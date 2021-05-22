@@ -1,0 +1,42 @@
+firewall:
+  - 'timestamp with timezone'
+  - 'source/destination IP'
+  - 'source/destination port'
+  - 'session duration'
+  - 'bytes sent/received'
+  - 'action (drop, allow)'
+
+proxy:
+  - 'timestamp with timezone'
+  - 'user'
+  - 'source/destination IP'
+  - 'source/destination port'
+  - 'full URL'
+  - 'referer'
+  - 'user-agent'
+  - 'verb'
+  - 'response code'
+  - 'response mime type'
+  - 'response size'
+  - 'action (passed, blocked)'
+
+av_edr:
+  - 'timestamp with timezone'
+  - 'hostname'
+  - 'host IP'
+  - 'file path'
+  - 'file hash'
+  - 'threat description'
+  - 'process info (name, path, hash)'
+  - 'action (cleaned, quarantine)'
+
+mail:
+  - 'timestamp with timezone'
+  - 'sender'
+  - 'recipients'
+  - 'subject'
+  - 'attachment name'
+  - 'attachment hash'
+  - 'attachement size'
+
+# evtx:

@@ -4,6 +4,7 @@ import json
 import yaml
 import csv
 import sys
+import os
 
 
 class AbstractCommand():
@@ -12,7 +13,8 @@ class AbstractCommand():
     OUTPUT_FORMATS = [OUTPUT_JSON, OUTPUT_CSV]
 
     def __init__(self, data):
-        file_path = './data/' + data
+
+        file_path = os.path.dirname(os.path.dirname(__file__)) + '/data/' + data
         with open(file_path, mode='r', encoding='utf-8') as f:
             self._data = yaml.safe_load(f)
 

@@ -1,6 +1,5 @@
 import click
-import yaml
-from src.command.abstract import AbstractCommand
+from facs.command.abstract import AbstractCommand
 
 
 class AcquisitionCommand(AbstractCommand):
@@ -8,7 +7,11 @@ class AcquisitionCommand(AbstractCommand):
         super().__init__('acquisition.yaml')
 
     def get_commands(self):
-        group = click.Group('acquisition', context_settings=dict(terminal_width=120))
+        group = click.Group(
+            'acquisition',
+            help='Cheat sheets related to data acquisition (info, dump, mount)',
+            context_settings=dict(terminal_width=120)
+        )
 
         group.add_command(click.Command(
             name='checklist', help='reminders to ensure chain of custody when performing an acquisition',
