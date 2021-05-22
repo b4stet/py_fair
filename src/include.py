@@ -1,5 +1,5 @@
-from src.command.dummy import DummyCommand
+from src.command.acquisition import AcquisitionCommand
 
 commands = [
-    DummyCommand,
+    AcquisitionCommand,
 ]
