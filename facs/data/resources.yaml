@@ -1,0 +1,74 @@
+executables:
+  - 'https://wadcoms.github.io/'
+  - 'https://lolbas-project.github.io/#'
+  - 'https://gtfobins.github.io/'
+
+iocs:
+  - 'https://github.com/eset/malware-ioc'
+  - 'http://malc0de.com/database/'
+
+malware:
+  - 'https://malpedia.caad.fkie.fraunhofer.de/'
+  - 'https://strontic.github.io/xcyclopedia/'
+
+evtx:
+  - 'http://www.eventid.net'
+  - 'https://www.myeventlog.com/search/browse'
+  - 'https://eventopedia.cloudapp.net'
+  - 'https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/advanced-security-auditing-faq'
+  - 'https://www.microsoft.com/download/details.aspx?id=50034'
+
+artifacts:
+  - 'https://github.com/EricZimmerman/KapeFiles'
+  - 'https://github.com/ForensicArtifacts/artifacts'
+  - 'https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES'
+  - 'https://jpcertcc.github.io/ToolAnalysisResultSheet'
+
+tools:
+  - 'https://github.com/DidierStevens/DidierStevensSuite'
+  - 'https://belkasoft.com/ram-capturer'
+  - 'https://accessdata.com/product-download/ftk-imager-version-4-2-1'
+  - 'http://ericzimmerman.github.io/#!index.md'
+
+challenges:
+  - 'https://www.honeynet.org/challenges/'
+  - 'https://cyberdefenders.org/labs/'
+  - 'https://magnetweeklyctf.ctfd.io/'
+  - 'https://dfirmadness.com/category/labs/the-hunt/'
+
+
+blogs:
+  - 'https://www.linuxleo.com/Docs/LinuxLeo-4.94.pdf'
+  - 'https://www.sans.org/security-resources/posters/dfir-find-evil/35/download'
+  - 'https://www.sans.org/blog/windows-7-mft-entry-timestamp-properties/'
+  - 'https://cyberforensicator.com/2018/03/25/windows-10-time-rules/'
+  - 'https://www.infosecmatter.com/top-16-active-directory-vulnerabilities/'
+  - 'https://emptydc.com/2020/12/10/privilege-escalation-in-azure-ad/'
+  - 'https://blog.didierstevens.com/2020/11/07/1768-k/'
+  - 'https://marcoramilli.com/2020/10/09/how-to-unpack-malware-personal-notes/'
+  - 'https://blueteamblog.com'
+  - 'https://www.andreafortuna.org'
+  - 'https://isc.sans.edu/diaryarchive.html'
+  - 'https://digitalf0rensics.wordpress.com'
+
+system:
+  - 'http://ntoskrnl.org/'
+  - 'https://refspecs.linuxfoundation.org/FHS_3.0/fhs-3.0.pdf'
+  - 'http://www.ntfs.com/'
+  - 'https://eclass.teicrete.gr/modules/document/file.php/TP326/%CE%98%CE%B5%CF%89%CF%81%CE%AF%CE%B1%20(Lectures)/Computer_Networking_A_Top-Down_Approach.pdf'
+
+cves:
+  - description: 'Pulse Secure'  
+    cve: 'CVE-2021-22893'
+  - description: 'Proxylogon (Exchange)'
+    cve: 'CVE-2021-26855, CVE-2021-27065'
+  - description: 'Sunburst (Solarwinds Orion)'
+    cve: 'CVE-2020-14005'
+  - description: 'Netlogon'
+    cve: 'CVE-2020-1472'
+  - description: 'Pulse Secure'
+    cve: 'CVE-2019-11510'
+  - description: 'Shitrix'
+    cve: 'CVE-2019-19781'
+  - description: 'Eternal Blue MS17-010'
+    cve: 'CVE-2017-0143 to CVE-2017-0148'

@@ -2,14 +2,14 @@ import click
 from facs.command.abstract import AbstractCommand
 
 
-class LogfileCommand(AbstractCommand):
+class LogsCommand(AbstractCommand):
     def __init__(self):
         super().__init__('logs.yaml')
 
     def get_commands(self):
         group = click.Group(
             'logs',
-            help='List fields of interest for various sources (firewall, proxy, mail, ...)',
+            help='List fields/events of interest for various sources (firewall, proxy, mail, ...)',
             context_settings=dict(terminal_width=120)
         )
 
