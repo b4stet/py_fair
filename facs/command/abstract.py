@@ -48,9 +48,9 @@ class AbstractCommand():
             type=click.Choice(self.OUTPUT_FORMATS)
         )
 
-    def _get_option_input(self):
+    def _get_option_pattern(self):
         return click.Option(
-            ['--input', '-i', 'input'],
-            help='Path to the disk dump.',
+            ['--pattern', '-p', 'pattern'],
+            help='list of words to filter on, comma separated',
             type=str
         )

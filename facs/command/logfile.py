@@ -32,6 +32,7 @@ class LogfileCommand(AbstractCommand):
 
         group.add_command(click.Command(
             name='evtx', help='list events of interest from evtx logs',
+            params=[self._get_option_pattern()],
             callback=self.list_evtx
         ))
 
@@ -49,5 +50,20 @@ class LogfileCommand(AbstractCommand):
     def list_antivirus(self):
         self._print_text('From antivirus/edr logs', self._data['av_edr'])
 
-    def list_evtx(self):
-        print('Under construction :)')
+    def list_evtx(self, pattern=None):
+        keywords = []
+        if pattern is not None:
+            keywords = pattern.split(',')
+
+        for source in self._data['evtx']:
+            events = []
+            if source['channel'].lower() == 'security':
+                events = ['EIDs: {:30} desc: {:65} audit to enable: {}'.format(event['eid'], event['description'], event['policy']) for event in source['eids']]
+            else:
+                events = ['EIDs: {:30} desc: {}'.format(event['eid'], event['description']) for event in source['eids']]
+
+            if len(keywords) > 0:
+                events = [event for event in events if any(keyword.lower() in event.lower() for keyword in keywords)]
+
+            if len(events) > 0:
+                self._print_text('Events from channel {}'.format(source['channel']), events)
