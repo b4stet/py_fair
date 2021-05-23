@@ -56,6 +56,6 @@ class ResourcesCommand(AbstractCommand):
             'system',
             'cves',
         ]
-        items = {k:v for k,v in self._data.items() if k not in keys}
+        items = {k: v for k, v in self._data.items() if k not in keys}
         for category, item in items.items():
             self._print_text(category, item)

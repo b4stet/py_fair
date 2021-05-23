@@ -29,6 +29,8 @@ tools:
   - 'https://belkasoft.com/ram-capturer'
   - 'https://accessdata.com/product-download/ftk-imager-version-4-2-1'
   - 'http://ericzimmerman.github.io/#!index.md'
+  - 'https://www.sleuthkit.org/sleuthkit/'
+  - 'https://github.com/log2timeline/plaso'
 
 challenges:
   - 'https://www.honeynet.org/challenges/'
