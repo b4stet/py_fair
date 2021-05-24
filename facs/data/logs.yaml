@@ -128,7 +128,7 @@ evtx:
       - eid: '7034/7035/7036/7040/7045'
         description: 'service crashed (can be injection attempt)/sent start,stop/started,stopped/start type changed/installed'
 
-  - channel: 'TaskScheduler/OPerational'
+  - channel: 'TaskScheduler/Operational'
     eids:
       - eid: '106/140/141/200/201'
         description: 'task created/updated/deleted/executed/completed'
@@ -148,10 +148,32 @@ evtx:
       - eid: '1149'
         description: 'incoming RDP, successful user network authn'
 
-  - channel: 'TerminalServices-LocalSessionManager/Operational.evtx'
+  - channel: 'TerminalServices-LocalSessionManager/Operational'
     eids:
       - eid: '21/22/24/25'
         description: 'incoming RDP, logon/shell start/disconnected/reconnected'
+
+  - channel: 'Microsoft-Windows-WinRM/Operational'
+    eids:
+      - eid: '6'
+        description: 'on the source, remote handling activity (eg. powershell)'
+      - eid: '169'
+        description: 'on the destination, remote handling activity (eg. powershell)'
+
+  - channel: 'Powershell'
+    eids:
+      - eid: '400/403'
+        description: 'engine start/stop'
+
+  - channel: 'Microsoft-Windows-PowerShell/Operational'
+    eids:
+      - eid: '4103/4104'
+        description: 'capture part of executed scripts'
+
+  - channel: 'Microsoft-Windows-Bits-Client/Operational'
+    eids:
+      - eid: '59'
+        description: 'transfer start (upload or download)'
 
   - channel: 'Microsoft-Windows-DNS-Client/Operational'
     eids:
@@ -168,12 +190,12 @@ evtx:
       - eid: '2101/2012'
         description: 'device connected/removed (eg. USB)'
   
-  - channel: 'OAlerts'
-    eids:
-      - eid: '300'
-        description: 'pop-up from an Office application'
-
   - channel: 'MBAM/Operational'
     eids:
       - eid: '39/40'
         description: 'removable media mounted/unmounted (eg. USB)'
+  
+  - channel: 'OAlerts'
+    eids:
+      - eid: '300'
+        description: 'pop-up from an Office application'

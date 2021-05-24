@@ -37,7 +37,7 @@ $ pip3 uninstall py_facs
 ```
 
 ## Commands
-- `acquisition`: cheat sheets for operations related to data acquisition (info about disks, dump disk/memory, mount)
+- `acquisition`: cheat sheets for operations related to data acquisition (info, dump disk/memory, mount)
 - `logs`: cheat sheet of interesting fields depending on the source
 - `resources`: blogs, tools, various knowledge bases, notable cves, ...
 
