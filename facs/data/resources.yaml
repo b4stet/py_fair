@@ -23,6 +23,9 @@ artifacts:
   - 'https://github.com/ForensicArtifacts/artifacts'
   - 'https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES'
   - 'https://jpcertcc.github.io/ToolAnalysisResultSheet'
+  - 'https://www.sans.org/security-resources/posters/hunt-evil/165/download'
+  - 'https://www.sans.org/security-resources/posters/windows-forensic-analysis/170/download'
+  - 'https://www.sans.org/security-resources/posters/dfir-memory-forensics/65/download'
 
 tools:
   - 'https://github.com/DidierStevens/DidierStevensSuite'
@@ -41,7 +44,6 @@ challenges:
 
 blogs:
   - 'https://www.linuxleo.com/Docs/LinuxLeo-4.94.pdf'
-  - 'https://www.sans.org/security-resources/posters/dfir-find-evil/35/download'
   - 'https://www.sans.org/blog/windows-7-mft-entry-timestamp-properties/'
   - 'https://cyberforensicator.com/2018/03/25/windows-10-time-rules/'
   - 'https://www.infosecmatter.com/top-16-active-directory-vulnerabilities/'

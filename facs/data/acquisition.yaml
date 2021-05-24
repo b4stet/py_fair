@@ -17,8 +17,7 @@ info:
         - '/dev/sdXY'
         - '/dev/nvmeXnYpZ'
   tools:
-    - 'lsblk'
-    - 'lsblkid'
+    - 'lsblk/lsblkid'
     - 'lshw'
     - 'lsscsi'
     - 'nvme'

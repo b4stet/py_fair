@@ -128,7 +128,7 @@ evtx:
       - eid: '7034/7035/7036/7040/7045'
         description: 'service crashed (can be injection attempt)/sent start,stop/started,stopped/start type changed/installed'
 
-  - channel: 'TaskScheduler/Maintenance'
+  - channel: 'TaskScheduler/OPerational'
     eids:
       - eid: '106/140/141/200/201'
         description: 'task created/updated/deleted/executed/completed'
@@ -152,6 +152,11 @@ evtx:
     eids:
       - eid: '21/22/24/25'
         description: 'incoming RDP, logon/shell start/disconnected/reconnected'
+
+  - channel: 'Microsoft-Windows-DNS-Client/Operational'
+    eids:
+      - eid: '3006'
+        description: 'DNS queries'
 
   - channel: 'WLAN-Autoconfig/Operational'
     eids:
