@@ -39,6 +39,20 @@ mail:
   - 'attachment hash'
   - 'attachement size'
 
+other_windows:
+  - description: 'path of system log files'
+    path: 'Windows/System32/LogFiles/*'
+  - description: 'path of IIS access logs'
+    path: 'inetpub/logs/LogFiles/**'
+  - description: 'path of Plug and Play logs'
+    path: 'Windows/inf/setupapi.dev.log'
+  - description: 'path of AV/EDR logs'
+    path: 'check https://github.com/EricZimmerman/KapeFiles/tree/master/Targets/Antivirus'
+  - description: 'path of common RAT logs (VNC, TeamViewer, ...)'
+    path: 'check https://github.com/EricZimmerman/KapeFiles/tree/master/Targets/Apps'
+  - description: 'path of powershell history if enabled'
+    path: 'Users/<user>/Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt'
+
 evtx:
   - channel: 'Security'
     eids:
@@ -106,13 +120,13 @@ evtx:
         description: 'new external device'
         policy: 'System > Plug and Play Events'
       - eid: '4693'
-        description: 'Recovery of DPAPI master key attempted'
+        description: 'recovery of DPAPI master key attempted'
         policy: 'Detailed Tracking > DPAPI Activity'
       - eid: '4932/4933'
-        description: 'replication start/end (can be DCSync/DCShadow)'
+        description: 'on DC, replication start/end (can be DCSync/DCShadow)'
         policy: 'DS Access > Directory Service Replication'
       - eid: '4657'
-        description: 'Registry value modified'
+        description: 'registry value modified'
         policy: 'Object Access > Registry'
 
   - channel: 'System'
@@ -199,3 +213,5 @@ evtx:
     eids:
       - eid: '300'
         description: 'pop-up from an Office application'
+
+  # - channel: 'sysmon'

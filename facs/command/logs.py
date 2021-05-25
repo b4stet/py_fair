@@ -36,6 +36,11 @@ class LogsCommand(AbstractCommand):
             callback=self.list_evtx
         ))
 
+        group.add_command(click.Command(
+            name='win_logs', help='list path of some log files on Windows',
+            callback=self.list_logs_windows
+        ))
+
         return group
 
     def list_firewall(self):
@@ -49,6 +54,13 @@ class LogsCommand(AbstractCommand):
 
     def list_antivirus(self):
         self._print_text('From antivirus/edr logs', self._data['av_edr'])
+
+    def list_logs_windows(self):
+        paths = []
+        for elt in self._data['other_windows']:
+            line = '{:80}: {}'.format(elt['description'], elt['path'])
+            paths.append(line)
+        self._print_text('On windows, other logs path ', paths)
 
     def list_evtx(self, pattern=None):
         keywords = []
