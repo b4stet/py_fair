@@ -9,7 +9,7 @@ class ExtractionCommand(AbstractCommand):
     def get_commands(self):
         group = click.Group(
             'extraction',
-            help='Cheat sheets related to artifacts extraction for further analysis (timelines, vss, carving, ...)',
+            help='cheat sheets related to artifacts extraction for further analysis (timelines, vss, carving, ...)',
             context_settings=dict(terminal_width=120)
         )
 

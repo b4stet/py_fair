@@ -24,7 +24,7 @@ class ResourcesCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
-            name='misc', help='other resources (tools blogs, challenges, ...)',
+            name='misc', help='other resources (tools, blogs, challenges, ...)',
             callback=self.get_others
         ))
 
