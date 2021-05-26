@@ -103,6 +103,7 @@ mount:
     - 'mount'
     - 'ewf-tools'
     - 'qemu-img'
+    - 'dislocker'
   cheat_sheet:
     - description: 'list partitions of a device (size, sector size, offset, file system code)'
       command: 'fdisk -l /dev/<device>'
