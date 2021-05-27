@@ -19,7 +19,7 @@ class AcquisitionCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
-            name='collect', help='cheat sheet to collect info about a disk',
+            name='collect', help='cheat sheet to collect info about the physical layer of a disk',
             callback=self.collect_info,
         ))
 
@@ -41,17 +41,17 @@ class AcquisitionCommand(AbstractCommand):
 
     def collect_info(self):
         glossary = []
-        for elt in self._data['info']['glossary']:
+        for elt in self._data['physical_layer']['glossary']:
             line = '{:15}: {}'.format(elt['name'], ', '.join(elt['examples']))
             glossary.append(line)
         self._print_text('Glossary', glossary)
 
-        tools = self._data['info']['tools']
+        tools = self._data['physical_layer']['tools']
         tools.sort()
         self._print_text('Tools', tools)
 
         cheat_sheet = []
-        for elt in self._data['info']['cheat_sheet']:
+        for elt in self._data['physical_layer']['cheat_sheet']:
             line = '{:80}: {}'.format(elt['description'], elt['command'])
             cheat_sheet.append(line)
         self._print_text('Cheat Sheet', cheat_sheet)
