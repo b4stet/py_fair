@@ -39,7 +39,7 @@ mail:
   - 'attachment hash'
   - 'attachement size'
 
-other_windows:
+logfiles_windows:
   - description: 'path of system log files'
     path: 'Windows/System32/LogFiles/*'
   - description: 'path of IIS access logs'
@@ -52,6 +52,16 @@ other_windows:
     path: 'check https://github.com/EricZimmerman/KapeFiles/tree/master/Targets/Apps'
   - description: 'path of powershell history if enabled'
     path: 'Users/<user>/Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt'
+
+defaults:
+  - description: 'default RDP port'
+    value: '3389'
+  - description: 'default Anydesk port'
+    value: '6568'
+  - description: 'default TeamViewer port'
+    value: '5938'
+  - description: 'default VNC port'
+    value: '5800/5900'
 
 evtx:
   - channel: 'Security'

@@ -41,6 +41,11 @@ class LogsCommand(AbstractCommand):
             callback=self.list_logs_windows
         ))
 
+        group.add_command(click.Command(
+            name='defaults', help='list default values in some software configuration (teamviewer, vns, ...)',
+            callback=self.list_defaults
+        ))
+
         return group
 
     def list_firewall(self):
@@ -57,10 +62,17 @@ class LogsCommand(AbstractCommand):
 
     def list_logs_windows(self):
         paths = []
-        for elt in self._data['other_windows']:
+        for elt in self._data['logfiles_windows']:
             line = '{:80}: {}'.format(elt['description'], elt['path'])
             paths.append(line)
         self._print_text('On windows, other logs path ', paths)
+
+    def list_defaults(self):
+        defaults = []
+        for elt in self._data['defaults']:
+            line = '{:40}: {}'.format(elt['description'], elt['value'])
+            defaults.append(line)
+        self._print_text('Some default values of software', defaults)
 
     def list_evtx(self, pattern=None):
         keywords = []
