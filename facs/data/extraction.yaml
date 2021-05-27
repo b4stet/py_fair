@@ -99,3 +99,13 @@ windows:
       path: 'Windows/Prefetch/*.pf'
     - description: 'path of on disk shell items (lnk, jumplists)'
       path: 'Users/<user>/AppData/Roaming/Microsoft/{Windows, Office}/Recent/{AutomaticDestinations/*, CustomDestinations/*, *.lnk}'
+
+general:
+  tools:
+    - 'find'
+    - 'sha256sum'
+  cheat_sheet:
+    - description: 'compute digest of all files'
+      command: 'find . -type f -exec sha256sum {} \; > ../sha256_all_files.txt'
+    - description: 'compare integrity of all files with a witness file'
+      command: 'sha256sum -c sha256_all_files.txt'
