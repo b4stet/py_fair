@@ -59,7 +59,7 @@ timelines:
     - 'log2timeline'
   cheat_sheet:
     - description: 'Create timeline of files/folders and deleted ones on linux'
-      command: 'WIP'
+      command: "fls -{F,D}rp{u,d} -m '/'  disk.raw | tee fls_{files,folders}_{allocated,deleted}.body"
     - description: 'Create timeline of files/folders and deleted ones on windows'
       command: 'WIP'
     - description: 'Create timeline of events on a host with plaso'
@@ -86,20 +86,6 @@ windows:
     - description: 'parse $Extend\$UsnJournal:$J'
       command: 'python3 usn.py -c -f usnjrnl.dat -o usnjrnl.csv'
   
-  paths:
-    - description: 'path of ntds.dit, the AD database'
-      path: 'Windows/NTDS/Ntds.dit'
-    - description: 'path of system registry hives (+ transaction logs)'
-      path: 'Windows/System32/config/{SYSTEM, SAM, SECURITY, SOFTWARE}'
-    - description: 'path user registry hive (+ transaction logs)'
-      path: 'Users/<user>/NTUSER.DAT + Users/<user>/AppData/Local/Microsoft/Windows/UsrClass.dat'
-    - description: 'path of event logs'
-      path: 'Windows/System32/winevt/logs/*.evtx'
-    - description: 'path of prefetch files'
-      path: 'Windows/Prefetch/*.pf'
-    - description: 'path of on disk shell items (lnk, jumplists)'
-      path: 'Users/<user>/AppData/Roaming/Microsoft/{Windows, Office}/Recent/{AutomaticDestinations/*, CustomDestinations/*, *.lnk}'
-
 general:
   tools:
     - 'find'

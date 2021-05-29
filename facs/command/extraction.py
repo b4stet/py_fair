@@ -24,7 +24,7 @@ class ExtractionCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
-            name='win_artifacts', help='cheat sheet of windows specific artifacts (evtx, registry hives, shell items, ...)',
+            name='windows', help='cheat sheet related to windows specific artifacts (shadow copies, usnjrnl, ...)',
             callback=self.list_artifacts_windows
         ))
 
@@ -68,9 +68,3 @@ class ExtractionCommand(AbstractCommand):
             line = '{:80}: {}'.format(elt['description'], elt['command'])
             cheat_sheet.append(line)
         self._print_text('Cheat Sheet', cheat_sheet)
-
-        paths = []
-        for elt in self._data['windows']['paths']:
-            line = '{:80}: {}'.format(elt['description'], elt['path'])
-            paths.append(line)
-        self._print_text('On windows, other logs path ', paths)

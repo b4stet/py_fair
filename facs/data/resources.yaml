@@ -26,6 +26,7 @@ artifacts:
   - 'https://www.sans.org/security-resources/posters/hunt-evil/165/download'
   - 'https://www.sans.org/security-resources/posters/windows-forensic-analysis/170/download'
   - 'https://www.sans.org/security-resources/posters/dfir-memory-forensics/65/download'
+  - 'https://www.nist.gov/itl/ssd/software-quality-group/national-software-reference-library-nsrl'
 
 tools:
   - 'https://github.com/DidierStevens/DidierStevensSuite'
@@ -55,6 +56,7 @@ blogs:
   - 'https://www.andreafortuna.org'
   - 'https://isc.sans.edu/diaryarchive.html'
   - 'https://digitalf0rensics.wordpress.com'
+  - 'https://forensicswiki.xyz/page/Main_Page'
 
 system:
   - 'http://ntoskrnl.org/'

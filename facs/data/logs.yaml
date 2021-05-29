@@ -39,19 +39,196 @@ mail:
   - 'attachment hash'
   - 'attachement size'
 
-logfiles_windows:
-  - description: 'path of system log files'
-    path: 'Windows/System32/LogFiles/*'
-  - description: 'path of IIS access logs'
-    path: 'inetpub/logs/LogFiles/**'
-  - description: 'path of Plug and Play logs'
-    path: 'Windows/inf/setupapi.dev.log'
-  - description: 'path of AV/EDR logs'
-    path: 'check https://github.com/EricZimmerman/KapeFiles/tree/master/Targets/Antivirus'
-  - description: 'path of common RAT logs (VNC, TeamViewer, ...)'
-    path: 'check https://github.com/EricZimmerman/KapeFiles/tree/master/Targets/Apps'
-  - description: 'path of powershell history if enabled'
-    path: 'Users/<user>/Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt'
+windows:
+  artifacts_paths:
+    - description: 'on DC, path of ntds.dit, the AD database'
+      path: 'Windows/NTDS/Ntds.dit'
+    - description: 'on DC, path of SYSVOL'
+      path: 'Windows/SYSVOL/sysvol/'
+    - description: 'path of system registry hives (+ transaction logs)'
+      path: 'Windows/System32/config/{SYSTEM, SAM, SECURITY, SOFTWARE}'
+    - description: 'path user registry hive (+ transaction logs)'
+      path: 'Users/<user>/NTUSER.DAT + Users/<user>/AppData/Local/Microsoft/Windows/UsrClass.dat'
+    - description: 'path of event logs'
+      path: 'Windows/System32/winevt/logs/*.evtx'
+    - description: 'path of prefetch files'
+      path: 'Windows/Prefetch/*.pf'
+    - description: 'path of on disk shell items (lnk, jumplists)'
+      path: 'Users/<user>/AppData/Roaming/Microsoft/{Windows, Office}/Recent/{AutomaticDestinations/*, CustomDestinations/*, *.lnk}'
+    - description: 'path of system log files'
+      path: 'Windows/System32/LogFiles/'
+    - description: 'path of IIS access logs'
+      path: 'inetpub/logs/LogFiles/'
+    - description: 'path of Plug and Play logs'
+      path: 'Windows/inf/setupapi.dev.log'
+    - description: 'path of AV/EDR logs'
+      path: 'check https://github.com/EricZimmerman/KapeFiles/tree/master/Targets/Antivirus'
+    - description: 'path of common RAT logs (VNC, TeamViewer, ...)'
+      path: 'check https://github.com/EricZimmerman/KapeFiles/tree/master/Targets/Apps'
+    - description: 'path of powershell history if enabled'
+      path: 'Users/<user>/Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt'
+  evtx:
+    - channel: 'Security'
+      eids:
+        - eid: '4608/4609'
+          description: 'windows start/stop'
+          policy: 'System > Security State Change'
+        - eid: '4616'
+          description: 'system time changed'
+          policy: 'System > Security State Change'
+        - eid: '1100/1102/1104'
+          description: 'logging shutdown/security log cleared/security log full'
+          policy: 'enabled by default'
+        - eid: '4624/4625/4648 and 4634/4647'
+          description: 'logon/logoff'
+          policy: 'Logon/Logoff > Logon and Logon/Logoff > Logoff'
+        - eid: '4672/4964'
+          description: 'privileges on new logon'
+          policy: 'Privilege Use > (Non) Sensitive Privilege Use and Logon/Logoff > Special Logon'
+        - eid: '4768/4771/4772'
+          description: 'on DC, kerberos TGT success/pre-auth failed/failure'
+          policy: 'Account Logon > Kerberos Authentication Service'
+        - eid: '4769/4770/4773'
+          description: 'on DC, kerberos TGS success/renewed/failure'
+          policy: 'Account Logon > Kerberos Service Ticket Operations'
+        - eid: '4776/4777'
+          description: 'on DC, NTLM authn success/failure'
+          policy: 'Account Logon > Credential Validation'
+        - eid: '4825'
+          description: 'incoming RDP, access denied'
+          policy: 'Logon/Logoff > Other Logon/Logoff Events'
+        - eid: '4778/4779'
+          description: 'incoming RDP, session reconnected/disconnected'
+          policy: 'Logon/Logoff > Other Logon/Logoff Events'
+        - eid: '4720'
+          description: 'user creation'
+          policy: 'Account Management > User Account Management'
+        - eid: '4728/4732/4756/4799'
+          description: 'user added to sensitive group / local group members enumerated'
+          policy: 'Account Management > Security Group Management'
+        - eid: '4656/4659/4661/4663'
+          description: 'object handling/access/delete (eg. USB/RDP/network share)'
+          policy: 'Object Access > Kernel'
+        - eid: '5140/5141/5142/5143/5144/5145'
+          description: 'network share permissions/add/delete/modify/access'
+          policy: 'Object Access > File Share and Object Access > Detailed File Share'
+        - eid: '4688/4689'
+          description: 'process creation/exit'
+          policy: 'Detailed Tracking > Process Creation and Detailed Tracking > Process Termination'
+        - eid: '4697'
+          description: 'new service installed'
+          policy: 'System > Security System Extension'
+        - eid: '4698/4699/4700/4701/4702'
+          description: 'task created/deleted/enabled/disabled/updated'
+          policy: 'Object Access > Other Object Access Events'
+        - eid: '4715/4817/4907'
+          description: 'SACL/audit settings changed on a object'
+          policy: 'Policy Change > Audit Policy Change'
+        - eid: '5024/2025'
+          description: 'local firewall start/stop'
+          policy: 'System > Other System Events'
+        - eid: '5156/5157'
+          description: 'connection allowed/blocked'
+          policy: 'Object Access > Filtering Platform Connection'
+        - eid: '6416'
+          description: 'new external device'
+          policy: 'System > Plug and Play Events'
+        - eid: '4693'
+          description: 'recovery of DPAPI master key attempted'
+          policy: 'Detailed Tracking > DPAPI Activity'
+        - eid: '4932/4933'
+          description: 'on DC, replication start/end (can be DCSync/DCShadow)'
+          policy: 'DS Access > Directory Service Replication'
+        - eid: '4657'
+          description: 'registry value modified'
+          policy: 'Object Access > Registry'
+
+    - channel: 'System'
+      eids:
+        - eid: '1'
+          description: 'system time changed'
+        - eid: '12/13'
+          description: 'system start/stop'
+        - eid: '20001'
+          description: 'PnP driver install (eg. USB)'
+        - eid: '6100'
+          description: 'wireless networking issue with history'
+        - eid: '7034/7035/7036/7040/7045'
+          description: 'service crashed (can be injection attempt)/sent start,stop/started,stopped/start type changed/installed'
+
+    - channel: 'Microsoft-Windows-TaskScheduler/Operational'
+      eids:
+        - eid: '106/140/141/200/201'
+          description: 'task created/updated/deleted/executed/completed'
+
+    - channel: 'Microsoft-Windows-TerminalServices-RDPClient/Operational'
+      eids:
+        - eid: '1024/1029/1102'
+          description: 'outgoing RDP initiated'
+
+    - channel: 'Microsoft-Windows-TerminalServices-RDPCoreTS/'
+      eids:
+        - eid: '131'
+          description: 'incoming RDP, TCP/UDP connection accepted'
+
+    - channel: 'Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational'
+      eids: 
+        - eid: '1149'
+          description: 'incoming RDP, successful user network authn'
+
+    - channel: 'Microsoft-Windows-TerminalServices-LocalSessionManager/Operational'
+      eids:
+        - eid: '21/22/24/25'
+          description: 'incoming RDP, logon/shell start/disconnected/reconnected'
+
+    - channel: 'Microsoft-Windows-WinRM/Operational'
+      eids:
+        - eid: '6'
+          description: 'on the source, remote handling activity (eg. powershell)'
+        - eid: '169'
+          description: 'on the destination, remote handling activity (eg. powershell)'
+
+    - channel: 'Microsoft Powershell'
+      eids:
+        - eid: '400/403'
+          description: 'engine start/stop'
+
+    - channel: 'Microsoft-Windows-PowerShell/Operational'
+      eids:
+        - eid: '4103/4104'
+          description: 'capture part of executed scripts'
+
+    - channel: 'Microsoft-Windows-Bits-Client/Operational'
+      eids:
+        - eid: '59'
+          description: 'transfer start (upload or download)'
+
+    - channel: 'Microsoft-Windows-DNS-Client/Operational'
+      eids:
+        - eid: '3006'
+          description: 'DNS queries'
+
+    - channel: 'Microsoft-Windows-WLAN-Autoconfig/Operational'
+      eids:
+        - eid: '8001/8002/8003'
+          description: 'wireless connection associated/success/failure'
+
+    - channel: 'Microsoft-Windows-DriverFrameworks-UserMode/Operational'
+      eids:
+        - eid: '2101/2012'
+          description: 'device connected/removed (eg. USB)'
+    
+    - channel: 'Microsoft-Windows-MBAM/Operational'
+      eids:
+        - eid: '39/40'
+          description: 'removable media mounted/unmounted (eg. USB)'
+    
+    - channel: 'OAlerts'
+      eids:
+        - eid: '300'
+          description: 'pop-up from an Office application'
+
+    # - channel: 'sysmon'
 
 defaults:
   - description: 'default RDP port'
@@ -63,165 +240,3 @@ defaults:
   - description: 'default VNC port'
     value: '5800/5900'
 
-evtx:
-  - channel: 'Security'
-    eids:
-      - eid: '4608/4609'
-        description: 'windows start/stop'
-        policy: 'System > Security State Change'
-      - eid: '4616'
-        description: 'system time changed'
-        policy: 'System > Security State Change'
-      - eid: '1100/1102/1104'
-        description: 'logging shutdown/security log cleared/security log full'
-        policy: 'enabled by default'
-      - eid: '4624/4625/4648 and 4634/4647'
-        description: 'logon/logoff'
-        policy: 'Logon/Logoff > Logon and Logon/Logoff > Logoff'
-      - eid: '4672/4964'
-        description: 'privileges on new logon'
-        policy: 'Privilege Use > (Non) Sensitive Privilege Use and Logon/Logoff > Special Logon'
-      - eid: '4768/4771/4772'
-        description: 'on DC, kerberos TGT success/pre-auth failed/failure'
-        policy: 'Account Logon > Kerberos Authentication Service'
-      - eid: '4769/4770/4773'
-        description: 'on DC, kerberos TGS success/renewed/failure'
-        policy: 'Account Logon > Kerberos Service Ticket Operations'
-      - eid: '4776/4777'
-        description: 'on DC, NTLM authn success/failure'
-        policy: 'Account Logon > Credential Validation'
-      - eid: '4825'
-        description: 'incoming RDP, access denied'
-        policy: 'Logon/Logoff > Other Logon/Logoff Events'
-      - eid: '4778/4779'
-        description: 'incoming RDP, session reconnected/disconnected'
-        policy: 'Logon/Logoff > Other Logon/Logoff Events'
-      - eid: '4720'
-        description: 'user creation'
-        policy: 'Account Management > User Account Management'
-      - eid: '4728/4732/4756/4799'
-        description: 'user added to sensitive group / local group members enumerated'
-        policy: 'Account Management > Security Group Management'
-      - eid: '4656/4659/4661/4663'
-        description: 'object handling/access/delete (eg. USB/RDP/network share)'
-        policy: 'Object Access > Kernel'
-      - eid: '5140/5141/5142/5143/5144/5145'
-        description: 'network share permissions/add/delete/modify/access'
-        policy: 'Object Access > File Share and Object Access > Detailed File Share'
-      - eid: '4688/4689'
-        description: 'process creation/exit'
-        policy: 'Detailed Tracking > Process Creation and Detailed Tracking > Process Termination'
-      - eid: '4697'
-        description: 'new service installed'
-        policy: 'System > Security System Extension'
-      - eid: '4698/4699/4700/4701/4702'
-        description: 'task created/deleted/enabled/disabled/updated'
-        policy: 'Object Access > Other Object Access Events'
-      - eid: '4715/4817/4907'
-        description: 'SACL/audit settings changed on a object'
-        policy: 'Policy Change > Audit Policy Change'
-      - eid: '5024/2025'
-        description: 'local firewall start/stop'
-        policy: 'System > Other System Events'
-      - eid: '5156/5157'
-        description: 'connection allowed/blocked'
-        policy: 'Object Access > Filtering Platform Connection'
-      - eid: '6416'
-        description: 'new external device'
-        policy: 'System > Plug and Play Events'
-      - eid: '4693'
-        description: 'recovery of DPAPI master key attempted'
-        policy: 'Detailed Tracking > DPAPI Activity'
-      - eid: '4932/4933'
-        description: 'on DC, replication start/end (can be DCSync/DCShadow)'
-        policy: 'DS Access > Directory Service Replication'
-      - eid: '4657'
-        description: 'registry value modified'
-        policy: 'Object Access > Registry'
-
-  - channel: 'System'
-    eids:
-      - eid: '1'
-        description: 'system time changed'
-      - eid: '12/13'
-        description: 'system start/stop'
-      - eid: '20001'
-        description: 'PnP driver install (eg. USB)'
-      - eid: '6100'
-        description: 'wireless networking issue with history'
-      - eid: '7034/7035/7036/7040/7045'
-        description: 'service crashed (can be injection attempt)/sent start,stop/started,stopped/start type changed/installed'
-
-  - channel: 'TaskScheduler/Operational'
-    eids:
-      - eid: '106/140/141/200/201'
-        description: 'task created/updated/deleted/executed/completed'
-
-  - channel: 'TerminalServices-RDPClient/Operational'
-    eids:
-      - eid: '1024/1029/1102'
-        description: 'outgoing RDP initiated'
-
-  - channel: 'TerminalServices-RDPCoreTS/'
-    eids:
-      - eid: '131'
-        description: 'incoming RDP, TCP/UDP connection accepted'
-
-  - channel: 'TerminalServices-RemoteConnectionManager/Operational'
-    eids: 
-      - eid: '1149'
-        description: 'incoming RDP, successful user network authn'
-
-  - channel: 'TerminalServices-LocalSessionManager/Operational'
-    eids:
-      - eid: '21/22/24/25'
-        description: 'incoming RDP, logon/shell start/disconnected/reconnected'
-
-  - channel: 'Microsoft-Windows-WinRM/Operational'
-    eids:
-      - eid: '6'
-        description: 'on the source, remote handling activity (eg. powershell)'
-      - eid: '169'
-        description: 'on the destination, remote handling activity (eg. powershell)'
-
-  - channel: 'Powershell'
-    eids:
-      - eid: '400/403'
-        description: 'engine start/stop'
-
-  - channel: 'Microsoft-Windows-PowerShell/Operational'
-    eids:
-      - eid: '4103/4104'
-        description: 'capture part of executed scripts'
-
-  - channel: 'Microsoft-Windows-Bits-Client/Operational'
-    eids:
-      - eid: '59'
-        description: 'transfer start (upload or download)'
-
-  - channel: 'Microsoft-Windows-DNS-Client/Operational'
-    eids:
-      - eid: '3006'
-        description: 'DNS queries'
-
-  - channel: 'WLAN-Autoconfig/Operational'
-    eids:
-      - eid: '8001/8002/8003'
-        description: 'wireless connection associated/success/failure'
-
-  - channel: 'Microsoft-Windows-DriverFrameworks-UserMode/Operational'
-    eids:
-      - eid: '2101/2012'
-        description: 'device connected/removed (eg. USB)'
-  
-  - channel: 'MBAM/Operational'
-    eids:
-      - eid: '39/40'
-        description: 'removable media mounted/unmounted (eg. USB)'
-  
-  - channel: 'OAlerts'
-    eids:
-      - eid: '300'
-        description: 'pop-up from an Office application'
-
-  # - channel: 'sysmon'

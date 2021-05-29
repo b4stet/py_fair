@@ -31,13 +31,7 @@ class LogsCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
-            name='evtx', help='list events of interest from evtx logs',
-            params=[self._get_option_pattern()],
-            callback=self.list_evtx
-        ))
-
-        group.add_command(click.Command(
-            name='win_logs', help='list path of some log files on Windows',
+            name='windows', help='list path of artifacts on Windows and useful event IDs',
             callback=self.list_logs_windows
         ))
 
@@ -62,10 +56,18 @@ class LogsCommand(AbstractCommand):
 
     def list_logs_windows(self):
         paths = []
-        for elt in self._data['logfiles_windows']:
+        for elt in self._data['windows']['artifacts_paths']:
             line = '{:80}: {}'.format(elt['description'], elt['path'])
             paths.append(line)
-        self._print_text('On windows, other logs path ', paths)
+        self._print_text('On windows, main artifacts paths', paths)
+
+        for source in self._data['windows']['evtx']:
+            events = []
+            if source['channel'].lower() == 'security':
+                events = ['EIDs: {:30} desc: {:65} audit to enable: {}'.format(event['eid'], event['description'], event['policy']) for event in source['eids']]
+            else:
+                events = ['EIDs: {:30} desc: {}'.format(event['eid'], event['description']) for event in source['eids']]
+            self._print_text('Events from channel {}'.format(source['channel']), events)
 
     def list_defaults(self):
         defaults = []
@@ -73,21 +75,3 @@ class LogsCommand(AbstractCommand):
             line = '{:40}: {}'.format(elt['description'], elt['value'])
             defaults.append(line)
         self._print_text('Some default values of software', defaults)
-
-    def list_evtx(self, pattern=None):
-        keywords = []
-        if pattern is not None:
-            keywords = pattern.split(',')
-
-        for source in self._data['evtx']:
-            events = []
-            if source['channel'].lower() == 'security':
-                events = ['EIDs: {:30} desc: {:65} audit to enable: {}'.format(event['eid'], event['description'], event['policy']) for event in source['eids']]
-            else:
-                events = ['EIDs: {:30} desc: {}'.format(event['eid'], event['description']) for event in source['eids']]
-
-            if len(keywords) > 0:
-                events = [event for event in events if any(keyword.lower() in event.lower() for keyword in keywords)]
-
-            if len(events) > 0:
-                self._print_text('Events from channel {}'.format(source['channel']), events)
