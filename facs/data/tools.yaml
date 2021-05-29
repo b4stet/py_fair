@@ -1,0 +1,86 @@
+sleuthkit:
+  ref: 'http://wiki.sleuthkit.org/index.php?title=The_Sleuth_Kit'
+  cheat_sheet:
+    - description: 'tools working on the physical media layer'
+      note: 'lshw, lsscsi, hdparm, sdparm, dd, dc3dd, ddrescue'
+    - description: 'tsk commands working in the media management layer'
+      note: 'mm* like mmls (other non tsk: fdisk, losetup)'
+    - description: 'tsk commands working on the file system layer'
+      note: 'fs* like fsstat (other non tsk: mount, file -s)'
+    - description: 'tsk commands working on the file name layer'
+      note: 'f* like fls/ffind (other non tsk: find, ls)'
+    - description: 'tsk commands working on the application layer (meta and content)'
+      note: 'i* for metadata like icat (non tsk: exiftool, file), blk* for content like blkls (non ts: grep)'
+    - description: 'list disk partitions (offset unit is sector)'
+      note: 'mmls disk.raw'
+    - description: 'describe a partitionn (file system, ...)'
+      note: 'fsstat -o <partition sector offset> disk.raw'
+    - description: 'list all allocated files on a partition'
+      note: "fls -Frpu -m '/' -o <partition sector offset> disk.raw > fls_files_disk.body"
+    - description: 'list all deleted files on a partition'
+      note: "fls -Frpd -m '/' -o <partition sector offset> disk.raw > fls_files_deleted_disk.body"
+    - description: 'list all deleted folders on a partition'
+      note: "fls -Drpu -m '/' -o <partition sector offset> disk.raw > fls_folders_deleted_disk.body"
+    - description: 'list filenames related to an inode'
+      note: 'ffind -o <partition sector offset> -a disk.raw <inode>'
+    - description: 'get inode details (mactimes, data blocks'
+      note: 'istat -o <partition sector offset> disk.raw <inode>'
+    - description: 'carve a file at a given inode'
+      note: 'icat -o <partition sector offset> disk.raw <inode> > file.dat'
+    - description: 'retrieve inode associated to a data block'
+      note: 'ifind -o <partition sector offset> -d <data block> disk.raw'
+    - description: 'carve data blocks'
+      note: 'blkcat -o <partition sector offset> disk.raw <data block> <nb blocks> > block.dat'
+    - description: 'carve unallocated data blocks'
+      note: 'blkls -o <partition sector offset> disk.raw > unallocated.dat'
+    - description: 'carve slack space'
+      note: 'blkls -o <partition sector offset> -s disk.raw > slack.dat'
+  outputs:
+    - description: 'fls output format'
+      note: 'X/Y where X comes from file name layer, and Y from the metadata layer'
+    - description: 'fls output for allocated file'
+      note: 'X = Y'
+    - description: 'fls output markers'
+      note: 'r=regular file, d=directory, l=symbolic link, -=unknown, V=virtual inode created by tsk (eg. orphan file)'
+    - description: 'fls output tag orphan file'
+      note: 'unallocated meta data, no corresponding file name, can only be accessed using metadata layer'
+    - description: 'fls output tag realloc'
+      note: 'metadata allocated but not file name layer. either file deleted (inode points to a new file), or renamed (inode points to the correct file name)'
+    - description: 'fls output tag *'
+      note: 'indicates an unallocated or deleted entry'
+
+volatility2:
+  ref: 'https://github.com/volatilityfoundation/volatility'
+  cheat_sheet:
+    - description: '.volatilityrc after imageinfo (list of profiles with --info)'
+      note: |
+        usage: vol.py --conf-file .volatilityrc <plugin> <options>
+        [DEFAULT]
+        PROFILE=<profile>
+        LOCATION=file:///path/to/memory.img
+        KDBG=0x<offset>
+    - description: 'get physical offset of file loaded in memory'
+      note: 'plugin filescan, then grep on the filename'
+    - description: 'dump file from memory'
+      note: 'plugin dumpfile -Q 0x<physical offset> -S summary.txt -D outdir -u -n'
+    - description: 'WIP'
+      note: 'WIP'
+
+tshark:
+  ref: 'https://www.wireshark.org/docs/dfref/'
+  cheat_sheet:
+    - description: 'list protocols in a capture'
+      note: 'tshark -r capture.pcap -T fields -e _ws.col.Protocol | sort | uniq -c'
+    - description: 'list IPs in a capture'
+      note: 'tshark -r capture.pcap -qz ip_hosts,tree'
+    - description: 'list src/dest in a capture'
+      note: 'tshark -r capture.pcap -T fields -e ip.src -e ip.dst | sort | uniq -c'
+    - description: 'dump data of a TCP session'
+      note: 'tshark -r capture.pcap -Y "tcp.stream == X" -T fields -e data'
+    - description: 'list HTTP requests in a capture'
+      note: 'tshark -r capture.pcap -Y "http.request" -T fields -e "ip.src" -e "ip.dst" -e "http.host" -e "http.server" -e "http.request.full_uri" -e "http.referer" -e "http.response.code" -e "http.content_type" -e "http.location" -E header=y -E separator=, -E quote=d'
+
+misc:
+  - description: 'convert base 16 to base 10'
+    note: 'echo "ibase=16;DEADBEEF" | bc'
+      

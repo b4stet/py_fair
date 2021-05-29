@@ -9,7 +9,7 @@ class SystemsCommand(AbstractCommand):
     def get_commands(self):
         group = click.Group(
             'systems',
-            help='some notes on operatin systems',
+            help='some notes on operating systems',
             context_settings=dict(terminal_width=120)
         )
 

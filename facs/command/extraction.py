@@ -59,7 +59,7 @@ class ExtractionCommand(AbstractCommand):
         self._print_text('Cheat Sheet', cheat_sheet)
 
     def list_artifacts_windows(self):
-        tools = self._data['timelines']['tools']
+        tools = self._data['windows']['tools']
         tools.sort()
         self._print_text('Tools', tools)
 
