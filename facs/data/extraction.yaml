@@ -87,11 +87,8 @@ windows:
       command: 'python3 usn.py -c -f usnjrnl.dat -o usnjrnl.csv'
   
 general:
-  tools:
-    - 'find'
-    - 'sha256sum'
   cheat_sheet:
     - description: 'compute digest of all files'
-      command: 'find . -type f -exec sha256sum {} \; > ../sha256_all_files.txt'
+      command: 'find . -type f -exec sha1sum {} \; > ../sha1_all_files.txt'
     - description: 'compare integrity of all files with a witness file'
-      command: 'sha256sum -c sha256_all_files.txt'
+      command: 'sha1sum -c sha1_all_files.txt'
