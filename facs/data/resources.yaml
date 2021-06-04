@@ -42,6 +42,7 @@ challenges:
   - 'https://magnetweeklyctf.ctfd.io/'
   - 'https://dfirmadness.com/category/labs/the-hunt/'
   - 'https://socvel.com/'
+  - 'https://zer1t0.gitlab.io/challenges/'
 
 
 blogs:
@@ -49,6 +50,7 @@ blogs:
   - 'https://www.sans.org/blog/windows-7-mft-entry-timestamp-properties/'
   - 'https://cyberforensicator.com/2018/03/25/windows-10-time-rules/'
   - 'https://www.infosecmatter.com/top-16-active-directory-vulnerabilities/'
+  - 'https://zer1t0.gitlab.io/posts/attacking_ad/'
   - 'https://emptydc.com/2020/12/10/privilege-escalation-in-azure-ad/'
   - 'https://blog.didierstevens.com/2020/11/07/1768-k/'
   - 'https://marcoramilli.com/2020/10/09/how-to-unpack-malware-personal-notes/'

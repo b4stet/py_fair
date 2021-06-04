@@ -1,0 +1,18 @@
+# profiling: WIP    
+
+- step: 'Files mining'
+  tools:
+    - 'clamav'
+    - 'yara'
+
+  tags:
+    - 'doubt removal'
+    - 'compromise'
+
+  cheat_sheet:
+    - description: 'run simple antivirus scan on all files'
+      note: 'freshclam && clamscan --infected --log=clamav_infected.log -r <mount point>'
+    - description: 'check files against yara rules'
+      note: 'yara -r ruleset.yara <mount point>'
+    # - description: 'mine disk file list for known bads based on name'
+    #   note: 'py_facs processing --files <filelist.txt> --wordlist <wordlist.txt> -o outdir'

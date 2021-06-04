@@ -1,0 +1,47 @@
+timelines:
+  tools:
+    - 'sleuthkit'
+    - 'log2timeline'
+  cheat_sheet:
+    - description: 'Create disk timeline (files/folders and deleted ones) with sleuthkit'
+      command: 'fls -{F,D}rp{u,d} -m ''/''  disk.raw | tee fls_{files,folders}_{allocated,deleted}.body'
+    - description: 'Convert body file to csv'
+      command: 'mactime -d -y -b fls_files.body | tee mactime_timeline_files.csv'
+    - description: 'Create disk timeline (files/folders and deleted ones) with log2timeline'
+      command: 'log2timeline --parsers mft <mft.plaso> <disk.raw> && psort -o l2tcsv -w plaso_mft.csv mft.plaso'
+    - description: 'compute md5 of all files'
+      command: 'find . -type f -exec md5sum {} \; > ../md5_all_files.csv && sed -i ''s/\s\+/,/'' forensic/md5_all_files.csv'
+    - description: 'enrich disk timeline based on NSRL db for the operating system investigated'
+      command: 'py_facs preprocessing enrich_timeline_nsrl --body <tsk_files.body> --hashes <md5.csv> --nsrl <nsrl.csv> -o outdir'
+    - description: 'Create activity timeline of a host with plaso'
+      command: 'WIP'
+
+windows:
+  tools:
+    - 'libvshadow'
+    - 'sleuthkit'
+    - 'plaso-tools'
+    - 'https://github.com/poorbillionaire/usn-journal-parser'
+    - 'regipy (python module)'
+
+  cheat_sheet:
+    - description: 'identify VSC (Volume Shadow Copy)'
+      command: 'vshadowinfo -o <partition offset> disk.raw'
+    - description: 'mount VSC device'
+      command: 'vshadowmount -o <partition offset> disk.raw /tmp/fuse'
+    - description: 'mount VSC'
+      command: 'mount -o ro,loop,show_sys_files,streams_interface=windows /tmp/fuse/vssX <mount_point>'
+    - description: 'extract $Extend\$UsnJournal:$J with plaso'
+      command: 'WIP'
+    - description: 'extract $Extend\$UsnJournal:$J (determine inode from fls output)'
+      command: 'icat -h -o <partition sector offset> disk.raw <inode> > usnjrnl.dat'
+    - description: 'parse $Extend\$UsnJournal:$J'
+      command: 'python3 usn.py -c -f usnjrnl.dat -o usnjrnl.csv'
+    - description: 'clean dirty hives (SOFTWARE, SYSTEM, SAM, NTUSER.DAT, USRCLASS.DAT)'
+      command: 'registry-transaction-logs <hive> -p <hive>.LOG1 -s <hive>.LOG2 -o <hive>_CLEAN'
+    - description: 'dump registries light (SOFTWARE, SYSTEM, SAM, NTUSER.DAT, USRCLASS.DAT)'
+      command: 'registry-plugins-run -o <hive>.json <clean hive>'
+    - description: 'dump registries full (SOFTWARE, SYSTEM, SAM, NTUSER.DAT, USRCLASS.DAT, take long times)'
+      command: 'registry-dump -o <hive>.json <clean hive>'
+
+  

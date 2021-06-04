@@ -9,7 +9,7 @@ unix:
     - 'system initialisation with SystemD: load units to bring the system up to the configured target state (units and targets configured using systemctl, logs through journalctl)'
     - 'inspect process behind a connection: netstat -laputen, or lsof -i tcp:<port>'
   
-  ext:
+  fs_ext:
     - name: 'metadata layer'
       description: 'inode, with macb, owner, permissions, pointers to data block (ext2/3) or extents (ext4)'
     - name: 'data blocks layer'

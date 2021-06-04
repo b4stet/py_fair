@@ -15,7 +15,7 @@ class AcquisitionCommand(AbstractCommand):
 
         group.add_command(click.Command(
             name='checklist', help='reminders to ensure chain of custody when performing an acquisition',
-            callback=self.checklist
+            callback=self.get_checklist
         ))
 
         group.add_command(click.Command(
@@ -35,7 +35,7 @@ class AcquisitionCommand(AbstractCommand):
 
         return group
 
-    def checklist(self):
+    def get_checklist(self):
         checkpoints = self._data['chain_of_custody']
         self._print_text('Check list for chain of custody', checkpoints)
 

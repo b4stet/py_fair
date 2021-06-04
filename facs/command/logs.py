@@ -9,7 +9,7 @@ class LogsCommand(AbstractCommand):
     def get_commands(self):
         group = click.Group(
             'logs',
-            help='list fields/events of interest from various sources (firewall, proxy, mail, ...)',
+            help='list fields/artifacts of interest from various sources (firewall, mail, windows, ...)',
             context_settings=dict(terminal_width=120)
         )
 

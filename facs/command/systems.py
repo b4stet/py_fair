@@ -30,7 +30,7 @@ class SystemsCommand(AbstractCommand):
         self._print_text('General notes', self._data['unix']['notes'])
 
         fs_ext = []
-        for elt in self._data['unix']['ext']:
+        for elt in self._data['unix']['fs_ext']:
             line = '{:40}: {}'.format(elt['name'], elt['description'])
             fs_ext.append(line)
         self._print_text('Notes about ext file systems', fs_ext)

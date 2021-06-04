@@ -11,6 +11,19 @@ class AbstractCommand():
     OUTPUT_JSON = 'json'
     OUTPUT_CSV = 'csv'
     OUTPUT_FORMATS = [OUTPUT_JSON, OUTPUT_CSV]
+    SUPPORTED_OS = [
+        'archlinux',
+        'bsd',
+        'centos',
+        'debian',
+        'fedora',
+        'mac os',
+        'manjaro',
+        'slackware',
+        'suse',
+        'ubuntu',
+        'windows',
+    ]
 
     def __init__(self, data):
 
@@ -48,9 +61,30 @@ class AbstractCommand():
             type=click.Choice(self.OUTPUT_FORMATS)
         )
 
-    def _get_option_pattern(self):
+    def _get_option_outdir(self):
         return click.Option(
-            ['--pattern', '-p', 'pattern'],
-            help='list of words to filter on, comma separated',
-            type=str
+            ['--outdir', '-d', 'outdir'],
+            help='Output folder for the result',
+            required=True
+        )
+
+    def _get_option_bodyfile(self):
+        return click.Option(
+            ['--body', '-b', 'body'],
+            help='body file as output by tsk fls command',
+            required=True
+        )
+
+    def _get_option_hashes(self):
+        return click.Option(
+            ['--hashes', '-h', 'hashes'],
+            help='csv with list of md5 hashes and filenames. no header, comma separated, hash then filename',
+            required=True,
+        )
+
+    def _get_option_nsrl(self):
+        return click.Option(
+            ['--nsrl', '-n', 'nsrl'],
+            help='a NSRLFiles.txt file, or an excerpt of it',
+            required=True,
         )
