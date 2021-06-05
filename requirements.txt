@@ -1,4 +1,5 @@
 click
 PyYAML
 regipy
+zipfile
 setuptools

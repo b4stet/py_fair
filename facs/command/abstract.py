@@ -75,16 +75,24 @@ class AbstractCommand():
             required=True
         )
 
-    def _get_option_hashes(self):
+    def _get_option_nsrl_files(self):
         return click.Option(
-            ['--hashes', '-h', 'hashes'],
-            help='csv with list of md5 hashes and filenames. no header, comma separated, hash then filename',
+            ['--nsrl', '-n', 'nsrl'],
+            help='a file in NSRLFile.txt format',
             required=True,
         )
 
-    def _get_option_nsrl(self):
+    def _get_option_nsrl_folder(self):
         return click.Option(
             ['--nsrl', '-n', 'nsrl'],
-            help='a NSRLFiles.txt file, or an excerpt of it',
+            help='path of NSRL files (NSRLFile.txt.zip and NSRLProd.txt)',
             required=True,
+        )
+
+    def _get_option_os(self):
+        return click.Option(
+            ['--os', 'operating_system'],
+            help='Operating System to filter on. Default is windows',
+            default='windows',
+            type=click.Choice(self.SUPPORTED_OS)
         )
