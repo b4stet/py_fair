@@ -21,7 +21,7 @@ windows:
     - 'https://www.ntfs.com/index.html'
     - 'https://cyberforensicator.com/2018/03/25/windows-10-time-rules/'
     - 'https://www.sans.org/security-resources/posters/windows-forensic-analysis/170/download'
-  ntfs:
+  fs_ntfs:
     - name: 'metafiles'
       description: 'organise the NTFS file system (for forensic: $MFT, $UsnJrnl, $LogFile'
     - name: '$MFT metafile'
@@ -52,13 +52,65 @@ windows:
       description: 'filename.ext:<ads>, in same $MFT record. famous one: Zone.Identifier'
     - name: 'volume shadow copy (VSC)'
       description: 'snapshot of files and volumes, stored in System Volume Information, changes monitored by 16K blocks'
-  fat:
+  fs_fat:
     - name: 'fat12/16/32'
       description: 'number of bits used for addresses'
     - name: 'exfat'
       description: 'fat32 which overcome 4GB/file limit'
     - name: 'fat table'
       description: 'state of each data block (allocated with next block for a file, unallocated, reserved, bad sectors)'
+
+macb_theory:
+  references:
+    - 'https://www.sans.org/security-resources/posters/windows-forensic-analysis/170/download'
+    - 'https://cyberforensicator.com/2018/03/25/windows-10-time-rules/'
+    - 'https://www.sans.org/blog/windows-7-mft-entry-timestamp-properties/'
+  
+  ntfs_win10:
+    - std_info: 'macb'
+      file_name: 'macb'
+      description: 'file created'
+    - std_info: '.(a)..'
+      file_name: '....'
+      description: 'file accessed. caution: if noatime, if volume > 128G, behavior of last access time update to check with fsutil'
+    - std_info: 'mac.'
+      file_name: '.... or mac.'
+      description: 'file modified'
+    - std_info: '.a.b or .acb + m... with m < b'
+      file_name: 'macb'
+      description: 'file copied'
+    - std_info: '..c.'
+      file_name: '....'
+      description: 'file renamed or moved on the same volume'
+    - std_info: '.a.b + m.c. with m < b'
+      file_name: 'macb'
+      description: 'file moved a on different volume via CLI'
+    - std_info: 'm.cb + .a.. with a < b'
+      file_name: 'macb'
+      description: 'file moved on a different volume via copy/paste in explorer'
+
+  ntfs_win7_8:
+    - std_info: 'macb'
+      file_name: 'macb'
+      description: 'file created'
+    - std_info: '....'
+      file_name: '....'
+      description: 'file accessed'
+    - std_info: 'm.c.'
+      file_name: '....'
+      description: 'file modified'
+    - std_info: '.acb'
+      file_name: 'macb'
+      description: 'file copied'
+    - std_info: '..c.'
+      file_name: '....'
+      description: 'file renamed'
+    - std_info: '..c.'
+      file_name: 'm.c.'
+      description: 'file moved on the same volume'
+    - std_info: '.ac.'
+      file_name: 'macb'
+      description: 'file moved on a different volume'
 
 general:
   - name: 'hard link'
