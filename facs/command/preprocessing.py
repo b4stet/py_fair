@@ -22,12 +22,11 @@ class PreprocessingCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
-            name='enrich_timeline', help='enrich the disk timeline with md5 hashes and a tag for files in NSRL Operating System db',
-            callback=self.enrich_timeline,
+            name='thin_timeline', help='thin the disk timeline using a NSRL file',
+            callback=self.thin_timeline,
             params=[
                 self._get_option_outdir(),
                 self._get_option_bodyfile(),
-                self._get_option_hashes(),
                 self._get_option_nsrl(),
             ]
         ))
@@ -50,32 +49,31 @@ class PreprocessingCommand(AbstractCommand):
             cheat_sheet.append(line)
         self._print_text('Cheat Sheet', cheat_sheet)
 
-    def enrich_timeline(self, body, hashes, nsrl, outdir):
+    def thin_timeline(self, body, nsrl, outdir):
         # prepare out files
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
 
-        base_hashes, ext_hashes = os.path.splitext(os.path.basename(hashes))
-        out_hashes_enriched = os.path.join(outdir, base_hashes + '_nsrl_os_enriched' + ext_hashes)
-
         base_body, ext_body = os.path.splitext(os.path.basename(body))
-        out_body_enriched = os.path.join(outdir, base_body + '_nsrl_os_enriched' + ext_body)
+        out_body_thinned = os.path.join(outdir, base_body + '_nsrl_thinned' + ext_body)
 
-        # load observed hashes in memory
-        with open(hashes, mode='r', encoding='utf8') as f:
-            reader = csv.DictReader(f, fieldnames=['md5', 'filepath'])
-            hashes_observed = {}
+        # index body in memory
+        body_src = {}
+        with open(body, mode='r', encoding='utf8') as f:
+            reader = csv.reader(f, delimiter='|')
             for row in reader:
-                if row['md5'] not in hashes_observed.keys():
-                    hashes_observed[row['md5']] = {
-                        'filepaths': [],
-                        'nsrl_os': False,
+                md5 = row[0]
+                rest = '|'.join(row[1:])
+                if row[0] not in body_src.keys():
+                    body_src[row[0]] = {
+                        'data': [],
+                        'nsrl': False,
                     }
-                hashes_observed[row['md5']]['filepaths'].append(row['filepath'].lstrip('.'))
+                body_src[md5]['data'].append(rest)
 
         # loop on NSRL files list
         nsrl_headers = ['MD5', 'FileName', 'FileSize', 'ProductCode']
-        out_nsrl_hits = os.path.join(outdir, 'nsrl_os_hits.csv')
+        out_nsrl_hits = os.path.join(outdir, 'nsrl_hits.csv')
         fd_out_nsrl_hits = open(out_nsrl_hits, mode='w', encoding='utf8')
         with open(nsrl, mode='r', encoding='utf8') as f:
             reader = csv.DictReader(f)
@@ -85,57 +83,20 @@ class PreprocessingCommand(AbstractCommand):
 
             for row in reader:
                 md5 = row['MD5'].lower().strip('"')
-                if md5 in hashes_observed.keys():
+                if md5 in body_src.keys():
                     fd_out_nsrl_hits.write(','.join([row[col] for col in nsrl_headers]) + '\n')
-                    hashes_observed[md5]['nsrl_os'] = True
+                    body_src[md5]['nsrl'] = True
         fd_out_nsrl_hits.close()
 
-        # save enriched hashes
-        hashes_enriched = []
-        for md5, values in hashes_observed.items():
-            for filepath in values['filepaths']:
-                hashes_enriched.append({
-                    'md5': md5,
-                    'filepath': filepath,
-                    'nsrl_os': values['nsrl_os'],
-                })
-        with open(out_hashes_enriched, mode='w', encoding='utf8') as f:
-            writer = csv.DictWriter(f, delimiter=',', fieldnames=['md5', 'nsrl_os', 'filepath'])
-            writer.writeheader()
-            writer.writerows(hashes_enriched)
-        del(hashes_observed)
-
-        # restructure enriched hashes for efficient search
-        hashes_enriched_dict = {}
-        for h in hashes_enriched:
-            hashes_enriched_dict[h['filepath']] = {
-                'md5': h['md5'],
-                'nsrl_os': h['nsrl_os'],
-            }
-        del(hashes_enriched)
-
-        # enrich the timeline based on known hashes/filenames
-        fd_out_body_enriched = open(out_body_enriched, mode='w', encoding='utf8')
-        fd_in_body = open(body, mode='r', encoding='utf8')
-        with open(body, mode='r', encoding='utf8') as f:
-            reader = csv.reader(f, delimiter='|')
-            for row in reader:
-                filename_body = row[1]
-                # some cleaning for file name attribute and alternate data stream
-                if filename_body.endswith(' ($FILE_NAME)'):
-                    filename_body = filename_body[:-len(' ($FILE_NAME)')]
-                if ':' in filename_body:
-                    filename_body = filename_body.split(':')[0]
-
-                nsrl_tag = 'nsrl_unknown'
-                found = hashes_enriched_dict.get(filename_body, None)
-                if found is not None:
-                    row[0] = found['md5']
-                    nsrl_tag = found['nsrl_os']
-
-                enriched_row = '{}|{}\n'.format(nsrl_tag, '|'.join(row))
-                fd_out_body_enriched.write(enriched_row)
-        fd_out_body_enriched.close()
+        # save thinned body
+        body_thinned = []
+        for md5, values in body_src.items():
+            if values['nsrl'] is False:
+                for d in values['data']:
+                    line = '|'.join([md5, d])
+                    body_thinned.append(line)
+        with open(out_body_thinned, mode='w', encoding='utf8') as f:
+            f.write('\n'.join(body_thinned))
 
     def list_artifacts_windows(self):
         tools = self._data['windows']['tools']

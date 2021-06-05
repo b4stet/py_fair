@@ -71,7 +71,7 @@ class AbstractCommand():
     def _get_option_bodyfile(self):
         return click.Option(
             ['--body', '-b', 'body'],
-            help='body file as output by tsk fls command',
+            help='body file as output by tsk fls command, with md5 hashes',
             required=True
         )
 

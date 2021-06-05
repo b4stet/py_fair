@@ -27,6 +27,7 @@ artifacts:
   - 'https://www.sans.org/security-resources/posters/windows-forensic-analysis/170/download'
   - 'https://www.sans.org/security-resources/posters/dfir-memory-forensics/65/download'
   - 'https://www.nist.gov/itl/ssd/software-quality-group/national-software-reference-library-nsrl/nsrl-download/current-rds'
+  - 'https://hashlookup.circl.lu/'
 
 tools:
   - 'https://github.com/DidierStevens/DidierStevensSuite'

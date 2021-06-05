@@ -85,7 +85,7 @@ tshark:
 # yara: WIP
 
 nsrl:
-  ref: 'https://www.nist.gov/itl/ssd/software-quality-group/national-software-reference-library-nsrl/nsrl-download/current-rds (updated every 3 months)'
+  ref: 'https://www.nist.gov/itl/ssd/software-quality-group/national-software-reference-library-nsrl/nsrl-download/current-rds (updated every 3 months, known goods+bads)'
   cheat_sheet:
     - description: 'download dataset for legacy and modern applications'
       note: 'curl "https://s3.amazonaws.com/rds.nsrl.nist.gov/RDS/current/RDS_{legacy, modern}.iso" -o {legacy,modern}.iso'
