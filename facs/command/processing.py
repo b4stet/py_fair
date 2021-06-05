@@ -9,7 +9,7 @@ class ProcessingCommand(AbstractCommand):
     def get_commands(self):
         group = click.Group(
             'processing',
-            help='cheat sheets and automated scripts to forensicate',
+            help='cheat sheets and scripts to forensicate',
             context_settings=dict(terminal_width=120)
         )
 

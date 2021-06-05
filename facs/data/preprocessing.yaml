@@ -1,7 +1,7 @@
 timelines:
   tools:
     - 'sleuthkit'
-    - 'log2timeline'
+    - 'plaso-tools'
   cheat_sheet:
     - description: 'Create disk timeline (files/folders and deleted ones) with sleuthkit'
       command: 'fls -{F,D}rph{u,d} -m ''/''  disk.raw | tee fls_{files,folders}_{allocated,deleted}.body'
@@ -11,16 +11,28 @@ timelines:
       command: 'log2timeline --parsers mft <mft.plaso> disk.raw && psort -o l2tcsv -w plaso_mft.csv mft.plaso'
     - description: 'compute md5 of all files'
       command: 'find . -type f -exec md5sum {} \; > ../md5_all_files.csv && sed -i ''s/\s\+/,/'' forensic/md5_all_files.csv'
-    - description: 'thin disk timeline based on NSRL db for the operating system investigated'
-      command: 'py_facs preprocessing thin_timeline_nsrl --body <tsk_files_w_md5.body> --nsrl <nsrl_os.csv> -o outdir'
+    - description: 'Prepare known goods (OS and Office Suite related files) from NSRL db'
+      command: 'py_facs preprocessing --os <operating system> -n <NSRL iso mount point> -d <outdir>'
+    - description: 'thin disk timeline based on a NSRL db'
+      command: 'py_facs preprocessing thin_timeline_nsrl --body <fls_w_md5.body> --nsrl <nsrl_os.csv> -d <outdir>'
     - description: 'Create activity timeline of a host with plaso'
       command: 'WIP'
 
+known_bads:
+  tools:
+    - 'yara'
+    - 'clamscan'
+
+  cheat_sheet:
+    - description: 'Check files against clamav db'
+      command: 'fresclam --show-progress && clamscan -r --alert-macros=yes --infected --log=clamav_infected.txt <mount_point>'
+    - description: 'Check disk against a set of yara rules'
+      command: 'yara -r ruleset.yara <mount point>'
+        
 windows:
   tools:
     - 'libvshadow'
     - 'sleuthkit'
-    - 'plaso-tools'
     - 'https://github.com/poorbillionaire/usn-journal-parser'
     - 'regipy (python module)'
 

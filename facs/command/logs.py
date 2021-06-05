@@ -14,20 +14,8 @@ class LogsCommand(AbstractCommand):
         )
 
         group.add_command(click.Command(
-            name='firewall', help='list fields of interest from firewall logs',
-            callback=self.list_firewall
-        ))
-        group.add_command(click.Command(
-            name='proxy', help='list fields of interest from proxy logs',
-            callback=self.list_proxy
-        ))
-        group.add_command(click.Command(
-            name='mail', help='list fields of interest from mail gateway logs',
-            callback=self.list_mail
-        ))
-        group.add_command(click.Command(
-            name='av_edr', help='list fields of interest from antivirus/edr logs',
-            callback=self.list_antivirus
+            name='fields', help='list fields of interest from firewall logs',
+            callback=self.list_fields
         ))
 
         group.add_command(click.Command(
@@ -36,23 +24,15 @@ class LogsCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
-            name='defaults', help='list default values in some software configuration (teamviewer, vns, ...)',
+            name='defaults', help='list default values in some software configuration (teamviewer, vnc, ...)',
             callback=self.list_defaults
         ))
 
         return group
 
-    def list_firewall(self):
-        self._print_text('From firewall logs', self._data['firewall'])
-
-    def list_proxy(self):
-        self._print_text('From proxy logs', self._data['proxy'])
-
-    def list_mail(self):
-        self._print_text('From mail gateway logs', self._data['mail'])
-
-    def list_antivirus(self):
-        self._print_text('From antivirus/edr logs', self._data['av_edr'])
+    def list_fields(self):
+        for source in self._data['fields']:
+            self._print_text('Fields from {} logs'.format(source['name']), source['fields'])
 
     def list_logs_windows(self):
         paths = []
@@ -61,13 +41,17 @@ class LogsCommand(AbstractCommand):
             paths.append(line)
         self._print_text('On windows, main artifacts paths', paths)
 
-        for source in self._data['windows']['evtx']:
-            events = []
-            if source['channel'].lower() == 'security':
-                events = ['EIDs: {:30} desc: {:65} audit to enable: {}'.format(event['eid'], event['description'], event['policy']) for event in source['eids']]
-            else:
-                events = ['EIDs: {:30} desc: {}'.format(event['eid'], event['description']) for event in source['eids']]
-            self._print_text('Events from channel {}'.format(source['channel']), events)
+        source = self._data['windows']['evtx_security']
+        events = ['EIDs: {:30} desc: {:65} audit to enable: {}'.format(event['eid'], event['description'], event['policy']) for event in source]
+        self._print_text('Events from Security channel', events)
+
+        source = self._data['windows']['evtx_system']
+        events = ['EIDs: {:30} desc: {}'.format(event['eid'], event['description']) for event in source]
+        self._print_text('Events from System channel', events)
+
+        source = self._data['windows']['evtx_app_services']
+        events = ['EIDs: {:30} channel: {:80} desc: {}'.format(event['eid'], event['channel'], event['description']) for event in source]
+        self._print_text('Events from channels under Application and Services Logs', events)
 
     def list_defaults(self):
         defaults = []

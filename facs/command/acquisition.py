@@ -9,7 +9,7 @@ class AcquisitionCommand(AbstractCommand):
     def get_commands(self):
         group = click.Group(
             'acquisition',
-            help='cheat sheets related to data acquisition (info, dump, mount)',
+            help='cheat sheets related to data acquisition (physical info, dump, mount)',
             context_settings=dict(terminal_width=120)
         )
 

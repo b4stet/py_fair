@@ -8,7 +8,7 @@ class CarvingCommand(AbstractCommand):
 
     def get_commands(self):
         return click.Command(
-            name='carving', help='cheat sheet to carve files from unallocated data blocks',
+            name='carving', help='cheat sheet to carve files from (un)allocated data blocks',
             callback=self.carve
         )
 

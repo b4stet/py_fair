@@ -14,7 +14,7 @@ class PreprocessingCommand(AbstractCommand):
     def get_commands(self):
         group = click.Group(
             'preprocessing',
-            help='cheat sheets related to artifacts extraction for further analysis (timelines, vss, carving, ...)',
+            help='cheat sheets and scripts of cumbersome/time intensive preparation tasks (timelines, NSRL, vss, registries, av/yara scan ...)',
             context_settings=dict(terminal_width=120)
         )
 
@@ -24,7 +24,7 @@ class PreprocessingCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
-            name='prepare_nsrl', help='extract NSRL good knowns for OS and Office Suite files',
+            name='prepare_nsrl', help='extract NSRL good knowns of OS and Office Suite files',
             callback=self.prepare_nsrl,
             params=[
                 self._get_option_outdir(),
