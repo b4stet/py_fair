@@ -1,0 +1,17 @@
+EulaAccepted
+consent.exe
+psexec
+ntdsutil
+shareenum
+sdelete
+psinfo
+utilman.exe
+sethc.exe
+osk.exe
+narrator.exe
+magnify.exe
+rclone.exe
+procdump
+whoami
+mimikatz
+SeDebugPrivilege

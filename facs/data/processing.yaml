@@ -1,18 +1,30 @@
-# profiling: WIP    
+manual_mining:
+  - description: 'look for known suspicious filenames on disk'
+    note: 'see wordlist_windows_disk.txt'
+  - description: 'look for known suspicious prefetch in the time frame'
+    note: 'see wordlist_windows_execution.txt'
+  - description: 'look for unusual binary types in user profile'
+    note: 'ps1|bat|vbs|dll|exe'
+  - description: 'look for credentials in GPO'
+    note: 'browse sysvol on DC'
 
-- step: 'Files mining'
-  tools:
-    - 'clamav'
-    - 'yara'
+patterns:
+  - tool: 'mimikatz'
+    detection:
+      - '.kirbi files when dumping kerberos tickets'
+      - 'security EID 4703: token rights elevated, SeDebugPrivilege'
+      - 'security EID 4656: handle to object requested, process = powershell, object name = lsass.exe, access mask = 0x143A (standalone) or 0x1410 (from empire)'
+      - 'security EID 4663: object access, process = powershell, access mask = 0x10, object name = lsass.exe'
+      - 'seucrity EID 4624+4634+4672 at the same timestamp when performing lsadump'
+      - 'sysmon EID 1+10: 1 (parent image= cmd.exe), 10 (srcImage != svchost.exe and targetImage=lsass.exe and grantAcess=0x1010)'
+      - 'sysmon EID 11: file created, image=mimikatz'
+  - tool: 'psexec'
+    detection:
+      - 'psexesvc.exe file on target'
+      - 'EulaAccepted registry key in SOFTWARE hive for SysInternals'
+      - 'sysmon EID 3: network connection, image=psexec on the source'
+      - 'sysmon EID 22: DNS query, image=psexec on the source'
+  # - tool: 'bloodhound'
+  #   detection:
 
-  tags:
-    - 'doubt removal'
-    - 'compromise'
-
-  cheat_sheet:
-    - description: 'run simple antivirus scan on all files'
-      note: 'freshclam && clamscan --infected --log=clamav_infected.log -r <mount point>'
-    - description: 'check files against yara rules'
-      note: 'yara -r ruleset.yara <mount point>'
-    # - description: 'mine disk file list for known bads based on name'
-    #   note: 'py_facs processing --files <filelist.txt> --wordlist <wordlist.txt> -o outdir'
+  # profiling: WIP

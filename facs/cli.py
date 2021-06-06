@@ -1,11 +1,11 @@
 import click
-from facs.command.acquisition import AcquisitionCommand
-from facs.command.logs import LogsCommand
 from facs.command.resources import ResourcesCommand
-from facs.command.carving import CarvingCommand
-from facs.command.preprocessing import PreprocessingCommand
 from facs.command.systems import SystemsCommand
 from facs.command.tools import ToolsCommand
+from facs.command.logs import LogsCommand
+from facs.command.acquisition import AcquisitionCommand
+from facs.command.carving import CarvingCommand
+from facs.command.preprocessing import PreprocessingCommand
 from facs.command.processing import ProcessingCommand
 
 cli = click.Group('cli', context_settings=dict(terminal_width=120))

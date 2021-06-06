@@ -14,23 +14,24 @@ class ProcessingCommand(AbstractCommand):
         )
 
         group.add_command(click.Command(
-            name='checklist', help='cheat sheets of forensic steps',
-            callback=self.get_checklist
+            name='misc', help='cheat sheets for other possible steps in the analysis (manual mining, ...)',
+            callback=self.get_cheat_sheet_misc
+        ))
+
+        group.add_command(click.Command(
+            name='tool_patterns', help='cheat sheets of known artifacts left by attacker toolbox (psexec, mimikatz, ...)',
+            callback=self.get_tool_patterns
         ))
 
         return group
 
-    def get_checklist(self):
-        for step in self._data:
-            cheat_sheet = []
+    def get_cheat_sheet_misc(self):
+        manual = []
+        for elt in self._data['manual_mining']:
+            line = '{:80}: {}'.format(elt['description'], elt['note'])
+            manual.append(line)
+        self._print_text('Manual mining', manual)
 
-            tools = step['tools']
-            tools.sort()
-            cheat_sheet.append('- Tools: {}'.format(', '.join(tools)))
-
-            cheat_sheet.append('- Cheat sheet:')
-            for elt in step['cheat_sheet']:
-                line = '{:80}: {}'.format(elt['description'], elt['note'])
-                cheat_sheet.append(line)
-
-            self._print_text(step['step'], cheat_sheet)
+    def get_tool_patterns(self):
+        for pattern in self._data['patterns']:
+            self._print_text('Known patterns for the tool: {}'.format(pattern['tool']), pattern['detection'])

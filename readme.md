@@ -1,6 +1,6 @@
 # py_facs (Forensic Automation and Cheat Sheets)
 
-Some wrappers and cheat sheets around common operations in a digital forensic analysis on a debian based GNU/Linux distribution.  
+Some scripts and cheat sheets around digital forensic analysis on a debian based GNU/Linux distribution.  
 
 Every command and subcommand have a helper.
 If installed with pip3:
@@ -37,11 +37,11 @@ $ pip3 uninstall py_facs
 ```
 
 ## Commands
-- `acquisition`: cheat sheets for operations related to data acquisition (info, dump disk/memory, mount)
-- `carving`: cheat sheets to carve allocated and unallocated blocks, ...
-- `logs`: cheat sheets of interesting fields depending on the source, some log paths, default values, ...
 - `resources`: blogs, tools, various knowledge bases, notable cves, ...
 - `systems`: some notes about operating systems
 - `tools`: cheat sheets for some tools
-- `preprocessing`: cheat sheets and commands to prepare some artifacts
-
+- `logs`: cheat sheets of some log paths, default values, Windows event IDs ...
+- `acquisition`: cheat sheets for operations related to data acquisition (info, dump disk/memory, mount)
+- `carving`: cheat sheets to carve allocated and unallocated blocks, ...
+- `preprocessing`: cheat sheets and scripts to prepare data to be analyzed
+- `processing`: cheat sheets and scripts to forensicate

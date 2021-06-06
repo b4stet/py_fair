@@ -8,6 +8,7 @@ iocs:
   - 'http://malc0de.com/database/'
 
 malware:
+  - 'https://www.crowdstrike.com/cybersecurity-101/malware/'
   - 'https://malpedia.caad.fkie.fraunhofer.de/'
   - 'https://strontic.github.io/xcyclopedia/'
 
@@ -53,6 +54,7 @@ blogs:
   - 'https://www.infosecmatter.com/top-16-active-directory-vulnerabilities/'
   - 'https://zer1t0.gitlab.io/posts/attacking_ad/'
   - 'https://emptydc.com/2020/12/10/privilege-escalation-in-azure-ad/'
+  - 'https://neil-fox.github.io/Mimikatz-usage-&-detection/'
   - 'https://blog.didierstevens.com/2020/11/07/1768-k/'
   - 'https://marcoramilli.com/2020/10/09/how-to-unpack-malware-personal-notes/'
   - 'https://blueteamblog.com'
@@ -60,6 +62,7 @@ blogs:
   - 'https://isc.sans.edu/diaryarchive.html'
   - 'https://digitalf0rensics.wordpress.com'
   - 'https://forensicswiki.xyz/page/Main_Page'
+  - 'https://www.crowdstrike.com/blog/2019-services-report-key-findings-part-2/'
 
 system:
   - 'http://ntoskrnl.org/'
