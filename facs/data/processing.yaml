@@ -1,5 +1,5 @@
 manual_mining:
-  - description: 'look for known suspicious filenames on disk'
+  - description: 'look for known suspicious filenames on disk (LOL, old privesc tricks, attacker toolbox, ...)'
     note: 'see wordlist_windows_disk.txt'
   - description: 'look for known suspicious prefetch in the time frame'
     note: 'see wordlist_windows_execution.txt'

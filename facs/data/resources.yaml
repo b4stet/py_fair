@@ -1,11 +1,12 @@
-executables:
+lol:
   - 'https://wadcoms.github.io/'
   - 'https://lolbas-project.github.io/#'
   - 'https://gtfobins.github.io/'
 
-iocs:
+ioc_ttp:
   - 'https://github.com/eset/malware-ioc'
   - 'http://malc0de.com/database/'
+  - 'https://mitre-attack.github.io/attack-navigator/'
 
 malware:
   - 'https://www.crowdstrike.com/cybersecurity-101/malware/'

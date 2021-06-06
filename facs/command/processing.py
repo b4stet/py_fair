@@ -34,4 +34,4 @@ class ProcessingCommand(AbstractCommand):
 
     def get_tool_patterns(self):
         for pattern in self._data['patterns']:
-            self._print_text('Known patterns for the tool: {}'.format(pattern['tool']), pattern['detection'])
+            self._print_text('Known/Possible patterns for the tool: {}'.format(pattern['tool']), pattern['detection'])
