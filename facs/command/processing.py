@@ -41,7 +41,7 @@ class ProcessingCommand(AbstractCommand):
         patterns = []
         for elt in self._data['patterns']:
             for pattern in elt['detection']:
-                line = 'tool: {:20} pattern: {}'.format(elt['tool'], pattern)
+                line = 'tool: {:40} pattern: {}'.format(elt['tool'], pattern)
                 patterns.append(line)
         self._print_text('Known/Possible patterns of adversaries tools', patterns)
 

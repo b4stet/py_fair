@@ -1,6 +1,7 @@
 # py_facs (Forensic Automation and Cheat Sheets)
 
-Some scripts and cheat sheets around digital forensic analysis on a debian based GNU/Linux distribution.  
+Some scripts and cheat sheets around digital forensic analysis.
+Tested on a debian based GNU/Linux distribution.  
 
 Every command and subcommand have a helper.
 If installed with pip3:

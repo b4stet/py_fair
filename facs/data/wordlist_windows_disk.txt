@@ -21,3 +21,5 @@ rubeus.exe
 shost.exe
 svhost.exe
 svch0st.exe
+launcher.bat
+launcher.vbs

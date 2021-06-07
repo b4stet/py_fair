@@ -25,6 +25,7 @@ patterns:
       - 'security EID 4624+4634 in the same minute (using impacket)'
       - 'psexesvc.exe or random exe name in systemroot path of the target (depends if framework used)'
       - 'security EID 7045: service installed, psexesvc, or random exe if framework used'
+      - 'psexesvc or random exe name spawns rundll32.exe them multiple cmd.exe (meterpreter to install reverse shell)'
       - 'EulaAccepted registry key in SOFTWARE hive for SysInternals'
       - 'sysmon EID 3: network connection, image=psexec on the source (using mimikatz)'
       - 'sysmon EID 22: DNS query, image=psexec on the source (using mimikatz)'
@@ -45,7 +46,7 @@ patterns:
 
   - tool: 'powershell'
     detection:
-      - 'dedicated EIDs'
+      - 'dedicated EIDs, 4103/4104/600 might capture part of scripts'
       - 'downgrade to Powershell v2 to avoid script block logging'
 
   - tool: 'bloodhound'
@@ -60,24 +61,23 @@ patterns:
   - tool: 'empire'
     detection:
       - 'lateral movement: psexec, dcomexec, smbexec'
+      - 'powershell artifacts'
 
-  - tool: 'metasploit'
+  - tool: 'metasploit/powersploit'
     detection:
       - 'lateral movement: psexec, winrm, wmiexec'
-
-  - tool: 'impacket'
-    detection:
-      - 'security EID 4624+4634+4672 at the same timestamp when dumping secrets'
-      - 'system EID 7040: remote registry started'
-
-  - tool: 'powersploit'
-    detection:
       - 'sysmon EID 3: network connection, image=powershell during recon'
       - 'sysmon EID 22: DNS query, image=powershell during recon'
       - 'runddl32.exe spawned as a child of legit exe (eg. notepad)'
       - 'scheduled task creation by the user for persistent reverse shell'
       - 'sysmon EID 11: file created, image=powershell, target= random ps1 in AppData of the user'
       - 'powershell spawns schtasks.exe and csc.exe'
+      - 'reverse connection established by rundll32.exe'
+
+  - tool: 'impacket'
+    detection:
+      - 'security EID 4624+4634+4672 at the same timestamp when dumping secrets'
+      - 'system EID 7040: remote registry started'
 
   - tool: 'rubeus'
     detection:
@@ -98,5 +98,9 @@ defaults:
     value: '5800/5900'
   - description: 'default port of meterpreter reverse shell'
     value: '4444'
+  - description: 'empire default stager name'
+    value: 'launcher.bat, launcher.vbs'
+  - description: 'empire default behavior of C2 beacons'
+    value: 'GET /login/process.php + GET /admin/get.php + GET /news.php'
 
 # profiling: WIP
