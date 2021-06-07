@@ -4,27 +4,99 @@ manual_mining:
   - description: 'look for known suspicious prefetch in the time frame'
     note: 'see wordlist_windows_execution.txt'
   - description: 'look for unusual binary types in user profile'
-    note: 'ps1|bat|vbs|dll|exe'
+    note: 'ps1|bat|vbs|dll|exe|msi'
   - description: 'look for credentials in GPO'
     note: 'browse sysvol on DC'
 
 patterns:
   - tool: 'mimikatz'
     detection:
+      - 'built into several toolbox, like cobalt strike''s beacon, empire, and meterpreter'
       - '.kirbi files when dumping kerberos tickets'
       - 'security EID 4703: token rights elevated, SeDebugPrivilege'
       - 'security EID 4656: handle to object requested, process = powershell, object name = lsass.exe, access mask = 0x143A (standalone) or 0x1410 (from empire)'
       - 'security EID 4663: object access, process = powershell, access mask = 0x10, object name = lsass.exe'
-      - 'seucrity EID 4624+4634+4672 at the same timestamp when performing lsadump'
+      - 'security EID 4624+4634+4672 at the same timestamp when performing lsadump'
       - 'sysmon EID 1+10: 1 (parent image= cmd.exe), 10 (srcImage != svchost.exe and targetImage=lsass.exe and grantAcess=0x1010)'
       - 'sysmon EID 11: file created, image=mimikatz'
+
   - tool: 'psexec'
     detection:
-      - 'psexesvc.exe file on target'
+      - 'security EID 4624+4634 in the same minute (using impacket)'
+      - 'psexesvc.exe or random exe name in systemroot path of the target (depends if framework used)'
+      - 'security EID 7045: service installed, psexesvc, or random exe if framework used'
       - 'EulaAccepted registry key in SOFTWARE hive for SysInternals'
-      - 'sysmon EID 3: network connection, image=psexec on the source'
-      - 'sysmon EID 22: DNS query, image=psexec on the source'
-  # - tool: 'bloodhound'
-  #   detection:
+      - 'sysmon EID 3: network connection, image=psexec on the source (using mimikatz)'
+      - 'sysmon EID 22: DNS query, image=psexec on the source (using mimikatz)'
+      - 'security EID 4697'
 
-  # profiling: WIP
+  - tool: 'smbexec'
+    detection:
+      - 'security EID 7045: service name BTOBTO (using impacket) with a bat file executed'
+
+  - tool: 'wmiexec'
+    detection:
+      - 'svchost.exe spawns a chain of process wmiprvse.exe > cmd.exe > conhost.exe'
+
+  - tool: 'dcomexec'
+    detection:
+      - 'security EID 4624+4634 in the same minute (using impacket)'
+      - 'mmc.exe spawns cmd.exe'
+
+  - tool: 'powershell'
+    detection:
+      - 'dedicated EIDs'
+      - 'downgrade to Powershell v2 to avoid script block logging'
+
+  - tool: 'bloodhound'
+    detection:
+      - 'high volume of LDAP traffic to the AD (port 389) from a same source'
+      - 'security EID 4662 on honey accounts/groups to detect enumeration'
+
+  - tool: 'cobalt strike'
+    detection:
+      - 'lateral movement: psexec, psexec, wmiexec, winrm'
+
+  - tool: 'empire'
+    detection:
+      - 'lateral movement: psexec, dcomexec, smbexec'
+
+  - tool: 'metasploit'
+    detection:
+      - 'lateral movement: psexec, winrm, wmiexec'
+
+  - tool: 'impacket'
+    detection:
+      - 'security EID 4624+4634+4672 at the same timestamp when dumping secrets'
+      - 'system EID 7040: remote registry started'
+
+  - tool: 'powersploit'
+    detection:
+      - 'sysmon EID 3: network connection, image=powershell during recon'
+      - 'sysmon EID 22: DNS query, image=powershell during recon'
+      - 'runddl32.exe spawned as a child of legit exe (eg. notepad)'
+      - 'scheduled task creation by the user for persistent reverse shell'
+      - 'sysmon EID 11: file created, image=powershell, target= random ps1 in AppData of the user'
+      - 'powershell spawns schtasks.exe and csc.exe'
+
+  - tool: 'rubeus'
+    detection:
+      - 'kerberoasting: connections to DC port 88 (KDC) with process != lsass.exe'
+
+  - tool: 'lolbins'
+    detection:
+      - 'most common observed from https://blog.talosintelligence.com/2019/11/hunting-for-lolbins.html (in execution wordlist)'
+
+defaults:
+  - description: 'default RDP port'
+    value: '3389'
+  - description: 'default Anydesk port'
+    value: '6568'
+  - description: 'default TeamViewer port'
+    value: '5938'
+  - description: 'default VNC port'
+    value: '5800/5900'
+  - description: 'default port of meterpreter reverse shell'
+    value: '4444'
+
+# profiling: WIP

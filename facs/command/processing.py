@@ -23,6 +23,11 @@ class ProcessingCommand(AbstractCommand):
             callback=self.get_tool_patterns
         ))
 
+        group.add_command(click.Command(
+            name='list_defaults', help='list of default values in tool configuration (RAT, reverse shells, ...)',
+            callback=self.list_defaults
+        ))
+
         return group
 
     def get_cheat_sheet_misc(self):
@@ -33,5 +38,16 @@ class ProcessingCommand(AbstractCommand):
         self._print_text('Manual mining', manual)
 
     def get_tool_patterns(self):
-        for pattern in self._data['patterns']:
-            self._print_text('Known/Possible patterns for the tool: {}'.format(pattern['tool']), pattern['detection'])
+        patterns = []
+        for elt in self._data['patterns']:
+            for pattern in elt['detection']:
+                line = 'tool: {:20} pattern: {}'.format(elt['tool'], pattern)
+                patterns.append(line)
+        self._print_text('Known/Possible patterns of adversaries tools', patterns)
+
+    def list_defaults(self):
+        defaults = []
+        for elt in self._data['defaults']:
+            line = '{:60}: {}'.format(elt['description'], elt['value'])
+            defaults.append(line)
+        self._print_text('Some default values of software', defaults)

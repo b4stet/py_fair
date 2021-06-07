@@ -4,7 +4,7 @@ from facs.command.abstract import AbstractCommand
 
 class ResourcesCommand(AbstractCommand):
     __KBS = [
-        'lol',
+        'lolbin',
         'malware',
         'ioc_ttp',
         'evtx',

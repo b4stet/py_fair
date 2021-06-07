@@ -13,4 +13,11 @@ magnify.exe
 rclone.exe
 procdump
 mimikatz
+pipikatz
 .kirbi
+responder.py
+dumphash.py
+rubeus.exe
+shost.exe
+svhost.exe
+svch0st.exe

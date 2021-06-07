@@ -208,13 +208,4 @@ windows:
       description: 'pop-up from an Office application'
     # - channel: 'sysmon WIP'
 
-defaults:
-  - description: 'default RDP port'
-    value: '3389'
-  - description: 'default Anydesk port'
-    value: '6568'
-  - description: 'default TeamViewer port'
-    value: '5938'
-  - description: 'default VNC port'
-    value: '5800/5900'
 

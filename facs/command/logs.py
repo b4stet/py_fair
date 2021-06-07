@@ -23,11 +23,6 @@ class LogsCommand(AbstractCommand):
             callback=self.list_logs_windows
         ))
 
-        group.add_command(click.Command(
-            name='defaults', help='list default values in some software configuration (teamviewer, vnc, ...)',
-            callback=self.list_defaults
-        ))
-
         return group
 
     def list_fields(self):
@@ -52,10 +47,3 @@ class LogsCommand(AbstractCommand):
         source = self._data['windows']['evtx_app_services']
         events = ['EIDs: {:30} channel: {:80} desc: {}'.format(event['eid'], event['channel'], event['description']) for event in source]
         self._print_text('Events from channels under Application and Services Logs', events)
-
-    def list_defaults(self):
-        defaults = []
-        for elt in self._data['defaults']:
-            line = '{:40}: {}'.format(elt['description'], elt['value'])
-            defaults.append(line)
-        self._print_text('Some default values of software', defaults)
