@@ -34,6 +34,11 @@ class ToolsCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
+            name='yara', help='notes about yara',
+            callback=self.get_notes_yara
+        ))
+
+        group.add_command(click.Command(
             name='nsrl', help='cheat sheet to extract nsrl datasets',
             callback=self.get_notes_nsrl
         ))
@@ -73,6 +78,14 @@ class ToolsCommand(AbstractCommand):
         cheat_sheet = []
         cheat_sheet.append('reference: {}'.format(self._data['tshark']['ref']))
         for elt in self._data['tshark']['cheat_sheet']:
+            line = '{:80}: {}'.format(elt['description'], elt['note'])
+            cheat_sheet.append(line)
+        self._print_text('Cheat Sheet', cheat_sheet)
+
+    def get_notes_yara(self):
+        cheat_sheet = []
+        cheat_sheet.append('reference: {}'.format(self._data['yara']['ref']))
+        for elt in self._data['yara']['cheat_sheet']:
             line = '{:80}: {}'.format(elt['description'], elt['note'])
             cheat_sheet.append(line)
         self._print_text('Cheat Sheet', cheat_sheet)

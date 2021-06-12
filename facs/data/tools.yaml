@@ -93,7 +93,15 @@ tshark:
     - description: 'list HTTP requests in a capture'
       note: 'tshark -r capture.pcap -Y "http.request" -T fields -e "ip.src" -e "ip.dst" -e "http.host" -e "http.server" -e "http.request.full_uri" -e "http.referer" -e "http.response.code" -e "http.content_type" -e "http.location" -E header=y -E separator=, -E quote=d'
 
-# yara: WIP
+yara:
+  ref: 'https://github.com/Yara-Rules/rules'
+  cheat_sheet:
+    - description: 'other sources of rules'
+      note: 'https://github.com/InQuest/awesome-yara'
+    - description: 'assemble a ruleset'
+      note: 'create a ruleset.yar file with series of include (MALW, RANSOM, RAT, TOOLKIT from the repo)'
+    - description: 'run yara against a mounted disk'
+      note: 'yara -r ruleset.yara <mount point>'
 
 nsrl:
   ref: 'https://www.nist.gov/itl/ssd/software-quality-group/national-software-reference-library-nsrl/nsrl-download/current-rds (updated every 3 months, known goods+bads)'

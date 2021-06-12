@@ -14,6 +14,10 @@ malware:
   - 'https://www.crowdstrike.com/cybersecurity-101/malware/'
   - 'https://malpedia.caad.fkie.fraunhofer.de/'
   - 'https://strontic.github.io/xcyclopedia/'
+  - 'https://thezoo.morirt.com (!! to use with caution !!)'
+  - 'https://github.com/Yara-Rules/rules'
+  - 'https://github.com/InQuest/awesome-yara'
+  - 'https://github.com/mikesxrs/Open-Source-YARA-rules'
 
 evtx:
   - 'http://www.eventid.net'
