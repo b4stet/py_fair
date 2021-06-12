@@ -4,14 +4,14 @@ manual_mining:
   - description: 'look for known suspicious prefetch in the time frame'
     note: 'see wordlist_windows_execution.txt'
   - description: 'look for unusual binary types in user profile'
-    note: 'ps1|bat|vbs|dll|exe|msi'
+    note: 'ps1|bat|vba|vbs|dll|exe|msi'
   - description: 'look for credentials in GPO'
     note: 'browse sysvol on DC'
 
 patterns:
   - tool: 'mimikatz'
     detection:
-      - 'built into several toolbox, like cobalt strike''s beacon, empire, and meterpreter'
+      - 'built into several toolbox, like cobalt strike''s beacon, empire, lazagne, and meterpreter'
       - '.kirbi files when dumping kerberos tickets'
       - 'security EID 4703: token rights elevated, SeDebugPrivilege'
       - 'security EID 4656: handle to object requested, process = powershell, object name = lsass.exe, access mask = 0x143A (standalone) or 0x1410 (from empire)'
@@ -48,6 +48,7 @@ patterns:
     detection:
       - 'dedicated EIDs, 4103/4104/600 might capture part of scripts'
       - 'downgrade to Powershell v2 to avoid script block logging'
+      - 'ideas in https://github.com/SigmaHQ/sigma/tree/master/rules/windows/powershell'
 
   - tool: 'bloodhound'
     detection:
@@ -56,12 +57,17 @@ patterns:
 
   - tool: 'cobalt strike'
     detection:
-      - 'lateral movement: psexec, psexec, wmiexec, winrm'
+      - 'lateral movement: psexec, smbexec, wmiexec, winrm'
+      - 'see https://www.sekoia.io/en/hunting-and-detecting-cobalt-strike/'
+      - 'see powerhsell artifacts'
+      - 'DNS beaconing: DNS queries contains cdn for A request + api for for TXT request + www6 for AAAA request'
+      - 'DNS/HTTP beaconing: if configured by default, around 200 req per minute'
+      - 'runddl32.exe spawned without command argument and established a connection'
 
   - tool: 'empire'
     detection:
       - 'lateral movement: psexec, dcomexec, smbexec'
-      - 'powershell artifacts'
+      - 'see powershell artifacts'
 
   - tool: 'metasploit/powersploit'
     detection:
@@ -77,15 +83,21 @@ patterns:
   - tool: 'impacket'
     detection:
       - 'security EID 4624+4634+4672 at the same timestamp when dumping secrets'
+      - 'kerberoasting: connections to DC port 88 (KDC) with process != lsass.exe'
       - 'system EID 7040: remote registry started'
 
   - tool: 'rubeus'
     detection:
       - 'kerberoasting: connections to DC port 88 (KDC) with process != lsass.exe'
+      - 'files created .kirbi, .asreproast, .kerberoast'
+      - 'similar to mimikatz'
 
   - tool: 'lolbins'
     detection:
-      - 'most common observed from https://blog.talosintelligence.com/2019/11/hunting-for-lolbins.html (in execution wordlist)'
+      - 'most common observed from https://blog.talosintelligence.com/2019/11/hunting-for-lolbins.html'
+      - 'other from https://infosecwriteups.com/common-tools-techniques-used-by-threat-actors-and-malware-part-i-deb05b664879'
+      - 'included in execution wordlist'
+
 
 defaults:
   - description: 'default RDP port'

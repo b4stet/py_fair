@@ -1,4 +1,3 @@
-ntdsutil.exe
 pstools
 psexec
 psexesvc
@@ -11,10 +10,12 @@ osk.exe
 narrator.exe
 magnify.exe
 rclone.exe
-procdump
 mimikatz
 pipikatz
+lazagne
 .kirbi
+.asreproast
+.kerberoast
 responder.py
 dumphash.py
 rubeus.exe

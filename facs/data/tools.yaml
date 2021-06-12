@@ -35,21 +35,34 @@ sleuthkit:
       note: 'blkls -o <partition sector offset> disk.raw > unallocated.dat'
     - description: 'carve slack space'
       note: 'blkls -o <partition sector offset> -s disk.raw > slack.dat'
-  outputs:
     - description: 'fls output, body file format'
       note: 'MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime'
-    - description: 'fls mode_as_string meaning'
+    - description: 'fls output, mode_as_string meaning'
       note: 'X/Y where X comes from file name layer, and Y from the metadata layer'
-    - description: 'fls mode_as_string for allocated file'
+    - description: 'fls output, mode_as_string for allocated file'
       note: 'X = Y'
-    - description: 'fls mode_as_string markers'
+    - description: 'fls output, mode_as_string markers'
       note: 'r=regular file, d=directory, l=symbolic link, -=unknown, V=virtual inode created by tsk (eg. orphan file)'
-    - description: 'fls mode_as_string tag orphan file'
+    - description: 'fls output, mode_as_string tag orphan file'
       note: 'unallocated meta data, no corresponding file name, can only be accessed using metadata layer'
-    - description: 'fls mode_as_string tag realloc'
+    - description: 'fls outpout, mode_as_string tag realloc'
       note: 'metadata allocated but not file name layer. either file deleted (inode points to a new file), or renamed (inode points to the correct file name)'
-    - description: 'fls mode_as_string tag *'
+    - description: 'fls output, mode_as_string tag *'
       note: 'indicates an unallocated or deleted entry'
+
+plaso:
+  ref: 'https://plaso.readthedocs.io/en/latest/'
+  cheat_sheet:
+    - description: 'docker preparation, as it conflicts with ewf-tools'
+      note: 'mkdir -p docker_plaso_tools && cd docker_plaso_tools'
+    - description: 'docker preparation, as it conflicts with ewf-tools'
+      note: 'curl ''https://raw.githubusercontent.com/log2timeline/plaso/main/config/docker/Dockerfile'' -o Dockerfile'
+    - description: 'docker preparation, as it conflicts with ewf-tools'
+      note: 'curl  ''https://raw.githubusercontent.com/log2timeline/plaso/main/config/docker/plaso-switch.sh'' -o plaso-switch.sh'
+    - description: 'docker preparation, as it conflicts with ewf-tools'
+      note: 'docker build -t plaso-tools .'
+    - description: 'base syntax to use the docker image'
+      note: 'docker run -it --rm -u $(id -u $USER):$(id -g $USER) -v <folder>:/data plaso-tools [log2timeline|psort|pinfo] <options> /data/<dst_file> /data/<src_file>'
 
 volatility2:
   ref: 'https://github.com/volatilityfoundation/volatility'
@@ -65,8 +78,6 @@ volatility2:
       note: 'plugin filescan, then grep on the filename'
     - description: 'dump file from memory'
       note: 'plugin dumpfile -Q 0x<physical offset> -S summary.txt -D outdir -u -n'
-    - description: 'WIP'
-      note: 'WIP'
 
 tshark:
   ref: 'https://www.wireshark.org/docs/dfref/'

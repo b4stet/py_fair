@@ -16,7 +16,7 @@ timelines:
     - description: 'thin disk timeline based on a NSRL db'
       command: 'py_facs preprocessing thin_timeline_nsrl --body <fls_w_md5.body> --nsrl <nsrl_os.csv> -d <outdir>'
     - description: 'Create activity timeline of a host with plaso'
-      command: 'WIP'
+      command: 'log2timeline + psort WIP'
 
 known_bads:
   tools:
@@ -43,8 +43,8 @@ windows:
       command: 'vshadowmount -o <partition offset> disk.raw /tmp/fuse'
     - description: 'mount VSC'
       command: 'mount -o ro,loop,show_sys_files,streams_interface=windows /tmp/fuse/vssX <mount_point>'
-    - description: 'extract $Extend\$UsnJournal:$J with plaso'
-      command: 'WIP'
+    - description: 'parse $Extend\$UsnJournal:$J with plaso'
+      command: 'usnjrnal parser WIP'
     - description: 'extract $Extend\$UsnJournal:$J (determine inode from fls output)'
       command: 'icat -h -o <partition sector offset> disk.raw <inode> > usnjrnl.dat'
     - description: 'parse $Extend\$UsnJournal:$J'

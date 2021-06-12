@@ -24,6 +24,11 @@ class ToolsCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
+            name='plaso', help='notes about plaso',
+            callback=self.get_notes_plaso
+        ))
+
+        group.add_command(click.Command(
             name='tshark', help='notes about tshark',
             callback=self.get_notes_tshark
         ))
@@ -48,11 +53,13 @@ class ToolsCommand(AbstractCommand):
             cheat_sheet.append(line)
         self._print_text('Cheat Sheet', cheat_sheet)
 
-        outputs = []
-        for elt in self._data['sleuthkit']['outputs']:
+    def get_notes_plaso(self):
+        cheat_sheet = []
+        cheat_sheet.append('reference: {}'.format(self._data['plaso']['ref']))
+        for elt in self._data['plaso']['cheat_sheet']:
             line = '{:80}: {}'.format(elt['description'], elt['note'])
-            outputs.append(line)
-        self._print_text('Outputs interpretation', outputs)
+            cheat_sheet.append(line)
+        self._print_text('Cheat Sheet', cheat_sheet)
 
     def get_notes_vol2(self):
         cheat_sheet = []

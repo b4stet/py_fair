@@ -6,6 +6,7 @@ class ResourcesCommand(AbstractCommand):
     __KBS = [
         'lolbin',
         'malware',
+        'files',
         'ioc_ttp',
         'evtx',
         'artifacts',
