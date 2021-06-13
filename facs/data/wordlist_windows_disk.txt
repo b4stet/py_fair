@@ -19,7 +19,6 @@ lazagne
 responder.py
 dumphash.py
 rubeus.exe
-shost.exe
 svhost.exe
 svch0st.exe
 launcher.bat

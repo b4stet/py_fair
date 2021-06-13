@@ -1,7 +1,7 @@
 manual_mining:
   - description: 'look for known suspicious filenames on disk (LOL, old privesc tricks, attacker toolbox, ...)'
     note: 'see wordlist_windows_disk.txt'
-  - description: 'look for known suspicious prefetch in the time frame'
+  - description: 'look for known suspicious executions in the time frame'
     note: 'see wordlist_windows_execution.txt'
   - description: 'look for unusual binary types in user profile'
     note: 'ps1|bat|vba|vbs|dll|exe|msi'
@@ -115,4 +115,15 @@ defaults:
   - description: 'empire default behavior of C2 beacons'
     value: 'GET /login/process.php + GET /admin/get.php + GET /news.php'
 
-# profiling: WIP
+win_profiling:
+  - description: 'collect start/end of event logs for main channels'
+  - description: 'look for defence evasion: system backdated'
+  - description: 'look for defence evasion: event logs cleared/stopped'
+  - description: 'verify the host was active for the time frame: boot/shutdown'
+  - description: 'verify the host is the correct one: hostname, last IP, local users'
+  - description: 'profile the local users: login history, group membership, SID'
+  - description: 'profile the system: network history'
+  - description: 'profile the system: USB history'
+  - description: 'profile the system: installed/uninstalled software'
+  - description: 'profile the system: startup process and services'
+  - description: 'profile the system: analyze the srum (System Resource Usage Monitor)'

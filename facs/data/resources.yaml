@@ -9,6 +9,7 @@ ioc_ttp:
   - 'https://mitre-attack.github.io/attack-navigator/'
   - 'https://neil-fox.github.io/'
   - 'https://github.com/SigmaHQ/sigma'
+  - 'https://labs.inquest.net/'
 
 malware:
   - 'https://www.crowdstrike.com/cybersecurity-101/malware/'

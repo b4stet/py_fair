@@ -24,6 +24,16 @@ class PreprocessingCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
+            name='windows', help='cheat sheet related to windows specific artifacts (shadow copies, usnjrnl, ...)',
+            callback=self.list_artifacts_windows
+        ))
+
+        group.add_command(click.Command(
+            name='known_bads', help='cheat_sheet to check against known bads',
+            callback=self.list_known_bads_checks
+        ))
+
+        group.add_command(click.Command(
             name='prepare_nsrl', help='extract NSRL good knowns of OS and Office Suite files',
             callback=self.prepare_nsrl,
             params=[
@@ -43,11 +53,6 @@ class PreprocessingCommand(AbstractCommand):
             ]
         ))
 
-        group.add_command(click.Command(
-            name='windows', help='cheat sheet related to windows specific artifacts (shadow copies, usnjrnl, ...)',
-            callback=self.list_artifacts_windows
-        ))
-
         return group
 
     def list_timelines_creation(self):
@@ -57,6 +62,28 @@ class PreprocessingCommand(AbstractCommand):
 
         cheat_sheet = []
         for elt in self._data['timelines']['cheat_sheet']:
+            line = '{:80}: {}'.format(elt['description'], elt['command'])
+            cheat_sheet.append(line)
+        self._print_text('Cheat Sheet', cheat_sheet)
+
+    def list_artifacts_windows(self):
+        tools = self._data['windows']['tools']
+        tools.sort()
+        self._print_text('Tools', tools)
+
+        cheat_sheet = []
+        for elt in self._data['windows']['cheat_sheet']:
+            line = '{:80}: {}'.format(elt['description'], elt['command'])
+            cheat_sheet.append(line)
+        self._print_text('Cheat Sheet', cheat_sheet)
+
+    def list_known_bads_checks(self):
+        tools = self._data['known_bads']['tools']
+        tools.sort()
+        self._print_text('Tools', tools)
+
+        cheat_sheet = []
+        for elt in self._data['known_bads']['cheat_sheet']:
             line = '{:80}: {}'.format(elt['description'], elt['command'])
             cheat_sheet.append(line)
         self._print_text('Cheat Sheet', cheat_sheet)
@@ -186,14 +213,3 @@ class PreprocessingCommand(AbstractCommand):
             f.write('\n'.join(body_thinned))
         print('done')
         print(' | Wrote result in {}'.format(out_body_thinned))
-
-    def list_artifacts_windows(self):
-        tools = self._data['windows']['tools']
-        tools.sort()
-        self._print_text('Tools', tools)
-
-        cheat_sheet = []
-        for elt in self._data['windows']['cheat_sheet']:
-            line = '{:80}: {}'.format(elt['description'], elt['command'])
-            cheat_sheet.append(line)
-        self._print_text('Cheat Sheet', cheat_sheet)

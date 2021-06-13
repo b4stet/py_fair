@@ -8,15 +8,13 @@ timelines:
     - description: 'Convert body file to csv'
       command: 'mactime -d -y -b fls_files.body | tee mactime_timeline_files.csv'
     - description: 'Create disk timeline (files/folders and deleted ones) with log2timeline'
-      command: 'log2timeline --parsers mft <mft.plaso> disk.raw && psort -o l2tcsv -w plaso_mft.csv mft.plaso'
+      command: 'log2timeline --parsers mft --storage-file mft.plaso disk.raw && psort -o l2tcsv -w plaso_mft.csv mft.plaso'
     - description: 'compute md5 of all files'
       command: 'find . -type f -exec md5sum {} \; > ../md5_all_files.csv && sed -i ''s/\s\+/,/'' forensic/md5_all_files.csv'
     - description: 'Prepare known goods (OS and Office Suite related files) from NSRL db'
       command: 'py_facs preprocessing --os <operating system> -n <NSRL iso mount point> -d <outdir>'
     - description: 'thin disk timeline based on a NSRL db'
       command: 'py_facs preprocessing thin_timeline_nsrl --body <fls_w_md5.body> --nsrl <nsrl_os.csv> -d <outdir>'
-    - description: 'Create activity timeline of a host with plaso'
-      command: 'log2timeline + psort WIP'
 
 known_bads:
   tools:
@@ -28,6 +26,8 @@ known_bads:
       command: 'fresclam --show-progress && clamscan -r --alert-macros=yes --infected --log=clamav_infected.txt <mount_point>'
     - description: 'Check disk against a set of yara rules'
       command: 'yara -r ruleset.yara <mount point>'
+    - description: 'databases to check hashes against'
+      command: 'virustotal, nsrl, any.run, hybrid-analysis, tria.ge, labs.inquest.net'
         
 windows:
   tools:
@@ -35,6 +35,7 @@ windows:
     - 'sleuthkit'
     - 'https://github.com/poorbillionaire/usn-journal-parser'
     - 'regipy (python module)'
+    - 'plaso-tools'
 
   cheat_sheet:
     - description: 'identify VSC (Volume Shadow Copy)'
@@ -53,7 +54,9 @@ windows:
       command: 'registry-transaction-logs <hive> -p <hive>.LOG1 -s <hive>.LOG2 -o <hive>_CLEAN'
     - description: 'dump registries light (SOFTWARE, SYSTEM, SAM, NTUSER.DAT, USRCLASS.DAT)'
       command: 'registry-plugins-run -o <hive>.json <clean hive>'
-    - description: 'dump registries full (SOFTWARE, SYSTEM, SAM, NTUSER.DAT, USRCLASS.DAT, take long times)'
+    - description: 'dump registries full (same hives but time intensive)'
       command: 'registry-dump -o <hive>.json <clean hive>'
+    - description: 'Create windows events timeline of a host with plaso'
+      command: 'log2timeline --parsers evtx --storage-file evtx.plaso disk.raw && psort -o json_line -w plaso_evtx.csv evtx.plaso'
 
   

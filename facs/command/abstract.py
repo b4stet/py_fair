@@ -96,3 +96,10 @@ class AbstractCommand():
             default='windows',
             type=click.Choice(self.SUPPORTED_OS)
         )
+
+    def _get_option_evtx(self):
+        return click.Option(
+            ['--evtx', '-e', 'evtx'],
+            help='path of evtx, as output by plaso in json_line format',
+            required=True,
+        )

@@ -59,10 +59,14 @@ plaso:
       note: 'curl ''https://raw.githubusercontent.com/log2timeline/plaso/main/config/docker/Dockerfile'' -o Dockerfile'
     - description: 'docker preparation, as it conflicts with ewf-tools'
       note: 'curl  ''https://raw.githubusercontent.com/log2timeline/plaso/main/config/docker/plaso-switch.sh'' -o plaso-switch.sh'
-    - description: 'docker preparation, as it conflicts with ewf-tools'
+    - description: 'docker preparation/update, as it conflicts with ewf-tools'
       note: 'docker build -t plaso-tools .'
     - description: 'base syntax to use the docker image'
-      note: 'docker run -it --rm -u $(id -u $USER):$(id -g $USER) -v <folder>:/data plaso-tools [log2timeline|psort|pinfo] <options> /data/<dst_file> /data/<src_file>'
+      note: 'docker run -it --rm -u $(id -u $USER):$(id -g $USER) -v <artifacts folder>:/data_src:ro -v <result folder>:/data_dst plaso-tools'
+    - description: 'base options to use for log2timeline/psort in docker'
+      note: '--status-view linear --logfile /data_dst/{l2t,psort}.log.gz'
+    - description: 'psort output format to use'
+      note: 'l2tcsv or json_line'
 
 volatility2:
   ref: 'https://github.com/volatilityfoundation/volatility'
@@ -114,9 +118,13 @@ nsrl:
       note: 'cat nsrl_sha1.txt | grep "legacy" | cut -d, -f1 | tr -d ''"'' | xargs -I {} echo "{} legacy.iso" | sha1sum --check'
     - description: 'mount the iso'
       note: 'mkdir legacy && sudo mount legacy.iso legacy/'
+    - description: 'extract os and office related files'
+      note: 'py_facs preprocessing prepare_nsrl --help'
 
 misc:
   - description: 'convert base 16 to base 10'
     note: 'echo "ibase=16;DEADBEEF" | bc'
   - description: 'compare integrity of files with a witness file'
-    command: 'sha1sum -c hash.txt --ignore-missing'      
+    note: 'sha1sum -c hash.txt --ignore-missing'      
+  - description: 'change the entrypoint to enter in a docker container'
+    note: 'docker run -it --rm --entrypoint bash <image>'
