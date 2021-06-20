@@ -2,4 +2,6 @@ click
 PyYAML
 regipy
 zipfile
+datetime
+dateutil
 setuptools

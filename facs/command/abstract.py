@@ -26,7 +26,6 @@ class AbstractCommand():
     ]
 
     def __init__(self, data):
-
         file_path = os.path.dirname(os.path.dirname(__file__)) + '/data/' + data
         with open(file_path, mode='r', encoding='utf-8') as f:
             self._data = yaml.safe_load(f)
@@ -34,6 +33,19 @@ class AbstractCommand():
     @abstractmethod
     def get_commands(self):
         raise NotImplementedError('Method get_commands must be implemented on class {}'.format(type(self)))
+
+    def _write_formatted(self, outfile, format: str, data: list):
+        if len(data) == 0:
+            return
+
+        with open(outfile, mode='w', encoding='utf8') as fout:
+            if format == self.OUTPUT_JSON:
+                json.dump(data, fout)
+
+            if format == self.OUTPUT_CSV:
+                writer = csv.DictWriter(fout, quoting=csv.QUOTE_MINIMAL, quotechar='"', fieldnames=data[0].keys())
+                writer.writeheader()
+                writer.writerows(data)
 
     def _print_formatted(self, format: str, data: list):
         if len(data) == 0:
@@ -101,5 +113,33 @@ class AbstractCommand():
         return click.Option(
             ['--evtx', '-e', 'evtx'],
             help='path of evtx, as output by plaso in json_line format',
+            required=True,
+        )
+
+    def _get_option_hive_sam(self):
+        return click.Option(
+            ['--hsam', 'hive_sam'],
+            help='path of a clean SAM hive, as output by registry-dump in json format',
+            required=True,
+        )
+
+    def _get_option_hive_software(self):
+        return click.Option(
+            ['--hsoftware', 'hive_software'],
+            help='path of a clean SOFTWARE hive, as output by registry-dump in json format',
+            required=True,
+        )
+
+    def _get_option_hive_system(self):
+        return click.Option(
+            ['--hsystem', 'hive_system'],
+            help='path of a clean SYSTEM hive, as output by registry-dump in json format',
+            required=True,
+        )
+
+    def _get_option_hive_ntuser(self):
+        return click.Option(
+            ['--hntuser', 'hive_ntuser'],
+            help='path of a clean NTUSER.DAT hive, as output by registry-dump in json format',
             required=True,
         )

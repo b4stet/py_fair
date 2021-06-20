@@ -1,23 +1,18 @@
 import click
 import json
 import sys
+import os
 from facs.command.abstract import AbstractCommand
 from facs.entity.timeline import TimelineEntity
 
 
 class ProcessingCommand(AbstractCommand):
-    __CHANNELS_MIN = [
-        'Security',
-        'System',
-        'Microsoft-Windows-TaskScheduler/Operational',
-        'Microsoft-Windows-TerminalServices-RDPClient/Operational',
-        'Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational',
-        'Microsoft-Windows-TerminalServices-LocalSessionManager/Operational',
-    ]
 
-    def __init__(self, evtx_bo):
+    def __init__(self, evtx_bo, registry_bo, report_timeline_bo):
         super().__init__('processing.yaml')
         self.__evtx_bo = evtx_bo
+        self.__registry_bo = registry_bo
+        self.__report_timeline_bo = report_timeline_bo
 
     def get_commands(self):
         group = click.Group(
@@ -44,7 +39,14 @@ class ProcessingCommand(AbstractCommand):
         group.add_command(click.Command(
             name='win_profiling', help='profile users and system based on evtx and registry',
             callback=self.do_win_profiling,
-            params=[self._get_option_evtx()]
+            params=[
+                self._get_option_evtx(),
+                self._get_option_hive_sam(),
+                self._get_option_hive_system(),
+                self._get_option_hive_software(),
+                self._get_option_outdir(),
+                self._get_option_output(),
+            ]
         ))
 
         return group
@@ -71,119 +73,33 @@ class ProcessingCommand(AbstractCommand):
             defaults.append(line)
         self._print_text('Some default values of software', defaults)
 
-    def do_win_profiling(self, evtx):
-        fd_in = open(evtx, mode='r', encoding='utf8')
+    def do_win_profiling(self, evtx, hive_sam, hive_system, hive_software, outdir, output):
+        if not os.path.exists(outdir):
+            raise ValueError('Out directory {} does not exist.'.format(outdir))
 
-        # loop on events
-        computer = None
-        cleaning = []
-        backdating = []
-        start_stop = []
-        start_end = {channel: {'start': None, 'end': None} for channel in self.__CHANNELS_MIN}
-        for line in fd_in:
-            event = json.loads(line)
-            info = self.__evtx_bo.extract_system_info(event['xml_string'])
-            channel = info['channel']
-            provider = info['provider']
-            event_id = info['event_id']
+        out_timeline = os.path.join(outdir, 'timeline_profiling.' + output)
 
-            if computer is None:
-                computer = info['computer']
+        # extract info from windows events
+        print('[+] Analyzing evtx ... ', end='', flush=True)
+        fd_evtx = open(evtx, mode='r', encoding='utf8')
+        nb_events, computer, backdating, cleaning, start_stop, start_end = self.__evtx_bo.get_profiling_from_evtx(fd_evtx)
+        fd_evtx.close()
+        print('done. Processed {} events'.format(nb_events))
 
-            # collect start/end of logs
-            if channel in self.__CHANNELS_MIN:
-                if start_end[channel]['start'] is None or info['datetime'] < start_end[channel]['start']:
-                    start_end[channel]['start'] = info['datetime']
-
-                if start_end[channel]['end'] is None or info['datetime'] > start_end[channel]['end']:
-                    start_end[channel]['end'] = info['datetime']
-
-            # check time changes, logging tampered and windows start/stop from Security channel
-            if channel == 'Security':
-                if provider == 'Microsoft-Windows-Security-Auditing' and event_id == '4616':
-                    data = self.__evtx_bo.extract_security_4616(event['xml_string'])
-                    event_processed = self.__evtx_bo.process_security_4616(info, data)
-                    backdating = self.__append_to_timeline(event_processed, backdating)
-
-                if provider == 'Microsoft-Windows-Security-Auditing' and event_id in ['4608', '4609']:
-                    event_processed = self.__evtx_bo.process_security_4608_4609(info)
-                    start_stop = self.__append_to_timeline(event_processed, start_stop)
-
-                if provider == 'Microsoft-Windows-Eventlog' and event_id in ['1100', '1102', '1104']:
-                    data = self.__evtx_bo.extract_security_1100_1102_1104(event['xml_string'])
-                    event_processed = self.__evtx_bo.process_security_1100_1102_1104(info, data)
-                    cleaning = self.__append_to_timeline(event_processed, cleaning)
-
-            # check time changes, logging tampered and windows start/stop from System channel
-            if channel == 'System':
-                if provider == 'Microsoft-Windows-Kernel-General' and event_id == '1':
-                    data = self.__evtx_bo.extract_system_1(event['xml_string'])
-                    event_processed = self.__evtx_bo.process_system_1(info, data)
-                    backdating = self.__append_to_timeline(event_processed, backdating)
-
-                if provider == 'Microsoft-Windows-Kernel-General' and event_id in ['12', '13']:
-                    data = self.__evtx_bo.extract_system_12_13(event['xml_string'])
-                    event_processed = self.__evtx_bo.process_system_12_13(info, data)
-                    start_stop = self.__append_to_timeline(event_processed, start_stop)
-
-        fd_in.close()
+        # extract info from system, software and sam hive
+        print('[+] Analyzing registry hives ... ', end='', flush=True)
+        host = self.__registry_bo.get_profiling_from_registry(hive_system, hive_software)
+        print('done.')
 
         # assemble timeline
-        timeline = []
-        print('[+] Checked start/end of windows event log for main channels ')
-        for channel in self.__CHANNELS_MIN:
-            print(' | {}'.format(channel))
-        missing_channels = []
-        for channel, values in start_end.items():
-            if values['start'] is None:
-                missing_channels.append(channel)
-                continue
-
-            event = TimelineEntity(
-                start=str(values['start']),
-                end=str(values['end']),
-                host=computer,
-                event='log start/end for channel {}'.format(channel),
-                event_type=TimelineEntity.TIMELINE_TYPE_LOG,
-                source='channel {}.evtx'.format(channel)
-            )
-
-            timeline.append(event.to_dict())
-
-        if len(missing_channels) > 0:
-            print(' | No events found from channels [{}]'.format(','.join(missing_channels)))
-
-        print('\n[+] Checked backdating evidences')
-        print(' | Looked for clock drift bigger than 10 minutes')
-        print(' | From Security channel, looked for provider Microsoft-Windows-Security-Auditing, EID 4616 where user is not "LOCAL SERVICE" or "SYSTEM"')
-        print(' | From System channel, looked for provider Microsoft-Windows-Kernel-General, EID 1 where reason is not 2')
-        print(' | Found: {} matching event(s)'.format(len(backdating)))
-        timeline += backdating
-
-        print('\n[+] Checked log tampering')
-        print(' | From Security channel, looked for provider Microsoft-Windows-Eventlog, EID 1100/1102/1104')
-        print(' | Found {} event(s)'.format(len(cleaning)))
-        timeline += cleaning
-
-        print('\n[+] Checked start/stop of the host')
-        print(' | From Security channel, looked for provider Microsoft-Windows-Eventlog, EID 4608/4609')
-        print(' | From System channel, looked for provider Microsoft-Windows-Kernel-General, EID 12/13')
-        print(' | Found {} event(s)'.format(len(start_stop)))
-        timeline += start_stop
+        timeline, report = self.__report_timeline_bo.get_profiling(computer, backdating, cleaning, start_stop, start_end, host, self.__evtx_bo.CHANNELS_MIN)
+        report.append({
+            'title': 'Wrote timeline in {}'.format(out_timeline),
+            'data': [],
+        })
+        for chunk in report:
+            self._print_text(chunk['title'], chunk['data'])
 
         timeline = sorted(timeline, key=lambda k: k['start'])
-
-        print('\n[+] Timeline')
-        self._print_formatted(self.OUTPUT_CSV, timeline)
-
-    def __append_to_timeline(self, event, timeline):
-        if event is None:
-            return timeline
-
-        formatted = event.to_dict()
-
-        # ensure no duplicates
-        if formatted not in timeline:
-            timeline.append(formatted)
-
-        return timeline
+        # self._print_formatted(output, timeline)
+        self._write_formatted(out_timeline, output, timeline)

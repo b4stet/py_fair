@@ -5,6 +5,8 @@ manual_mining:
     note: 'see wordlist_windows_execution.txt'
   - description: 'look for unusual binary types in user profile'
     note: 'ps1|bat|vba|vbs|dll|exe|msi'
+  - description: 'databases to check hashes against'
+    note: 'virustotal, nsrl, any.run, hybrid-analysis, tria.ge, labs.inquest.net'
   - description: 'look for credentials in GPO'
     note: 'browse sysvol on DC'
 
