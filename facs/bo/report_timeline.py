@@ -23,15 +23,18 @@ class ReportTimelineBO(AbstractBo):
         timeline_global += timeline
         report_global.append(report)
 
-        timeline, report = self.__get_profiling_host_info(host)
-        timeline_global += timeline
+        profiling_host, report = self.__get_profiling_host_info(host)
         report_global.append(report)
 
-        timeline, report = self.__get_profiling_networks(host)
-        timeline_global += timeline
+        profiling_users, report = self.__get_profiling_local_users(host)
         report_global.append(report)
 
-        return timeline_global, report_global
+        timeline, profiling_nic, profiling_interfaces, report = self.__get_profiling_networks(host)
+        timeline_global += timeline
+        profiling_host += profiling_nic
+        report_global.append(report)
+
+        return timeline_global, profiling_host, profiling_users, profiling_interfaces, report_global
 
     def __get_profiling_log_start_end(self, computer, start_end, channels):
         timeline = []
@@ -105,46 +108,60 @@ class ReportTimelineBO(AbstractBo):
         return start_stop, report
 
     def __get_profiling_host_info(self, host):
+        profiling = []
         report = {
             'title': '',
             'data': [],
         }
 
         report['title'] = 'Collected system information'
-        report['data'].append('- Got:')
-        report['data'].append('  computer name from key SYSTEM\\Control\\ComputerName\\ComputerName')
-        report['data'].append('  OS info from key SYSTEM\\Microsoft\\Windows NT\\CurrentVersion')
-        report['data'].append('  time zone info from key SYSTEM\\Control\\TimeZoneInformation')
-        report['data'].append('  control sets from key SYSTEM\\Select')
-        report['data'].append('- Results:')
-        report['data'].append('  computer name: {}'.format(host['computer_name']))
-        report['data'].append('  OS:            {}, installed on {}'.format(host['os']['version'], host['os']['install_date']))
-        report['data'].append('  local time:    {} (UTC = local time + {} min)'.format(host['time_zone']['name'], host['time_zone']['active_time_bias']))
-        report['data'].append('  control sets:  current is {}, last known good is {}, available are [{}]'.format(
-            host['control_sets']['current'], host['control_sets']['last_known_good'], ','.join(host['control_sets']['available'])
-        ))
-        return [], report
+        report['data'].append('computer name from key SYSTEM\\Control\\ComputerName\\ComputerName')
+        report['data'].append('OS info from key SYSTEM\\Microsoft\\Windows NT\\CurrentVersion')
+        report['data'].append('time zone info from key SYSTEM\\Control\\TimeZoneInformation')
+        report['data'].append('control sets from key SYSTEM\\Select')
+
+        profiling.append({
+            'name': 'computer name',
+            'value': host['computer_name'],
+        })
+        profiling.append({
+            'name': 'OS',
+            'value': '{}; installed on {}'.format(host['os']['version'], host['os']['install_date']),
+        })
+        profiling.append({
+            'name': 'local time',
+            'value': '{} (UTC = local time + {} min)'.format(host['time_zone']['name'], host['time_zone']['active_time_bias']),
+        })
+        profiling.append({
+            'name': 'control sets',
+            'value': 'current is {}; last known good is {}; available are [{}]'.format(
+                host['control_sets']['current'], host['control_sets']['last_known_good'], ','.join(host['control_sets']['available'])
+            )
+        })
+        return profiling, report
 
     def __get_profiling_networks(self, host):
         timeline = []
+        profiling_nic = []
+        profiling_parameters = []
         report = {
             'title': '',
             'data': [],
         }
 
         report['title'] = 'Collected network connections'
-        report['data'].append('- Got:')
-        report['data'].append('  NIC from subkeys of SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\NetworkCards')
-        report['data'].append('  interface parameters from subkeys of SOFTWARE\\Services\\Tcpip\\Parameters\\Interfaces\\')
-        report['data'].append('  connections history from subkeys of SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\NetworkList\\Signatures\\')
-        report['data'].append('- Results:')
+        report['data'].append('NIC from subkeys of SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\NetworkCards')
+        report['data'].append('interface parameters from subkeys of SOFTWARE\\Services\\Tcpip\\Parameters\\Interfaces\\')
+        report['data'].append('connections history from subkeys of SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\NetworkList\\Signatures\\')
+
         for nic in host['networks']['nics']:
-            report['data'].append('  NIC GUID {}: {}'.format(nic['guid'], nic['description']))
+            profiling_nic.append({
+                'name': 'NIC',
+                'value': 'GUID {} ({})'.format(nic['guid'], nic['description'])
+            })
+
         for parameters in host['networks']['parameters']:
-            report['data'].append('  IP {}/{}: {}, {}, gateway {}, DHCP {}, DNS {}, NIC {}, lease {}/{}'.format(
-                parameters['ip'], parameters['subnet_mask'], parameters['domain'], parameters['network_hint'], parameters['gateway'],
-                parameters['dhcp_server'], parameters['dns_servers'], parameters['nic_guid'], str(parameters['lease_start']), str(parameters['lease_end'])
-            ))
+            profiling_parameters.append({'name': 'Last known interface parameters', **parameters})
 
         for connection in host['networks']['connections']:
             source = 'SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\NetworkList\\Signatures\\'
@@ -180,4 +197,21 @@ class ReportTimelineBO(AbstractBo):
             )
             timeline = self._append_to_timeline(event, timeline)
 
-        return timeline, report
+        return timeline, profiling_nic, profiling_parameters, report
+
+    def __get_profiling_local_users(self, host):
+        profiling = []
+        report = {
+            'title': '',
+            'data': [],
+        }
+
+        report['title'] = 'Collected local accounts information'
+        report['data'].append('accounts from key \\SAM\\Domains\\Account\\Users')
+        report['data'].append('groups membership from key \\SAM\\Domains\\Builtin\\Aliases')
+        report['data'].append('account creation from key \\SAM\\Domains\\Account\\Users\\Names')
+
+        for user in host['local_users']:
+            profiling.append({'name': 'Local user', **user})
+
+        return profiling, report

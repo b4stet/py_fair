@@ -77,7 +77,10 @@ class ProcessingCommand(AbstractCommand):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
 
-        out_timeline = os.path.join(outdir, 'timeline_profiling.' + output)
+        out_timeline = os.path.join(outdir, 'profiling_timeline.' + output)
+        out_profiling_host = os.path.join(outdir, 'profiling_host.' + output)
+        out_profiling_users = os.path.join(outdir, 'profiling_users.' + output)
+        out_profiling_networks = os.path.join(outdir, 'profiling_networks.' + output)
 
         # extract info from windows events
         print('[+] Analyzing evtx ... ', end='', flush=True)
@@ -88,18 +91,27 @@ class ProcessingCommand(AbstractCommand):
 
         # extract info from system, software and sam hive
         print('[+] Analyzing registry hives ... ', end='', flush=True)
-        host = self.__registry_bo.get_profiling_from_registry(hive_system, hive_software)
+        host = self.__registry_bo.get_profiling_from_registry(hive_system, hive_software, hive_sam)
         print('done.')
 
-        # assemble timeline
-        timeline, report = self.__report_timeline_bo.get_profiling(computer, backdating, cleaning, start_stop, start_end, host, self.__evtx_bo.CHANNELS_MIN)
+        # assemble timeline and reports
+        timeline, profile_host, profile_users, profile_network_parameters, report = self.__report_timeline_bo.get_profiling(
+            computer, backdating, cleaning, start_stop, start_end, host, self.__evtx_bo.CHANNELS_MIN
+        )
         report.append({
-            'title': 'Wrote timeline in {}'.format(out_timeline),
-            'data': [],
+            'title': 'Output files',
+            'data': [
+                'timeline in {}'.format(out_timeline),
+                'host profiling in {}'.format(out_profiling_host),
+                'networks profiling in {}'.format(out_profiling_networks),
+                'local users profiling in {}'.format(out_profiling_users),
+            ],
         })
         for chunk in report:
             self._print_text(chunk['title'], chunk['data'])
 
         timeline = sorted(timeline, key=lambda k: k['start'])
-        # self._print_formatted(output, timeline)
         self._write_formatted(out_timeline, output, timeline)
+        self._write_formatted(out_profiling_host, output, profile_host)
+        self._write_formatted(out_profiling_users, output, profile_users)
+        self._write_formatted(out_profiling_networks, output, profile_network_parameters)

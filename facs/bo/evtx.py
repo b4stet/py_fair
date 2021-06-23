@@ -1,6 +1,5 @@
 import json
 from xml.dom import minidom
-from dateutil import parser
 from facs.entity.timeline import TimelineEntity
 from facs.bo.abstract import AbstractBo
 

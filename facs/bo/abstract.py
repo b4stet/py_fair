@@ -1,6 +1,5 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from dateutil import parser
-from regipy.utils import convert_wintime
 from facs.entity.timeline import TimelineEntity
 
 
@@ -35,7 +34,15 @@ class AbstractBo():
         return datetime(year, month, day, hour, minute, second, microsec, timezone.utc)
 
     def _filetime_to_datetime(self, filetime: int):
-        return convert_wintime(filetime)
+        if filetime == 0:
+            return None
+
+        try:
+            dt = datetime(1601, 1, 1, tzinfo=timezone.utc) + timedelta(microseconds=filetime/10)
+        except OverflowError:
+            # because sometimes the value is just shit ^^
+            return None
+        return dt
 
     def _unixepoch_to_datetime(self, timestamp: int):
         return datetime.fromtimestamp(timestamp, timezone.utc)

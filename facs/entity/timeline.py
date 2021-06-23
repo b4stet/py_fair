@@ -19,7 +19,7 @@ class TimelineEntity():
             'end': self.__end,
             'host': self.__host,
             'user': self.__user,
-            'foreign': self.__user,
+            'foreign': self.__foreign,
             'event': self.__event,
             'type': self.__type,
             'source': self.__source,
