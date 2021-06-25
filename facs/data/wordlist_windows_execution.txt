@@ -43,7 +43,6 @@ csc.exe
 regsvr32.exe
 esentutl.exe
 wevutil.exe
-shost.exe
 svhost.exe
 svch0st.exe
 rdpclip.exe
@@ -55,3 +54,8 @@ sc.exe
 bcdedit.exe
 attrib.exe
 reg.exe
+anydesk
+teamviewer
+logmein
+realvnc
+tightvnc

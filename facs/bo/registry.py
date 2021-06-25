@@ -25,9 +25,9 @@ class RegistryBo(AbstractBo):
         profiling['time_zone'] = self.__get_timezone(reg_system, current_control_set)
         profiling['networks'] = self.__get_networks(reg_system, reg_software, current_control_set)
         profiling['local_users'] = self.__get_local_users(reg_sam)
+        profiling['applications'] = self.__get_installed_applications(reg_software)
 
         # usb
-        # installed/uninstalled application (includes well known RAT and cloud)
         # startup keys
         # mapping device/guid/drive letter
         return profiling
@@ -122,11 +122,11 @@ class RegistryBo(AbstractBo):
                 last_connected_at = self._systemtime_to_datetime(values_profile['DateLastConnected'])
                 parameters = parameters_indexed.get(ssid)
                 if parameters is not None:
-                    lease_start = parameters['lease_start']
-                    lease_end = parameters['lease_end']
-                    if first_connected_at >= parameters['lease_start'] and first_connected_at <= parameters['lease_end']:
+                    lease_start = parameters['last_lease_start']
+                    lease_end = parameters['last_lease_end']
+                    if first_connected_at >= lease_start and first_connected_at <= lease_end:
                         ip_first = parameters['ip']
-                    if last_connected_at >= parameters['lease_start'] and last_connected_at <= parameters['lease_end']:
+                    if last_connected_at >= lease_start and last_connected_at <= lease_end:
                         ip_last = parameters['ip']
 
                 # record the connection
@@ -176,7 +176,6 @@ class RegistryBo(AbstractBo):
         # parsing based on https://github.com/EricZimmerman/RegistryPlugins: UserAccounts.cs
         users = []
 
-        # groups -> builtin> aliases
         # collect local accounts creation date
         accounts_creation = {}
         path = '\\SAM\\Domains\\Account\\Users\\Names'
@@ -290,3 +289,23 @@ class RegistryBo(AbstractBo):
             })
 
         return users
+
+    def __get_installed_applications(self, reg_sam):
+        applications = []
+
+        path = '\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
+        key = reg_sam.get_key(path)
+        for subkey in key.iter_subkeys():
+            values = {value.name: value.value for value in subkey.get_values()}
+
+            if values.get('UninstallString') is None:
+                continue
+
+            applications.append({
+                'app_name': values.get('DisplayName', ''),
+                'app_version': values.get('DisplayVersion', ''),
+                'install_date': values.get('InstallDate', ''),
+                'uninstall_string': values['UninstallString'],
+            })
+
+        return applications

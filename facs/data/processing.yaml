@@ -9,6 +9,8 @@ manual_mining:
     note: 'virustotal, nsrl, any.run, hybrid-analysis, tria.ge, labs.inquest.net'
   - description: 'look for credentials in GPO'
     note: 'browse sysvol on DC'
+  - description: 'look for specific logs (RAT, AV, Cloud ...)'
+    note: 'py_facs logs windows'
 
 patterns:
   - tool: 'mimikatz'

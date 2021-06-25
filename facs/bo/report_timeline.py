@@ -3,38 +3,50 @@ from facs.bo.abstract import AbstractBo
 
 
 class ReportTimelineBO(AbstractBo):
-    def get_profiling(self, computer, backdating, cleaning, start_stop, start_end, host, channels):
+    def get_profiling(self, results_evtx, results_registry, channels):
         timeline_global = []
         report_global = []
 
-        timeline, report = self.__get_profiling_log_start_end(computer, start_end, channels)
+        timeline, report = self.__get_profiling_log_start_end(results_evtx['computer_name'], results_evtx['log_start_end'], channels)
         timeline_global += timeline
         report_global.append(report)
 
-        timeline, report = self.__get_profiling_system_backdating(backdating)
+        timeline, report = self.__get_profiling_system_backdating(results_evtx['time_changed'])
         timeline_global += timeline
         report_global.append(report)
 
-        timeline, report = self.__get_profiling_log_cleaning(cleaning)
+        timeline, report = self.__get_profiling_log_cleaning(results_evtx['log_tampered'])
         timeline_global += timeline
         report_global.append(report)
 
-        timeline, report = self.__get_profiling_system_start_stop(start_stop)
+        timeline, report = self.__get_profiling_system_start_stop(results_evtx['host_start_stop'])
         timeline_global += timeline
         report_global.append(report)
 
-        profiling_host, report = self.__get_profiling_host_info(host)
+        profiling_host, report = self.__get_profiling_host_info(results_registry)
         report_global.append(report)
 
-        profiling_users, report = self.__get_profiling_local_users(host)
+        profiling_users, report = self.__get_profiling_local_users(results_registry)
         report_global.append(report)
 
-        timeline, profiling_nic, profiling_interfaces, report = self.__get_profiling_networks(host)
+        profiling_applications, report = self.__get_profiling_applications(results_evtx['app_uninstalled'], results_registry)
+        report_global.append(report)
+
+        timeline, profiling_nic, profiling_interfaces, report = self.__get_profiling_networks(results_registry)
         timeline_global += timeline
         profiling_host += profiling_nic
         report_global.append(report)
 
-        return timeline_global, profiling_host, profiling_users, profiling_interfaces, report_global
+        return {
+            'timeline': timeline_global,
+            'report': report_global,
+            'profiling': {
+                'host': profiling_host,
+                'users': profiling_users,
+                'interfaces': profiling_interfaces,
+                'applications': profiling_applications,
+            }
+        }
 
     def __get_profiling_log_start_end(self, computer, start_end, channels):
         timeline = []
@@ -107,7 +119,7 @@ class ReportTimelineBO(AbstractBo):
 
         return start_stop, report
 
-    def __get_profiling_host_info(self, host):
+    def __get_profiling_host_info(self, results_registry):
         profiling = []
         report = {
             'title': '',
@@ -122,25 +134,26 @@ class ReportTimelineBO(AbstractBo):
 
         profiling.append({
             'name': 'computer name',
-            'value': host['computer_name'],
+            'value': results_registry['computer_name'],
         })
         profiling.append({
             'name': 'OS',
-            'value': '{}; installed on {}'.format(host['os']['version'], host['os']['install_date']),
+            'value': '{}; installed on {}'.format(results_registry['os']['version'], results_registry['os']['install_date']),
         })
         profiling.append({
             'name': 'local time',
-            'value': '{} (UTC = local time + {} min)'.format(host['time_zone']['name'], host['time_zone']['active_time_bias']),
+            'value': '{} (UTC = local time + {} min)'.format(results_registry['time_zone']['name'], results_registry['time_zone']['active_time_bias']),
         })
         profiling.append({
             'name': 'control sets',
             'value': 'current is {}; last known good is {}; available are [{}]'.format(
-                host['control_sets']['current'], host['control_sets']['last_known_good'], ','.join(host['control_sets']['available'])
+                results_registry['control_sets']['current'], results_registry['control_sets']['last_known_good'],
+                ','.join(results_registry['control_sets']['available'])
             )
         })
         return profiling, report
 
-    def __get_profiling_networks(self, host):
+    def __get_profiling_networks(self, results_registry):
         timeline = []
         profiling_nic = []
         profiling_parameters = []
@@ -154,26 +167,26 @@ class ReportTimelineBO(AbstractBo):
         report['data'].append('interface parameters from subkeys of SOFTWARE\\Services\\Tcpip\\Parameters\\Interfaces\\')
         report['data'].append('connections history from subkeys of SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\NetworkList\\Signatures\\')
 
-        for nic in host['networks']['nics']:
+        for nic in results_registry['networks']['nics']:
             profiling_nic.append({
                 'name': 'NIC',
                 'value': 'GUID {} ({})'.format(nic['guid'], nic['description'])
             })
 
-        for parameters in host['networks']['parameters']:
+        for parameters in results_registry['networks']['parameters']:
             profiling_parameters.append({'name': 'Last known interface parameters', **parameters})
 
-        for connection in host['networks']['connections']:
+        for connection in results_registry['networks']['connections']:
             source = 'SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\NetworkList\\Signatures\\'
             note = 'connection type {}; gateway MAC {}; profile GUID {}'.format(
                 connection['connection_type'], connection['gateway_mac'], connection['profile_guid']
             )
             event_desc = 'connection to {} network (SSID: {})'.format(connection['dns_suffix'], connection['ssid'])
 
-            host_first = host['computer_name']
+            host_first = results_registry['computer_name']
             if connection['ip_first'] is not None:
                 host_first += ' ({})'.format(connection['ip_first'])
-            host_last = host['computer_name']
+            host_last = results_registry['computer_name']
             if connection['ip_last'] is not None:
                 host_last += ' ({})'.format(connection['ip_last'])
 
@@ -199,7 +212,7 @@ class ReportTimelineBO(AbstractBo):
 
         return timeline, profiling_nic, profiling_parameters, report
 
-    def __get_profiling_local_users(self, host):
+    def __get_profiling_local_users(self, results_registry):
         profiling = []
         report = {
             'title': '',
@@ -211,7 +224,29 @@ class ReportTimelineBO(AbstractBo):
         report['data'].append('groups membership from key \\SAM\\Domains\\Builtin\\Aliases')
         report['data'].append('account creation from key \\SAM\\Domains\\Account\\Users\\Names')
 
-        for user in host['local_users']:
+        for user in results_registry['local_users']:
             profiling.append({'name': 'Local user', **user})
+
+        return profiling, report
+
+    def __get_profiling_applications(self, evtx_uninstalled, results_registry):
+        profiling = []
+        report = {
+            'title': '',
+            'data': [],
+        }
+
+        report['title'] = 'Collected application installed system wide and uninstalled'
+        report['data'].append('system wide installation from key \\Microsoft\\Windows\\CurrentVersion\\Uninstall')
+        report['data'].append('uninstalled from Application channel, provider MsiInstaller, EID 11724')
+
+        for application in results_registry['applications']:
+            profiling.append({'name': 'system wide application', **application})
+
+        for application in evtx_uninstalled:
+            profiling.append({
+                'name': 'uninstalled application',
+                'app_name': application['note'],
+            })
 
         return profiling, report

@@ -8,6 +8,7 @@ class EvtxBo(AbstractBo):
     CHANNELS_MIN = [
         'Security',
         'System',
+        'Application',
         'Microsoft-Windows-TaskScheduler/Operational',
         'Microsoft-Windows-TerminalServices-RDPClient/Operational',
         'Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational',
@@ -20,12 +21,17 @@ class EvtxBo(AbstractBo):
         backdating = []
         start_stop = []
         start_end = {channel: {'start': None, 'end': None} for channel in self.CHANNELS_MIN}
+        uninstalled = []
 
         nb_events = 0
         for line in fd_evtx:
             nb_events += 1
             event = json.loads(line)
             info = self.__extract_common(event['xml_string'])
+
+            if info is None:
+                continue
+
             channel = info['channel']
             provider = info['provider']
             event_id = info['event_id']
@@ -78,10 +84,30 @@ class EvtxBo(AbstractBo):
                     event_processed = self.__process_system_6005_6006(info)
                     cleaning = self._append_to_timeline(event_processed, cleaning)
 
-        return nb_events, computer, backdating, cleaning, start_stop, start_end
+            # check uninstalled applications
+            if channel == "Application":
+                if provider == 'MsiInstaller' and event_id == '11724':
+                    data = self.__extract_application_11724(event['xml_string'])
+                    event_processed = self.__process_application_11724(info, data)
+                    uninstalled = self._append_to_timeline(event_processed, uninstalled)
+
+        return {
+            'nb_events': nb_events,
+            'computer_name': computer,
+            'time_changed': backdating,
+            'log_tampered': cleaning,
+            'log_start_end': start_end,
+            'host_start_stop': start_stop,
+            'app_uninstalled': uninstalled,
+        }
 
     def __extract_common(self, evtx_xml):
-        event = minidom.parseString(evtx_xml)
+        try:
+            # because plaso create sometimes invalid xml string
+            event = minidom.parseString(evtx_xml)
+        except Exception:
+            return None
+
         system = event.getElementsByTagName('System')[0]
         info = {
             'datetime': self._isoformat_to_datetime(system.getElementsByTagName('TimeCreated')[0].getAttribute('SystemTime')),
@@ -89,6 +115,7 @@ class EvtxBo(AbstractBo):
             'provider': system.getElementsByTagName('Provider')[0].getAttribute('Name'),
             'event_id': system.getElementsByTagName('EventID')[0].firstChild.data,
             'computer': system.getElementsByTagName('Computer')[0].firstChild.data,
+            'sid': system.getElementsByTagName('Security')[0].getAttribute('UserID'),
         }
 
         return info
@@ -201,6 +228,7 @@ class EvtxBo(AbstractBo):
         return TimelineEntity(
             start=str(info['datetime']),
             host=info['computer'],
+            user=info['sid'],
             event=event,
             event_type=TimelineEntity.TIMELINE_TYPE_EVENT,
             source=source
@@ -244,6 +272,7 @@ class EvtxBo(AbstractBo):
         return TimelineEntity(
             start=str(info['datetime']),
             host=info['computer'],
+            user=info['sid'],
             event='system time changed',
             event_type=TimelineEntity.TIMELINE_TYPE_EVENT,
             source=source,
@@ -279,6 +308,7 @@ class EvtxBo(AbstractBo):
         return TimelineEntity(
             start=str(info['datetime']),
             host=info['computer'],
+            user=info['sid'],
             event=data['event'],
             event_type=TimelineEntity.TIMELINE_TYPE_EVENT,
             source=source,
@@ -334,7 +364,29 @@ class EvtxBo(AbstractBo):
         return TimelineEntity(
             start=str(info['datetime']),
             host=info['computer'],
+            user=info['sid'],
             event=event,
             event_type=TimelineEntity.TIMELINE_TYPE_EVENT,
             source=source
+        )
+
+    def __extract_application_11724(self, evtx_xml):
+        event = minidom.parseString(evtx_xml)
+        data = event.getElementsByTagName('EventData')[0].getElementsByTagName('Data')[0]
+        return {
+            'event': 'application successfully removed',
+            'product': data.firstChild.data,
+        }
+
+    def __process_application_11724(self, info, data):
+        source = 'EID {}; channel {} ; provider {}'.format(info['event_id'], info['channel'], info['provider'])
+
+        return TimelineEntity(
+            start=str(info['datetime']),
+            host=info['computer'],
+            user=info['sid'],
+            event=data['event'],
+            event_type=TimelineEntity.TIMELINE_TYPE_EVENT,
+            source=source,
+            note=data['product']
         )

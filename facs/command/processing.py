@@ -37,7 +37,7 @@ class ProcessingCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
-            name='win_profiling', help='profile users and system based on evtx and registry',
+            name='win_profiling_host', help='profile a host based on evtx and registry',
             callback=self.do_win_profiling,
             params=[
                 self._get_option_evtx(),
@@ -81,37 +81,39 @@ class ProcessingCommand(AbstractCommand):
         out_profiling_host = os.path.join(outdir, 'profiling_host.' + output)
         out_profiling_users = os.path.join(outdir, 'profiling_users.' + output)
         out_profiling_networks = os.path.join(outdir, 'profiling_networks.' + output)
+        out_profiling_applications = os.path.join(outdir, 'profiling_applications_system_wide.' + output)
 
         # extract info from windows events
         print('[+] Analyzing evtx ... ', end='', flush=True)
         fd_evtx = open(evtx, mode='r', encoding='utf8')
-        nb_events, computer, backdating, cleaning, start_stop, start_end = self.__evtx_bo.get_profiling_from_evtx(fd_evtx)
+        results_evtx = self.__evtx_bo.get_profiling_from_evtx(fd_evtx)
+        # nb_events, computer, backdating, cleaning, start_stop, start_end = self.__evtx_bo.get_profiling_from_evtx(fd_evtx)
         fd_evtx.close()
-        print('done. Processed {} events'.format(nb_events))
+        print('done. Processed {} events'.format(results_evtx['nb_events']))
 
         # extract info from system, software and sam hive
         print('[+] Analyzing registry hives ... ', end='', flush=True)
-        host = self.__registry_bo.get_profiling_from_registry(hive_system, hive_software, hive_sam)
+        results_registry = self.__registry_bo.get_profiling_from_registry(hive_system, hive_software, hive_sam)
         print('done.')
 
         # assemble timeline and reports
-        timeline, profile_host, profile_users, profile_network_parameters, report = self.__report_timeline_bo.get_profiling(
-            computer, backdating, cleaning, start_stop, start_end, host, self.__evtx_bo.CHANNELS_MIN
-        )
-        report.append({
+        result = self.__report_timeline_bo.get_profiling(results_evtx, results_registry, self.__evtx_bo.CHANNELS_MIN)
+        result['report'].append({
             'title': 'Output files',
             'data': [
                 'timeline in {}'.format(out_timeline),
                 'host profiling in {}'.format(out_profiling_host),
                 'networks profiling in {}'.format(out_profiling_networks),
                 'local users profiling in {}'.format(out_profiling_users),
+                'applications system wide info in {}'.format(out_profiling_applications),
             ],
         })
-        for chunk in report:
+        for chunk in result['report']:
             self._print_text(chunk['title'], chunk['data'])
 
-        timeline = sorted(timeline, key=lambda k: k['start'])
+        timeline = sorted(result['timeline'], key=lambda k: k['start'])
         self._write_formatted(out_timeline, output, timeline)
-        self._write_formatted(out_profiling_host, output, profile_host)
-        self._write_formatted(out_profiling_users, output, profile_users)
-        self._write_formatted(out_profiling_networks, output, profile_network_parameters)
+        self._write_formatted(out_profiling_host, output, result['profiling']['host'])
+        self._write_formatted(out_profiling_users, output, result['profiling']['users'])
+        self._write_formatted(out_profiling_networks, output, result['profiling']['interfaces'])
+        self._write_formatted(out_profiling_applications, output, result['profiling']['applications'])

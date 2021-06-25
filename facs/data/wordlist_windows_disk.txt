@@ -23,3 +23,8 @@ svhost.exe
 svch0st.exe
 launcher.bat
 launcher.vbs
+anydesk
+teamviewer
+logmein
+realvnc
+tightvnc

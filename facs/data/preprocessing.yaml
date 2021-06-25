@@ -55,6 +55,6 @@ windows:
     - description: 'dump registries full (SOFTWARE hive is big and can take up to 2 hours)'
       command: 'registry-dump -o <hive>.json <clean hive>'
     - description: 'Create windows events timeline of a host with plaso'
-      command: 'log2timeline --parsers evtx --storage-file l2t_evtx.plaso </evtx/folder> && psort -o json_line -w l2t_evtx.csv l2t_evtx.plaso'
+      command: 'log2timeline --parsers winevtx --storage-file l2t_evtx.plaso </evtx/folder> && psort -o json_line -w l2t_evtx.csv l2t_evtx.plaso'
 
   

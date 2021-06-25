@@ -119,27 +119,27 @@ class AbstractCommand():
     def _get_option_hive_sam(self):
         return click.Option(
             ['--hsam', 'hive_sam'],
-            help='path of a clean SAM hive, as output by registry-dump in json format',
+            help='path of a clean SAM hive',
             required=True,
         )
 
     def _get_option_hive_software(self):
         return click.Option(
             ['--hsoftware', 'hive_software'],
-            help='path of a clean SOFTWARE hive, as output by registry-dump in json format',
+            help='path of a clean SOFTWARE hive',
             required=True,
         )
 
     def _get_option_hive_system(self):
         return click.Option(
             ['--hsystem', 'hive_system'],
-            help='path of a clean SYSTEM hive, as output by registry-dump in json format',
+            help='path of a clean SYSTEM hive',
             required=True,
         )
 
     def _get_option_hive_ntuser(self):
         return click.Option(
             ['--hntuser', 'hive_ntuser'],
-            help='path of a clean NTUSER.DAT hive, as output by registry-dump in json format',
+            help='path of a clean NTUSER.DAT hive',
             required=True,
         )

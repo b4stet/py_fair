@@ -74,6 +74,8 @@ windows:
       path: 'check https://github.com/EricZimmerman/KapeFiles/tree/master/Targets/Apps'
     - description: 'path of powershell history if enabled'
       path: 'Users/<user>/AppData/Roaming/Microsoft/Windows/PowerShell/PSReadLine/ConsoleHost_history.txt'
+    - description: 'path of Cloud applications artifacts'
+      path: 'check https://github.com/EricZimmerman/KapeFiles/blob/master/Targets/Compound/CloudStorage.tkape'
   evtx_security:
     - eid: '4608/4609'
       description: 'windows start/stop'
