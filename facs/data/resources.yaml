@@ -10,6 +10,7 @@ ioc_ttp:
   - 'https://neil-fox.github.io/'
   - 'https://github.com/SigmaHQ/sigma'
   - 'https://labs.inquest.net/'
+  - 'https://blog.group-ib.cm/revil_raas'
 
 malware:
   - 'https://www.crowdstrike.com/cybersecurity-101/malware/'
@@ -79,6 +80,7 @@ blogs:
   - 'https://www.winitor.com/articles'
   - 'https://nasbench.medium.com/'
   - 'https://www.sekoia.io/en/hunting-and-detecting-cobalt-strike/'
+  - 'https://github.com/vadim-hunter/Detection-Ideas-Rules'
 
 
 system:

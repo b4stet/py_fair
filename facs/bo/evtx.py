@@ -1,4 +1,5 @@
 import json
+import sys
 from xml.dom import minidom
 from facs.entity.timeline import TimelineEntity
 from facs.bo.abstract import AbstractBo
@@ -22,6 +23,8 @@ class EvtxBo(AbstractBo):
         start_stop = []
         start_end = {channel: {'start': None, 'end': None} for channel in self.CHANNELS_MIN}
         uninstalled = []
+        storage_info = []
+        pnp_connections = []
 
         nb_events = 0
         for line in fd_evtx:
@@ -63,7 +66,7 @@ class EvtxBo(AbstractBo):
                     event_processed = self.__process_security_1100_1102_1104(info, data)
                     cleaning = self._append_to_timeline(event_processed, cleaning)
 
-            # check time changes, logging tampered and windows start/stop from System channel
+            # check time changes, logging tampered and system start/stop from System channel
             if channel == 'System':
                 if provider == 'Microsoft-Windows-Kernel-General' and event_id == '1':
                     data = self.__extract_system_1(event['xml_string'])
@@ -84,12 +87,27 @@ class EvtxBo(AbstractBo):
                     event_processed = self.__process_system_6005_6006(info)
                     cleaning = self._append_to_timeline(event_processed, cleaning)
 
-            # check uninstalled applications
-            if channel == "Application":
+            # look for uninstalled applications
+            if channel == 'Application':
                 if provider == 'MsiInstaller' and event_id == '11724':
                     data = self.__extract_application_11724(event['xml_string'])
                     event_processed = self.__process_application_11724(info, data)
                     uninstalled = self._append_to_timeline(event_processed, uninstalled)
+
+            # collect info on storage devices (internal, external drives, USB MSC keys)
+            if channel == 'Microsoft-Windows-Partition/Diagnostic':
+                if provider == 'Microsoft-Windows-Partition' and event_id == '1006':
+                    device = self.__extract_partition_1006(event['xml_string'])
+                    if device is not None and device not in storage_info:
+                        storage_info.append(device)
+
+            # collect device connections to an USB port
+            if channel == 'Microsoft-Windows-Kernel-PnP/Configuration':
+                if provider == 'Microsoft-Windows-Kernel-PnP' and event_id in ['410', '430']:
+                    data = self.__extract_kernel_pnp_410_430(event['xml_string'])
+                    event_processed = self.__process_kernel_pnp_410_430(info, data)
+                    if event_processed is not None:
+                        pnp_connections = self._append_to_timeline(event_processed, pnp_connections)
 
         return {
             'nb_events': nb_events,
@@ -99,6 +117,8 @@ class EvtxBo(AbstractBo):
             'log_start_end': start_end,
             'host_start_stop': start_stop,
             'app_uninstalled': uninstalled,
+            'storage_info': storage_info,
+            'pnp_connections': pnp_connections,
         }
 
     def __extract_common(self, evtx_xml):
@@ -201,7 +221,7 @@ class EvtxBo(AbstractBo):
         return info
 
     def __process_security_1100_1102_1104(self, info, data):
-        user = ''
+        user = info['sid']
         if 'sid' in data.keys():
             user = '{}\\{} (SID {})'.format(data['domain'], data['username'], data['sid'])
         source = 'EID {}; channel {} ; provider {}'.format(info['event_id'], info['channel'], info['provider'])
@@ -389,4 +409,98 @@ class EvtxBo(AbstractBo):
             event_type=TimelineEntity.TIMELINE_TYPE_EVENT,
             source=source,
             note=data['product']
+        )
+
+    def __extract_partition_1006(self, evtx_xml):
+        event = minidom.parseString(evtx_xml)
+        data = event.getElementsByTagName('EventData')[0].getElementsByTagName('Data')
+        info = {}
+
+        for elt in data:
+            attribute = elt.getAttribute('Name')
+
+            if attribute == 'Capacity':
+                info['bytes_capacity'] = elt.firstChild.data
+
+            # when capacity is zero, it is just an unplug
+            if info.get('bytes_capacity') is not None and info['bytes_capacity'] == 0:
+                return None
+
+            if attribute == 'Manufacturer':
+                info['manufacturer'] = elt.firstChild.data
+
+            if attribute == 'Model':
+                info['model'] = elt.firstChild.data
+
+            if attribute == 'Revision':
+                info['revision'] = elt.firstChild.data
+
+            if attribute == 'SerialNumber':
+                info['disk_serial_number'] = elt.firstChild.data
+
+            if attribute == 'ParentId':
+                parent_id = elt.firstChild.data.split('\\')
+                if parent_id[0] == 'PCI':
+                    info['vendor_product'] = parent_id[1]
+
+                if parent_id[0] == 'USB':
+                    info['vid_pid'] = parent_id[1]
+                info['serial_number'] = parent_id[2]
+
+            if attribute == 'DiskId':
+                info['disk_guid'] = elt.firstChild.data
+
+            if attribute == 'AdapterId':
+                info['adapter_guid'] = elt.firstChild.data
+
+            if attribute == 'RegistryId':
+                info['registry_guid'] = elt.firstChild.data
+
+            if attribute == 'PartitionTable':
+                table = elt.firstChild.data
+                partition_type = table[0:8]
+                if partition_type == '00000000':
+                    info['partition_type'] = self._PARTITION_MBR
+                    info['disk_signature'] = table[16:24].lower()
+
+                if partition_type == '01000000':
+                    info['partition_type'] = self._PARTITION_GPT
+                    info['partitions_guid'] = []
+                    for i in range(0, len(table)-1, 32):
+                        # collect the partition GUID if its header is "Basic Data Partition"
+                        if table[i:i+32].lower() == 'a2a0d0ebe5b9334487c068b6b72699c7':
+                            info['partitions_guid'].append(table[i+32:i+64].lower())
+        return info
+
+    def __extract_kernel_pnp_410_430(self, evtx_xml):
+        event = minidom.parseString(evtx_xml)
+        data = event.getElementsByTagName('EventData')[0].getElementsByTagName('Data')
+        info = {}
+
+        for elt in data:
+            attribute = elt.getAttribute('Name')
+
+            if attribute == 'DeviceInstanceId' and elt.firstChild.data.startswith('USB\\'):
+                # pattern is USB\VID_XXX&PID_YYY\<SN>
+                instance_id = elt.firstChild.data.split('\\')
+                info['vid_pid'] = instance_id[1]
+                info['serial_number'] = instance_id[2]
+
+        return info
+
+    def __process_kernel_pnp_410_430(self, info, data):
+        if len(data) == 0:
+            return None
+
+        source = 'EID {}; channel {} ; provider {}'.format(info['event_id'], info['channel'], info['provider'])
+        note = '{}#{}'.format(data['vid_pid'], data['serial_number'])
+
+        return TimelineEntity(
+            start=str(info['datetime']),
+            host=info['computer'],
+            user=info['sid'],
+            event='USB device started',
+            event_type=TimelineEntity.TIMELINE_TYPE_EVENT,
+            source=source,
+            note=note
         )

@@ -58,6 +58,9 @@ patterns:
     detection:
       - 'high volume of LDAP traffic to the AD (port 389) from a same source'
       - 'security EID 4662 on honey accounts/groups to detect enumeration'
+      - 'default filenames bloodhound/sharphound/azurehound'
+      - 'uses powershell'
+      - 'command lines arguments in process creation: https://github.com/vadim-hunter/Detection-Ideas-Rules/blob/main/Tools/BloodHound.yaml'
 
   - tool: 'cobalt strike'
     detection:

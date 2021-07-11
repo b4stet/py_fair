@@ -16,6 +16,7 @@ lazagne
 .kirbi
 .asreproast
 .kerberoast
+hound
 responder.py
 dumphash.py
 rubeus.exe

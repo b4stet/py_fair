@@ -1,10 +1,12 @@
-import json
+import copy
 from regipy.registry import RegistryHive
+from regipy.structs import VALUE_KEY
+from regipy.utils import boomerang_stream
 from facs.bo.abstract import AbstractBo
 
 
 class RegistryBo(AbstractBo):
-    __CONNECTION_TYPES = {
+    __NETWORK_TYPES = {
         '6': 'wired',
         '23': 'VPN',
         '71': 'wireless',
@@ -26,10 +28,8 @@ class RegistryBo(AbstractBo):
         profiling['networks'] = self.__get_networks(reg_system, reg_software, current_control_set)
         profiling['local_users'] = self.__get_local_users(reg_sam)
         profiling['applications'] = self.__get_installed_applications(reg_software)
+        profiling['usb'] = self.__get_usb_info(reg_system, reg_software, current_control_set)
 
-        # usb
-        # startup keys
-        # mapping device/guid/drive letter
         return profiling
 
     def __get_control_sets(self, reg_system):
@@ -135,7 +135,7 @@ class RegistryBo(AbstractBo):
                     'dns_suffix': values_signature['DnsSuffix'],
                     'ssid': ssid,
                     'profile_guid': values_signature['ProfileGuid'],
-                    'connection_type': self.__CONNECTION_TYPES[str(values_profile['NameType'])],
+                    'connection_type': self.__NETWORK_TYPES[str(values_profile['NameType'])],
                     'first_connected_at': first_connected_at,
                     'last_connected_at': last_connected_at,
                     'ip_first': ip_first,
@@ -305,7 +305,193 @@ class RegistryBo(AbstractBo):
                 'app_name': values.get('DisplayName', ''),
                 'app_version': values.get('DisplayVersion', ''),
                 'install_date': values.get('InstallDate', ''),
-                'uninstall_string': values['UninstallString'],
+                'install_location': values.get('InstallLocation', ''),
             })
 
         return applications
+
+    def __get_usb_info(self, reg_system, reg_software, current_control_set):
+        info = {
+            'user_labels': [],
+            'connections': [],
+            'drive_letters': [],
+        }
+
+        # collect labels, vid_pid+serial number or volume guid+partition offset
+        path = '\\Microsoft\\Windows Portable Devices\\Devices'
+        key = reg_software.get_key(path)
+
+        for subkey in key.iter_subkeys():
+            instance_id = subkey.header.key_name_string.decode('utf8').split('#')
+            label = subkey.get_value('FriendlyName')
+            data = {
+                'user_label': label,
+                'vendor_product': None,
+                'vid_pid': None,
+                'vendor_product': None,
+                'serial_number': None,
+                'registry_guid': None,
+                'partition_offset': None,
+            }
+
+            # split instance id depending on cases
+            # SWD#WPDBUSENUM#_??_USBSTOR#DISK&<VEND_XXX&PROD_YYY#<Serial Number>#{<device class GUID>}
+            # SWD#WPDBUSENUM#{<registry GUID>}#<partition start offset>
+            # USB#VID_XXX&PID_YYY#<Serial Number>
+            if instance_id[0] == 'SWD' and 'USBSTOR' in instance_id[2]:
+                data['vendor_product'] = instance_id[3]
+                data['serial_number'] = instance_id[4]
+
+            if instance_id[0] == 'SWD' and '{' in instance_id[2]:
+                data['registry_guid'] = instance_id[2]
+                data['partition_offset'] = instance_id[3]
+
+            if instance_id[0] == 'USB':
+                data['vid_pid'] = instance_id[1]
+                data['serial_number'] = instance_id[2]
+
+            info['user_labels'].append(data)
+
+        # collect vid_pid+serial number with first and last connections for external drive, MSC and MTP devices
+        path = current_control_set + '\\Enum\\USB'
+        key = reg_system.get_key(path)
+
+        for subkey in key.iter_subkeys():
+            vid_pid = subkey.header.key_name_string.decode('utf8')
+            for sk_serial_number in subkey.iter_subkeys():
+                serial_number = sk_serial_number.header.key_name_string.decode('utf8')
+                sk_properties = sk_serial_number.get_subkey('Properties')
+
+                sk = sk_properties.get_subkey('{a8b865dd-2e3d-4094-ad97-e593a70c75d6}')
+                values = self.__get_raw_values(reg_system, sk.get_subkey('0004'))
+                device_type = values['(default)'].value.decode('utf-16le')[:-1]
+
+                values = self.__get_raw_values(reg_system, sk.get_subkey('0005'))
+                driver = values['(default)'].value.decode('utf-16le')[:-1]
+
+                # only keep writable devices: UMS (usb stick and external drives) and MTP
+                if driver not in list(self._STORAGE_DRIVERS.values()):
+                    continue
+
+                sk = sk_properties.get_subkey('{540b947e-8b40-45bc-a8a2-6a0b894cbda2}')
+                values = self.__get_raw_values(reg_system, sk.get_subkey('0004'))
+                device_model = values['(default)'].value.decode('utf-16le')[:-1].strip(' ')
+
+                sk = sk_properties.get_subkey('{83da6326-97a6-4088-9453-a1923f573b29}')
+                first_connection = sk.get_subkey('0064')
+                last_connection = sk.get_subkey('0066')
+                last_removal = sk.get_subkey('0067')
+
+                info['connections'].append({
+                    'device_model': device_model,
+                    'vid_pid': vid_pid,
+                    'serial_number': serial_number,
+                    'device_type': device_type,
+                    'driver': driver,
+                    'first_connection': str(self._filetime_to_datetime(first_connection.header.last_modified)),
+                    'last_connection': str(self._filetime_to_datetime(last_connection.header.last_modified)),
+                    'last_removal': str(self._filetime_to_datetime(last_removal.header.last_modified)) if last_removal is not None else '',
+                })
+
+        # collect last known drive letters and volume guid
+        path = '\\MountedDevices'
+        key = reg_system.get_key(path)
+        values = key.get_values()
+        letters = {value.name: value.value for value in values if 'DosDevice' in value.name}
+        volumes = {value.name: value.value for value in values if 'Volume' in value.name}
+
+        template = {
+            'drive_letter': None,
+            'device_type': None,
+            'instance_id': None,
+            'partition_type': None,
+            'disk_signature': None,
+            'partition_offset': None,
+            'partition_guid': None,
+            'vendor_product': None,
+            'serial_number': None,
+            'volume_guid': None,
+        }
+
+        # process listed drive letters
+        # could guess more from slack space
+        for name, value in letters.items():
+            data = copy.deepcopy(template)
+            data['drive_letter'] = name.split('\\')[-1]
+            data = self.__decode_mounted_device_value(value, data)
+
+            # skip unknown device type
+            if data['device_type'] is None:
+                continue
+
+            # attempt to associate a volume GUID
+            guid = [name for name, value in volumes.items() if value == data['instance_id'].encode('utf-16le')]
+            if len(guid) != 0:
+                data['volume_guid'] = guid[0].split('\\')[-1][len('Volume'):]
+
+            info['drive_letters'].append(data)
+
+        # process remaining volume GUIDs which have no corresponding letter
+        for volume, value in volumes.items():
+            data = copy.deepcopy(template)
+            data['drive_letter'] = ''
+            data = self.__decode_mounted_device_value(value, data)
+
+            # skip if value already processed in previous loop
+            processed = any(1 for device in info['drive_letters'] if device['instance_id'] == data['instance_id'])
+            if processed is True:
+                continue
+
+            data['volume_guid'] = volume.split('\\')[-1][len('Volume'):]
+            info['drive_letters'].append(data)
+        return info
+
+    def __decode_mounted_device_value(self, value, data):
+        # for drive with mbr partitioning
+        if len(value) == 12:
+            data['device_type'] = self._STORAGE_EXTERNAL_DRIVE
+            data['instance_id'] = value.hex()
+            data['partition_type'] = self._PARTITION_MBR
+            data['disk_signature'] = value[0:4].hex()
+            data['partition_offset'] = value[4:].hex()
+
+        # for drive with gpt partitioning
+        if len(value) == 24:
+            data['device_type'] = self._STORAGE_EXTERNAL_DRIVE
+            data['instance_id'] = value.hex()
+            data['partition_type'] = self._PARTITION_GPT
+            data['partition_guid'] = value[8:].hex()
+
+        # for usb mass storage
+        if len(value) > 24 and 'USBSTOR' in value.decode('utf-16le'):
+            data['device_type'] = self._STORAGE_MSC
+            data['instance_id'] = value.decode('utf-16le')
+            instance_id = data['instance_id'].split('#')
+            data['vendor_product'] = instance_id[1]
+            data['serial_number'] = instance_id[2]
+
+        # for virtual drive like Google Drive FS
+        if len(value) > 24 and 'Volume' in value.decode('utf-16le'):
+            data['device_type'] = self._STORAGE_VIRTUAL
+            data['instance_id'] = value.decode('utf-16le')
+
+        return data
+
+    def __get_raw_values(self, registry, name_key_record):
+        # because regipy method get_values() skips values for unsupported value types
+        # https://github.com/mkorman90/regipy/blob/master/regipy/structs.py
+        values = {}
+
+        for _ in range(0, name_key_record.header.values_count):
+            with boomerang_stream(registry._stream) as substream:
+                substream.seek(4096 + 4 + name_key_record.header.values_list_offset)
+                value_offset = int.from_bytes(substream.read(4), byteorder='little', signed=False)
+                substream.seek(4096 + 4 + value_offset)
+                value = VALUE_KEY.parse_stream(substream)
+
+                if value.name_size == 0:
+                    value.name = '(default)'
+
+                values[value.name] = name_key_record.read_value(value, substream)
+
+        return values

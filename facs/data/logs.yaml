@@ -52,7 +52,7 @@ windows:
       path: 'Windows/SYSVOL/sysvol/'
     - description: 'path of system registry hives (+ transaction logs)'
       path: 'Windows/System32/config/{SYSTEM, SAM, SECURITY, SOFTWARE}'
-    - description: 'path user registry hive (+ transaction logs)'
+    - description: 'path of user registry hive (+ transaction logs)'
       path: 'Users/<user>/NTUSER.DAT + Users/<user>/AppData/Local/Microsoft/Windows/UsrClass.dat'
     - description: 'path of the amcache hive'
       path: 'Windows/AppCompat/Programs/AmCache.hve'

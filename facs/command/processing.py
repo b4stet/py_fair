@@ -82,19 +82,19 @@ class ProcessingCommand(AbstractCommand):
         out_profiling_users = os.path.join(outdir, 'profiling_users.' + output)
         out_profiling_networks = os.path.join(outdir, 'profiling_networks.' + output)
         out_profiling_applications = os.path.join(outdir, 'profiling_applications_system_wide.' + output)
-
-        # extract info from windows events
-        print('[+] Analyzing evtx ... ', end='', flush=True)
-        fd_evtx = open(evtx, mode='r', encoding='utf8')
-        results_evtx = self.__evtx_bo.get_profiling_from_evtx(fd_evtx)
-        # nb_events, computer, backdating, cleaning, start_stop, start_end = self.__evtx_bo.get_profiling_from_evtx(fd_evtx)
-        fd_evtx.close()
-        print('done. Processed {} events'.format(results_evtx['nb_events']))
+        out_profiling_storage = os.path.join(outdir, 'profiling_storage.' + output)
 
         # extract info from system, software and sam hive
         print('[+] Analyzing registry hives ... ', end='', flush=True)
         results_registry = self.__registry_bo.get_profiling_from_registry(hive_system, hive_software, hive_sam)
         print('done.')
+
+        # extract info from windows events
+        print('[+] Analyzing evtx ... ', end='', flush=True)
+        fd_evtx = open(evtx, mode='r', encoding='utf8')
+        results_evtx = self.__evtx_bo.get_profiling_from_evtx(fd_evtx)
+        fd_evtx.close()
+        print('done. Processed {} events'.format(results_evtx['nb_events']))
 
         # assemble timeline and reports
         result = self.__report_timeline_bo.get_profiling(results_evtx, results_registry, self.__evtx_bo.CHANNELS_MIN)
@@ -106,6 +106,7 @@ class ProcessingCommand(AbstractCommand):
                 'networks profiling in {}'.format(out_profiling_networks),
                 'local users profiling in {}'.format(out_profiling_users),
                 'applications system wide info in {}'.format(out_profiling_applications),
+                'writable storage info in {}'.format(out_profiling_storage),
             ],
         })
         for chunk in result['report']:
@@ -117,3 +118,4 @@ class ProcessingCommand(AbstractCommand):
         self._write_formatted(out_profiling_users, output, result['profiling']['users'])
         self._write_formatted(out_profiling_networks, output, result['profiling']['interfaces'])
         self._write_formatted(out_profiling_applications, output, result['profiling']['applications'])
+        self._write_formatted(out_profiling_storage, output, result['profiling']['writable_storage'])

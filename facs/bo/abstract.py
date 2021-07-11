@@ -4,6 +4,21 @@ from facs.entity.timeline import TimelineEntity
 
 
 class AbstractBo():
+    _PARTITION_MBR = 'mbr'
+    _PARTITION_GPT = 'gpt'
+
+    _STORAGE_INTERNAL_DRIVE = 'internal storage'
+    _STORAGE_EXTERNAL_DRIVE = 'uas_mass_storage'
+    _STORAGE_MSC = 'usb_mass_storage'
+    _STORAGE_MTP = 'mtp'
+    _STORAGE_VIRTUAL = 'virtual_drive'
+
+    _STORAGE_DRIVERS = {
+        _STORAGE_EXTERNAL_DRIVE: 'uaspstor.inf',
+        _STORAGE_MSC: 'usbstor.inf',
+        _STORAGE_MTP: 'wpdmtp.inf',
+    }
+
     def __init__(self):
         pass
 

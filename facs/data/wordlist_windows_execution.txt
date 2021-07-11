@@ -31,6 +31,8 @@ msiexec
 rubeus
 certutil.exe
 powershell.exe
+pswh.exe
+hound.exe
 bitsadmin.exe
 wmic.exe
 mshta.exe
