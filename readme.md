@@ -49,9 +49,8 @@ $ pip3 uninstall py_facs
 ## Examples
 Windows host profiling on a 120G disk dump:
 ```
-$ py_facs processing win_profiling_host -e plaso_evtx.json -hsystem SYSTEM_CLEAN -hsoftware SOFTWARE_CLEAN -hsam SAM_CLEAN -d reports/ -o csv
-[+] Analyzing evtx ... done. Processed 264382 events
 [+] Analyzing registry hives ... done.
+[+] Analyzing evtx ... done. Processed 264382 events
 [+] Checked start/end of windows event log for main channels
  | Security                                                                        : ok
  | System                                                                          : ok
@@ -79,33 +78,43 @@ $ py_facs processing win_profiling_host -e plaso_evtx.json -hsystem SYSTEM_CLEAN
  | Found 25 event(s)
 
 [+] Collected system information
- | computer name from key SYSTEM\Control\ComputerName\ComputerName
+ | computer name from key SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName
  | OS info from key SYSTEM\Microsoft\Windows NT\CurrentVersion
- | time zone info from key SYSTEM\Control\TimeZoneInformation
+ | time zone info from key SYSTEM\CurrentControlSet\Control\TimeZoneInformation
  | control sets from key SYSTEM\Select
 
 [+] Collected local accounts information
- | accounts from key \SAM\Domains\Account\Users
- | groups membership from key \SAM\Domains\Builtin\Aliases
- | account creation from key \SAM\Domains\Account\Users\Names
+ | accounts from key SAM\SAM\Domains\Account\Users
+ | groups membership from key SAM\SAM\Domains\Builtin\Aliases
+ | account creation from key SAM\SAM\Domains\Account\Users\Names
 
-[+] Collected application installed system wide and uninstalled
- | system wide installation from key \Microsoft\Windows\CurrentVersion\Uninstall
- | uninstalled from Application channel, provider MsiInstaller, EID 11724
+[+] Collected application installed system wide or uninstalled
+ | system wide installation from key SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
+ | uninstalled applications from Application channel, provider MsiInstaller, EID 11724
 
 [+] Collected network connections
  | NIC from subkeys of SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkCards
- | interface parameters from subkeys of SOFTWARE\Services\Tcpip\Parameters\Interfaces\
- | connections history from subkeys of SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Signatures\
+ | interface parameters from subkeys of SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces
+ | connections history from subkeys of SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Signatures
+
+[+] Collected information about writable storage (PCI, UAS drives, USB mass storage, MTP devices)
+ | hardware info from Microsoft-Windows-Partition/Diagnostic channel, provider Microsoft-Windows-Partition, EID 1006
+ | connections from Microsoft-Windows-Kernel-PnP/Configuration channel, provider Microsoft-Windows-Kernel-PnP, EID 410/430
+ | user labels and instance info from key SOFTWARE\Microsoft\Windows Portable Devices\Devices
+ | device types from key SYSTEM\CurrentControlSet\Enum\USB, property {a8b865dd-2e3d-4094-ad97-e593a70c75d6}
+ | models from key SYSTEM\CurrentControlSet\Enum\USB, property {540b947e-8b40-45bc-a8a2-6a0b894cbda2}
+ | first/last connections from key SYSTEM\CurrentControlSet\Enum\USB, property {83da6326-97a6-4088-9453-a1923f573b29}
+ | drive letters, and volume GUID from key SYSTEM\MountedDevices
 
 [+] Output files
- | timeline in reports/profiling_timeline.csv
- | host profiling in reports/profiling_host.csv
- | networks profiling in reports/profiling_networks.csv
- | local users profiling in reports/profiling_users.csv
- | applications system wide info in reports/profiling_applications_system_wide.csv
+ | timeline in ../../challenges/training/challenge_stack/forensic/reports/profiling_timeline.csv
+ | host profiling in ../../challenges/training/challenge_stack/forensic/reports/profiling_host.csv
+ | networks profiling in ../../challenges/training/challenge_stack/forensic/reports/profiling_networks.csv
+ | local users profiling in ../../challenges/training/challenge_stack/forensic/reports/profiling_users.csv
+ | applications system wide info in ../../challenges/training/challenge_stack/forensic/reports/profiling_applications_system_wide.csv
+ | writable storage info in ../../challenges/training/challenge_stack/forensic/reports/profiling_storage.csv
 
-real	2m16,088s
-user	2m10,261s
-sys	    0m5,787s
+real	1m40,572s
+user	1m35,255s
+sys	0m4,975s
 ```
