@@ -10,7 +10,6 @@ class AcquisitionCommand(AbstractCommand):
         group = click.Group(
             'acquisition',
             help='cheat sheets related to data acquisition (physical info, dump, mount)',
-            context_settings=dict(terminal_width=120)
         )
 
         group.add_command(click.Command(
@@ -19,17 +18,17 @@ class AcquisitionCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
-            name='collect', help='cheat sheet to collect info about the physical layer of a disk',
+            name='collect', help='to collect info about the physical layer of a disk',
             callback=self.collect_info,
         ))
 
         group.add_command(click.Command(
-            name='dump', help='cheat sheet to dump disk or memory',
+            name='dump', help='to dump disk or memory',
             callback=self.dump,
         ))
 
         group.add_command(click.Command(
-            name='mount', help='cheat sheet to mount partitions',
+            name='mount', help='to mount partitions',
             callback=self.mount
         ))
 

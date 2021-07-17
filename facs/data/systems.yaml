@@ -112,6 +112,20 @@ macb_theory:
       file_name: 'macb'
       description: 'file moved on a different volume'
 
+deletion_behaviors:
+  - fs: 'ext2'
+    behavior: 'inode marked as unallocated, data block pointers still present)'
+  - fs: 'ext3'
+    behavior: 'inode marked as unallocated, data block pointers zeroed'
+  - fs: 'ext4'
+    behavior: 'inode marked as unallocated, extents zeroed'
+  - fs: 'ntfs'
+    behavior: 'clusters marked as unallocated, data runs not cleared'
+  - fs: 'fat*'
+    behavior: 'clusters marked as unallocated, size and filename kept in cluster, chain of cluster lost'
+  - fs: 'exfat'
+    behavior: 'clusters marked as unallocated, size and filename kept in cluster, chain of cluster lost'
+
 general:
   - name: 'hard link'
     description: '2 inodes, same data blocks'

@@ -3,29 +3,32 @@ timelines:
     - 'sleuthkit'
     - 'plaso-tools'
   cheat_sheet:
-    - description: 'Create disk timeline (files/folders and deleted ones) with sleuthkit'
+    - description: 'create disk timeline (files/folders and deleted ones) with sleuthkit'
       command: 'fls -{F,D}rph{u,d} -m ''/''  disk.raw | tee fls_{files,folders}_{allocated,deleted}.body'
-    - description: 'Convert body file to csv'
+    - description: 'convert body file to csv'
       command: 'mactime -d -y -b fls_files.body | tee mactime_timeline_files.csv'
-    - description: 'Create disk timeline (files/folders and deleted ones) with log2timeline'
+    - description: 'create disk timeline (files/folders and deleted ones) with log2timeline'
       command: 'log2timeline --parsers mft --storage-file l2t_mft.plaso disk.raw && psort -o l2tcsv -w l2t_mft.csv l2t_mft.plaso'
     - description: 'compute md5 of all files'
       command: 'find . -type f -exec md5sum {} \; > ../md5_all_files.csv && sed -i ''s/\s\+/,/'' forensic/md5_all_files.csv'
-    - description: 'Prepare known goods (OS and Office Suite related files) from NSRL db'
-      command: 'py_facs preprocessing --os <operating system> -n <NSRL iso mount point> -d <outdir>'
+    - description: 'prepare known goods (OS and Office Suite related files) from NSRL db'
+      command: 'py_facs scripts nsrl prepare --os <operating system> -n <NSRL iso mount point> -d <outdir>'
     - description: 'thin disk timeline based on a NSRL db'
-      command: 'py_facs preprocessing thin_timeline_nsrl --body <fls_w_md5.body> --nsrl <nsrl_os.csv> -d <outdir>'
+      command: 'py_facs scripts nsrl prepare --body <fls_w_md5.body> --nsrl <nsrl_os.csv> -d <outdir>'
 
 known_bads:
   tools:
     - 'yara'
     - 'clamscan'
+    - 'nsrl'
 
   cheat_sheet:
     - description: 'Check files against clamav db'
       command: 'fresclam --show-progress && clamscan -r --alert-macros=yes --infected --log=clamav_infected.txt <mount_point>'
     - description: 'Check disk against a set of yara rules'
       command: 'yara -r ruleset.yara <mount point>'
+    - description: 'Discard OS and office files from a disk timeline'
+      command: 'py_facs script nsrl prepare, then py_facs nsrl thin'
         
 windows:
   tools:
@@ -50,10 +53,8 @@ windows:
       command: 'python3 usn.py -c -f usnjrnl.dat -o usnjrnl.csv'
     - description: 'clean dirty hives (SOFTWARE, SYSTEM, SAM, NTUSER.DAT, USRCLASS.DAT)'
       command: 'registry-transaction-logs <hive> -p <hive>.LOG1 -s <hive>.LOG2 -o <hive>_CLEAN'
-    - description: 'dump registries light (SOFTWARE, SYSTEM, SAM, NTUSER.DAT, USRCLASS.DAT)'
-      command: 'registry-plugins-run -o <hive>.json <clean hive>'
-    - description: 'dump registries full (SOFTWARE hive is big and can take up to 2 hours)'
-      command: 'registry-dump -o <hive>.json <clean hive>'
+    - description: 'dump all registries (SOFTWARE hive is big and can take up to 2 hours)'
+      command: 'registry-dump -o registries.json <path to clean hives>'
     - description: 'Create windows events timeline of a host with plaso'
       command: 'log2timeline --parsers winevtx --storage-file l2t_evtx.plaso </evtx/folder> && psort -o json_line -w l2t_evtx.csv l2t_evtx.plaso'
 

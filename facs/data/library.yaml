@@ -2,6 +2,7 @@ lolbin:
   - 'https://wadcoms.github.io/'
   - 'https://lolbas-project.github.io/#'
   - 'https://gtfobins.github.io/'
+  - 'https://filesec.io'
 
 ioc_ttp:
   - 'https://github.com/eset/malware-ioc'

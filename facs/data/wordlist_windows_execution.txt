@@ -2,14 +2,16 @@ EulaAccepted
 DownloadString
 accepteula
 consent.exe
+wusa.exe
 ntdsutil
 comsvcs.dll
-nltest
 whoami
 ipconfig
 netstat
 net.exe
+nltest
 systeminfo.exe
+wermgr
 shareenum
 sdelete
 psinfo

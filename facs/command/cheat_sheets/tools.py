@@ -9,8 +9,7 @@ class ToolsCommand(AbstractCommand):
     def get_commands(self):
         group = click.Group(
             'tools',
-            help='cheat sheets on some tools',
-            context_settings=dict(terminal_width=120)
+            help='cheat sheets on some tools used in digital forensic',
         )
 
         group.add_command(click.Command(
@@ -44,7 +43,7 @@ class ToolsCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
-            name='misc', help='cheat sheet on some useful bash commands',
+            name='misc', help='cheat sheet on some useful shell commands',
             callback=self.get_notes_misc
         ))
 

@@ -6,39 +6,22 @@ from facs.command.abstract import AbstractCommand
 from facs.entity.timeline import TimelineEntity
 
 
-class ProcessingCommand(AbstractCommand):
+class WindowsCommand(AbstractCommand):
 
     def __init__(self, evtx_bo, registry_bo, report_timeline_bo):
-        super().__init__('processing.yaml')
         self.__evtx_bo = evtx_bo
         self.__registry_bo = registry_bo
         self.__report_timeline_bo = report_timeline_bo
 
     def get_commands(self):
         group = click.Group(
-            'processing',
-            help='cheat sheets and scripts to forensicate',
-            context_settings=dict(terminal_width=120)
+            'windows',
+            help='forensicating on Windows',
         )
 
         group.add_command(click.Command(
-            name='misc', help='cheat sheets for other possible steps in the analysis (manual mining, ...)',
-            callback=self.get_cheat_sheet_misc
-        ))
-
-        group.add_command(click.Command(
-            name='tool_patterns', help='cheat sheets of known artifacts left by attacker toolbox (psexec, mimikatz, ...)',
-            callback=self.get_tool_patterns
-        ))
-
-        group.add_command(click.Command(
-            name='list_defaults', help='list of default values in tool configuration (RAT, reverse shells, ...)',
-            callback=self.list_defaults
-        ))
-
-        group.add_command(click.Command(
-            name='win_profiling_host', help='profile a host based on evtx and registry',
-            callback=self.do_win_profiling,
+            name='profile_host', help='profile a host based on evtx and registry',
+            callback=self.do_profile_host,
             params=[
                 self._get_option_evtx(),
                 self._get_option_hive_sam(),
@@ -51,29 +34,7 @@ class ProcessingCommand(AbstractCommand):
 
         return group
 
-    def get_cheat_sheet_misc(self):
-        manual = []
-        for elt in self._data['manual_mining']:
-            line = '{:80}: {}'.format(elt['description'], elt['note'])
-            manual.append(line)
-        self._print_text('Manual mining', manual)
-
-    def get_tool_patterns(self):
-        patterns = []
-        for elt in self._data['patterns']:
-            for pattern in elt['detection']:
-                line = 'tool: {:40} pattern: {}'.format(elt['tool'], pattern)
-                patterns.append(line)
-        self._print_text('Known/Possible patterns of adversaries tools', patterns)
-
-    def list_defaults(self):
-        defaults = []
-        for elt in self._data['defaults']:
-            line = '{:60}: {}'.format(elt['description'], elt['value'])
-            defaults.append(line)
-        self._print_text('Some default values of software', defaults)
-
-    def do_win_profiling(self, evtx, hive_sam, hive_system, hive_software, outdir, output):
+    def do_profile_host(self, evtx, hive_sam, hive_system, hive_software, outdir, output):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
 

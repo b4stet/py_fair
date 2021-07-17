@@ -10,7 +10,7 @@ manual_mining:
   - description: 'look for credentials in GPO'
     note: 'browse sysvol on DC'
   - description: 'look for specific logs (RAT, AV, Cloud ...)'
-    note: 'py_facs logs windows'
+    note: 'py_facs cheat_sheets logs windows'
 
 patterns:
   - tool: 'mimikatz'
@@ -106,7 +106,7 @@ patterns:
       - 'included in execution wordlist'
 
 
-defaults:
+defaults_values:
   - description: 'default RDP port'
     value: '3389'
   - description: 'default Anydesk port'
@@ -123,14 +123,22 @@ defaults:
     value: 'GET /login/process.php + GET /admin/get.php + GET /news.php'
 
 win_profiling:
-  - description: 'collect start/end of event logs for main channels'
-  - description: 'look for defence evasion: system backdated'
-  - description: 'look for defence evasion: event logs cleared/stopped'
-  - description: 'verify the host was active for the time frame: boot/shutdown'
-  - description: 'verify the host is the correct one: hostname, last IP, local users'
-  - description: 'profile the local users: login history, group membership, SID'
-  - description: 'profile the system: network history'
-  - description: 'profile the system: USB history'
-  - description: 'profile the system: installed/uninstalled software'
-  - description: 'profile the system: startup process and services'
-  - description: 'profile the system: analyze the srum (System Resource Usage Monitor)'
+  - 'collect start/end of event logs for main channels'
+  - 'look for defence evasion: system backdated'
+  - 'look for defence evasion: event logs cleared/stopped'
+  - 'verify the host was active for the time frame: boot/shutdown'
+  - 'verify the host is the correct one: hostname, last IP, local users'
+  - 'profile the local users: login history, group membership, SID'
+  - 'profile the system: network history'
+  - 'profile the system: USB history'
+  - 'profile the system: installed/uninstalled software'
+  - 'profile the system: startup process and services'
+  - 'profile the system: analyze the srum (System Resource Usage Monitor)'
+  - 'profile the users: installed/uninstalled software'
+  - 'profile the users: USB history'
+  - 'profile the users: installed/uninstalled software'
+  - 'profile the users: startup process and services'
+  - 'profile the users: cloud synchronization'
+  - 'py_facs scripts windows profile_host (if it works -_-)'
+
+

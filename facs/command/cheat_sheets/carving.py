@@ -17,12 +17,6 @@ class CarvingCommand(AbstractCommand):
         tools.sort()
         self._print_text('Tools', tools)
 
-        behaviors = []
-        for elt in self._data['fs_behaviors']:
-            line = '{:10}: {}'.format(elt['fs'], elt['behavior'])
-            behaviors.append(line)
-        self._print_text('File System behavior when deleting', behaviors)
-
         cheat_sheet = []
         for elt in self._data['cheat_sheet']:
             line = '{:80}: {}'.format(elt['description'], elt['command'])

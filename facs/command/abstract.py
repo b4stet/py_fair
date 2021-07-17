@@ -25,7 +25,7 @@ class AbstractCommand():
         'windows',
     ]
 
-    def __init__(self, data):
+    def __init__(self, data=None):
         file_path = os.path.dirname(os.path.dirname(__file__)) + '/data/' + data
         with open(file_path, mode='r', encoding='utf-8') as f:
             self._data = yaml.safe_load(f)

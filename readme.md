@@ -36,19 +36,23 @@ $ pip3 install .
 $ pip3 uninstall py_facs
 ```
 
-## Commands
-- `resources`: blogs, tools, various knowledge bases, notable cves, ...
-- `systems`: some notes about operating systems
+## Cheat Sheets Commands
+- `library`: blogs, tools, various knowledge bases, notable cves, ...
 - `tools`: cheat sheets for some tools like tsk, plaso, tshark, volatility, ...
-- `logs`: cheat sheets of some log paths, default values, Windows event IDs ...
+- `systems`: some notes about operating systems
+- `logs`: cheat sheets of some log paths, Windows event IDs ...
 - `acquisition`: cheat sheets for operations related to data acquisition (info, dump disk/memory, mount)
 - `carving`: cheat sheets to carve allocated and unallocated blocks, ...
-- `preprocessing`: cheat sheets and scripts to prepare data to be analyzed
-- `processing`: cheat sheets and scripts to forensicate
+- `preprocessing`: cheat sheets to prepare data to be analyzed, time intensive tasks
+- `processing`: cheat sheets for manual mining, default values, attacker toolbox patterns
+
+## Scripts Commands
 
 ## Examples
 Windows host profiling on a 120G disk dump:
 ```
+$ py_facs scripts windows profile_host -e l2t_evtx.json  -d reports/ -o csv --hsystem SYSTEM_CLEAN --hsoftware SOFTWARE_CLEAN --hsam SAM_CLEAN
+
 [+] Analyzing registry hives ... done.
 [+] Analyzing evtx ... done. Processed 264382 events
 [+] Checked start/end of windows event log for main channels

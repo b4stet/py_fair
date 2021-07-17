@@ -7,35 +7,19 @@ import zipfile
 from facs.command.abstract import AbstractCommand
 
 
-class PreprocessingCommand(AbstractCommand):
+class NsrlCommand(AbstractCommand):
     def __init__(self):
-        super().__init__('preprocessing.yaml')
+        pass
 
     def get_commands(self):
         group = click.Group(
-            'preprocessing',
-            help='cheat sheets and scripts of cumbersome/time intensive preparation tasks (timelines, NSRL, vss, registries, av/yara scan ...)',
-            context_settings=dict(terminal_width=120)
+            'nsrl',
+            help='scripts to play with nsrl database',
         )
 
         group.add_command(click.Command(
-            name='timeline', help='cheat sheet to create disk timelines (tsk, plaso, ...)',
-            callback=self.list_timelines_creation
-        ))
-
-        group.add_command(click.Command(
-            name='windows', help='cheat sheet related to windows specific artifacts (shadow copies, usnjrnl, ...)',
-            callback=self.list_artifacts_windows
-        ))
-
-        group.add_command(click.Command(
-            name='known_bads', help='cheat_sheet to check against known bads',
-            callback=self.list_known_bads_checks
-        ))
-
-        group.add_command(click.Command(
-            name='prepare_nsrl', help='extract NSRL good knowns of OS and Office Suite files',
-            callback=self.prepare_nsrl,
+            name='prepare', help='extract NSRL good knowns for OS and Office Suite files',
+            callback=self.prepare,
             params=[
                 self._get_option_outdir(),
                 self._get_option_nsrl_folder(),
@@ -44,8 +28,8 @@ class PreprocessingCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
-            name='thin_timeline', help='thin the disk timeline using a NSRL db',
-            callback=self.thin_timeline,
+            name='thin', help='thin a disk timeline using a NSRL db',
+            callback=self.thin,
             params=[
                 self._get_option_outdir(),
                 self._get_option_bodyfile(),
@@ -55,40 +39,7 @@ class PreprocessingCommand(AbstractCommand):
 
         return group
 
-    def list_timelines_creation(self):
-        tools = self._data['timelines']['tools']
-        tools.sort()
-        self._print_text('Tools', tools)
-
-        cheat_sheet = []
-        for elt in self._data['timelines']['cheat_sheet']:
-            line = '{:80}: {}'.format(elt['description'], elt['command'])
-            cheat_sheet.append(line)
-        self._print_text('Cheat Sheet', cheat_sheet)
-
-    def list_artifacts_windows(self):
-        tools = self._data['windows']['tools']
-        tools.sort()
-        self._print_text('Tools', tools)
-
-        cheat_sheet = []
-        for elt in self._data['windows']['cheat_sheet']:
-            line = '{:80}: {}'.format(elt['description'], elt['command'])
-            cheat_sheet.append(line)
-        self._print_text('Cheat Sheet', cheat_sheet)
-
-    def list_known_bads_checks(self):
-        tools = self._data['known_bads']['tools']
-        tools.sort()
-        self._print_text('Tools', tools)
-
-        cheat_sheet = []
-        for elt in self._data['known_bads']['cheat_sheet']:
-            line = '{:80}: {}'.format(elt['description'], elt['command'])
-            cheat_sheet.append(line)
-        self._print_text('Cheat Sheet', cheat_sheet)
-
-    def prepare_nsrl(self, nsrl, operating_system, outdir):
+    def prepare(self, nsrl, operating_system, outdir):
         # prepare out files
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
@@ -153,7 +104,7 @@ class PreprocessingCommand(AbstractCommand):
         print('done')
         print(' | Wrote result in {}'.format(out_nsrl_filtered))
 
-    def thin_timeline(self, body, nsrl, outdir):
+    def thin(self, body, nsrl, outdir):
         # prepare out files
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))

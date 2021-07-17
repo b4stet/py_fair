@@ -118,8 +118,6 @@ nsrl:
       note: 'cat nsrl_sha1.txt | grep "legacy" | cut -d, -f1 | tr -d ''"'' | xargs -I {} echo "{} legacy.iso" | sha1sum --check'
     - description: 'mount the iso'
       note: 'mkdir legacy && sudo mount legacy.iso legacy/'
-    - description: 'extract os and office related files'
-      note: 'py_facs preprocessing prepare_nsrl --help'
 
 misc:
   - description: 'convert base 16 to base 10'
