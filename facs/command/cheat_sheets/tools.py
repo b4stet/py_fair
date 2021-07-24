@@ -28,6 +28,11 @@ class ToolsCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
+            name='bulk', help='notes about bulk_extractor',
+            callback=self.get_notes_bulk_extractor
+        ))
+
+        group.add_command(click.Command(
             name='tshark', help='notes about tshark',
             callback=self.get_notes_tshark
         ))
@@ -61,6 +66,14 @@ class ToolsCommand(AbstractCommand):
         cheat_sheet = []
         cheat_sheet.append('reference: {}'.format(self._data['plaso']['ref']))
         for elt in self._data['plaso']['cheat_sheet']:
+            line = '{:80}: {}'.format(elt['description'], elt['note'])
+            cheat_sheet.append(line)
+        self._print_text('Cheat Sheet', cheat_sheet)
+
+    def get_notes_bulk_extractor(self):
+        cheat_sheet = []
+        cheat_sheet.append('reference: {}'.format(self._data['bulk_extractor']['ref']))
+        for elt in self._data['bulk_extractor']['cheat_sheet']:
             line = '{:80}: {}'.format(elt['description'], elt['note'])
             cheat_sheet.append(line)
         self._print_text('Cheat Sheet', cheat_sheet)

@@ -35,6 +35,8 @@ sleuthkit:
       note: 'blkls -o <partition sector offset> disk.raw > unallocated.dat'
     - description: 'carve slack space'
       note: 'blkls -o <partition sector offset> -s disk.raw > slack.dat'
+    - description: 'from grep to data block'
+      note: 'grep -abi to get byte offset X of hit, fdisk to get partition offset Y the hit X/sector size belongs to, get data blocks with fsstat on (X-Y*sector byte size)/block size, carve with icat/ifind/blkcat'
     - description: 'fls output, body file format'
       note: 'MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime'
     - description: 'fls output, mode_as_string meaning'
@@ -78,6 +80,8 @@ volatility2:
         PROFILE=<profile>
         LOCATION=file:///path/to/memory.img
         KDBG=0x<offset>
+    - description: 'check if a file is on the disk'
+      note: 'mftparser | grep <pattern>'
     - description: 'get physical offset of file loaded in memory'
       note: 'plugin filescan, then grep on the filename'
     - description: 'dump file from memory'
@@ -119,10 +123,20 @@ nsrl:
     - description: 'mount the iso'
       note: 'mkdir legacy && sudo mount legacy.iso legacy/'
 
+bulk_extractor:
+  ref: 'https://github.com/simsong/bulk_extractor'
+  cheat_sheet:
+    - description: 'usage (E is for exclude, e for enable)'
+      note: 'bulk_extractor  -E <scanner1> -e <scanner2> -f <string/regex> -o output/ disk.raw'
+    - description: 'outputs'
+      note: '1 txt file per scanner (+ histogram sometimes), offset of hits (convert to data block with icat/ifind)'
+
 misc:
   - description: 'convert base 16 to base 10'
     note: 'echo "ibase=16;DEADBEEF" | bc'
   - description: 'compare integrity of files with a witness file'
-    note: 'sha1sum -c hash.txt --ignore-missing'      
+    note: 'sha1sum -c hash.txt --ignore-missing'
   - description: 'change the entrypoint to enter in a docker container'
     note: 'docker run -it --rm --entrypoint bash <image>'
+  - description: 'search strings in raw image'
+    note: 'grep -abi <pattern> disk.raw'
