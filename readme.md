@@ -54,12 +54,12 @@ $ pip3 uninstall py_facs
 ## About export to ODS
 The ODF format was preferred to Open XML one due to issues with xlsx file created in LibreOffice.
 However, the only suitable library found to handle creation, data updates and styles in ODF was `odfpy`.
-As the notion of cell address is absent in ODF, several limitations to the automation are enforced to avoid writing a too complex processor:
-- styles managed are font, size, alignement, color and color background
-- cell borders are not managed by the code
-    - if used, this style property is applied per cell
+As the notion of address/coordinates is not attached to a cell in ODF, several limitations are enforced to avoid writing a too complex processor:
+- styles supported are font, size, alignement, color and color background
+- cell borders are not supported by the code
+    - when used, this style property is applied per cell ... not friendly to handle properly without cell addresses
     - using table range (in LibreOffice: Data > Select Range > select the table name), it's a 2 clics process to get borders as you wish the first time
-    - code maintains table range, so that borders will be auto updated when adding rows
+    - the code maintains table range, so that borders will be auto updated when adding rows
 - all cells have type `string`, which does not break date sorting since scripts generate all dates in ISO8601 format
 - table should start at cell A1
 - first row of a table should be the header, with non empty, nor duplicate values
