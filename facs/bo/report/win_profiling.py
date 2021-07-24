@@ -276,7 +276,7 @@ class ReportWinProfilingBo(AbstractBo):
         report['data'].append('device types from key SYSTEM\\CurrentControlSet\\Enum\\USB, property {a8b865dd-2e3d-4094-ad97-e593a70c75d6}')
         report['data'].append('models from key SYSTEM\\CurrentControlSet\\Enum\\USB, property {540b947e-8b40-45bc-a8a2-6a0b894cbda2}')
         report['data'].append('first/last connections from key SYSTEM\\CurrentControlSet\\Enum\\USB, property {83da6326-97a6-4088-9453-a1923f573b29}')
-        report['data'].append('drive letters, and volume GUID from key SYSTEM\\MountedDevices')
+        report['data'].append('drive letters, and volume GUID from key SYSTEM\\MountedDevices (do check manually slack space)')
 
         # add connections, only keep those referring to USB mass storage, MTP or UAS mass storage
         for event in evtx_pnp_connections:
@@ -353,17 +353,17 @@ class ReportWinProfilingBo(AbstractBo):
 
             data = StorageInfoEntity(
                 device_type=self._STORAGE_INTERNAL_DRIVE,
-                manufacturer=device['manufacturer'],
-                model=device['model'],
-                revision=device['revision'],
-                bytes_capacity=device['bytes_capacity'],
-                disk_serial_number=device['disk_serial_number'],
-                partition_type=device['partition_type'],
-                disk_guid=device['disk_guid'],
-                adapter_guid=device['adapter_guid'],
-                registry_guid=device['registry_guid'],
-                vendor_product=device['vendor_product'],
-                serial_number=device['serial_number']
+                manufacturer=device.get('manufacturer', ''),
+                model=device.get('model', ''),
+                revision=device.get('revision', ''),
+                bytes_capacity=device.get('bytes_capacity', ''),
+                disk_serial_number=device.get('disk_serial_number', ''),
+                partition_type=device.get('partition_type', ''),
+                disk_guid=device.get('disk_guid', ''),
+                adapter_guid=device.get('adapter_guid', ''),
+                registry_guid=device.get('registry_guid', ''),
+                vendor_product=device.get('vendor_product', ''),
+                serial_number=device.get('serial_number', ''),
             )
             found = False
 
@@ -402,24 +402,25 @@ class ReportWinProfilingBo(AbstractBo):
             if device['driver'] != self._STORAGE_DRIVERS[self._STORAGE_EXTERNAL_DRIVE]:
                 continue
 
-            hardware = [
+            hardware = next((
                 elt for elt in evtx_storage_info
-                if elt.get('vid_pid') == device['vid_pid'] and elt['serial_number'] == device['serial_number']
-            ]
+                if elt.get('vid_pid') == device['vid_pid'] and elt['serial_number'] == device['serial_number']), None
+            )
+
             data = StorageInfoEntity(
-                manufacturer=hardware[0]['manufacturer'],
-                model=hardware[0]['model'],
-                revision=hardware[0]['revision'],
-                bytes_capacity=hardware[0]['bytes_capacity'],
-                disk_serial_number=hardware[0]['disk_serial_number'],
-                partition_type=hardware[0]['partition_type'],
-                disk_guid=hardware[0]['disk_guid'],
-                adapter_guid=hardware[0]['adapter_guid'],
-                registry_guid=hardware[0]['registry_guid'],
-                serial_number=hardware[0]['serial_number'],
-                vid_pid=device['vid_pid'],
                 device_type=device['device_type'],
-                driver=device['driver']
+                driver=device['driver'],
+                vid_pid=device['vid_pid'],
+                manufacturer=hardware.get('manufacturer', '') if hardware is not None else '',
+                model=hardware.get('model', '') if hardware is not None else '',
+                revision=hardware.get('revision', '') if hardware is not None else '',
+                bytes_capacity=hardware.get('bytes_capacity', '') if hardware is not None else '',
+                disk_serial_number=hardware.get('disk_serial_number', '') if hardware is not None else '',
+                disk_guid=hardware['disk_guid'] if hardware is not None else '',
+                adapter_guid=hardware['adapter_guid'] if hardware is not None else '',
+                registry_guid=hardware['registry_guid'] if hardware is not None else '',
+                partition_type=hardware['partition_type'] if hardware is not None else '',
+                serial_number=hardware['serial_number'] if hardware is not None else '',
             )
 
             labels = [elt for elt in registry_usb['user_labels'] if elt['registry_guid'] == data.registry_guid]
@@ -460,23 +461,23 @@ class ReportWinProfilingBo(AbstractBo):
             if device['driver'] != self._STORAGE_DRIVERS[self._STORAGE_MSC]:
                 continue
 
-            hardware = [
+            hardware = next((
                 elt for elt in evtx_storage_info
-                if elt.get('vid_pid') == device['vid_pid'] and elt['serial_number'] == device['serial_number']
-            ]
+                if elt.get('vid_pid') == device['vid_pid'] and elt['serial_number'] == device['serial_number']), None
+            )
 
             data = StorageInfoEntity(
                 device_type=device['device_type'],
                 driver=device['driver'],
                 vid_pid=device['vid_pid'],
-                manufacturer=hardware[0]['manufacturer'],
-                model=hardware[0]['model'],
-                revision=hardware[0]['revision'],
-                bytes_capacity=hardware[0]['bytes_capacity'],
-                disk_serial_number=hardware[0]['disk_serial_number'],
-                disk_guid=hardware[0]['disk_guid'],
-                adapter_guid=hardware[0]['adapter_guid'],
-                registry_guid=hardware[0]['registry_guid']
+                manufacturer=hardware.get('manufacturer', '') if hardware is not None else '',
+                model=hardware.get('model', '') if hardware is not None else '',
+                revision=hardware.get('revision', '') if hardware is not None else '',
+                bytes_capacity=hardware.get('bytes_capacity', '') if hardware is not None else '',
+                disk_serial_number=hardware.get('disk_serial_number', '') if hardware is not None else '',
+                disk_guid=hardware['disk_guid'] if hardware is not None else '',
+                adapter_guid=hardware['adapter_guid'] if hardware is not None else '',
+                registry_guid=hardware['registry_guid'] if hardware is not None else ''
             )
 
             found = False
@@ -540,7 +541,7 @@ class ReportWinProfilingBo(AbstractBo):
 
             info.append(StorageInfoEntity(
                 virtual_volume=device['instance_id'],
-                drive_letter=device['drive_letter'],
+                last_known_drive_letter=device['drive_letter'],
                 volume_guid=device['volume_guid']
             ).to_dict())
 

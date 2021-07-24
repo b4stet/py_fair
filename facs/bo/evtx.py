@@ -422,23 +422,23 @@ class EvtxBo(AbstractBo):
         for elt in data:
             attribute = elt.getAttribute('Name')
 
-            if attribute == 'Capacity':
-                info['bytes_capacity'] = elt.firstChild.data
-
             # when capacity is zero, it is just an unplug
             if info.get('bytes_capacity') is not None and info['bytes_capacity'] == 0:
                 return None
 
-            if attribute == 'Manufacturer':
+            if attribute == 'Capacity' and elt.firstChild is not None:
+                info['bytes_capacity'] = elt.firstChild.data
+
+            if attribute == 'Manufacturer' and elt.firstChild is not None:
                 info['manufacturer'] = elt.firstChild.data
 
-            if attribute == 'Model':
+            if attribute == 'Model' and elt.firstChild is not None:
                 info['model'] = elt.firstChild.data
 
-            if attribute == 'Revision':
+            if attribute == 'Revision' and elt.firstChild is not None:
                 info['revision'] = elt.firstChild.data
 
-            if attribute == 'SerialNumber':
+            if attribute == 'SerialNumber' and elt.firstChild is not None:
                 info['disk_serial_number'] = elt.firstChild.data
 
             if attribute == 'ParentId':
@@ -459,7 +459,7 @@ class EvtxBo(AbstractBo):
             if attribute == 'RegistryId':
                 info['registry_guid'] = elt.firstChild.data
 
-            if attribute == 'PartitionTable':
+            if attribute == 'PartitionTable' and elt.firstChild is not None:
                 table = elt.firstChild.data
                 partition_type = table[0:8]
                 if partition_type == '00000000':
