@@ -20,15 +20,23 @@ class RegistryBo(AbstractBo):
         reg_sam = RegistryHive(hive_sam)
 
         profiling['control_sets'] = self.__get_control_sets(reg_system)
+        print('.', end='', flush=True)
         current_control_set = '\\ControlSet{:03d}'.format(profiling['control_sets']['current'])
 
         profiling['computer_name'] = self.__get_computer_name(reg_system, current_control_set)
+        print('.', end='', flush=True)
         profiling['os'] = self.__get_operating_system(reg_software)
+        print('.', end='', flush=True)
         profiling['time_zone'] = self.__get_timezone(reg_system, current_control_set)
+        print('.', end='', flush=True)
         profiling['networks'] = self.__get_networks(reg_system, reg_software, current_control_set)
+        print('.', end='', flush=True)
         profiling['local_users'] = self.__get_local_users(reg_sam)
+        print('.', end='', flush=True)
         profiling['applications'] = self.__get_installed_applications(reg_software)
+        print('.', end='', flush=True)
         profiling['usb'] = self.__get_usb_info(reg_system, reg_software, current_control_set)
+        print('.', end='', flush=True)
 
         return profiling
 

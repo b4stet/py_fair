@@ -29,6 +29,9 @@ class EvtxBo(AbstractBo):
         nb_events = 0
         for line in fd_evtx:
             nb_events += 1
+            if nb_events % 1000 == 0:
+                print('.', end='', flush=True)
+
             event = json.loads(line)
             info = self.__extract_common(event['xml_string'])
 

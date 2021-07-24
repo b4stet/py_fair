@@ -6,8 +6,8 @@ from facs.entity.storage_info import StorageInfoEntity
 from facs.bo.abstract import AbstractBo
 
 
-class ReportTimelineBO(AbstractBo):
-    def get_profiling(self, results_evtx, results_registry, channels):
+class ReportWinProfilingBo(AbstractBo):
+    def assemble_report(self, results_evtx, results_registry, channels):
         timeline_global = []
         report_global = []
 
@@ -313,7 +313,7 @@ class ReportTimelineBO(AbstractBo):
                 event = TimelineEntity(
                     start=elt['last_removal'],
                     host=results_registry['computer_name'],
-                    event='Last_removal of {}'.format(elt['device_model']),
+                    event='Last removal of {}'.format(elt['device_model']),
                     event_type=TimelineEntity.TIMELINE_TYPE_EVENT,
                     source='SYSTEM\\CurrentControlSet\\Enum\\USB',
                     note='{}; {}#{}'.format(elt['device_type'], elt['vid_pid'], elt['serial_number'])

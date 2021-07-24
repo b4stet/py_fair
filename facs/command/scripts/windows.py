@@ -1,6 +1,4 @@
 import click
-import json
-import sys
 import os
 from facs.command.abstract import AbstractCommand
 from facs.entity.timeline import TimelineEntity
@@ -8,15 +6,15 @@ from facs.entity.timeline import TimelineEntity
 
 class WindowsCommand(AbstractCommand):
 
-    def __init__(self, evtx_bo, registry_bo, report_timeline_bo):
+    def __init__(self, evtx_bo, registry_bo, report_bo):
         self.__evtx_bo = evtx_bo
         self.__registry_bo = registry_bo
-        self.__report_timeline_bo = report_timeline_bo
+        self.__report_bo = report_bo
 
     def get_commands(self):
         group = click.Group(
             'windows',
-            help='forensicating on Windows',
+            help='forensicating a Windows host',
         )
 
         group.add_command(click.Command(
@@ -46,20 +44,20 @@ class WindowsCommand(AbstractCommand):
         out_profiling_storage = os.path.join(outdir, 'profiling_storage.' + output)
 
         # extract info from system, software and sam hive
-        print('[+] Analyzing registry hives ... ', end='', flush=True)
+        print('[+] Analyzing registry hives ', end='', flush=True)
         results_registry = self.__registry_bo.get_profiling_from_registry(hive_system, hive_software, hive_sam)
-        print('done.')
+        print(' done.')
 
         # extract info from windows events
-        print('[+] Analyzing evtx ... ', end='', flush=True)
+        print('[+] Analyzing evtx ', end='', flush=True)
         fd_evtx = open(evtx, mode='r', encoding='utf8')
         results_evtx = self.__evtx_bo.get_profiling_from_evtx(fd_evtx)
         fd_evtx.close()
-        print('done. Processed {} events'.format(results_evtx['nb_events']))
+        print(' done. Processed {} events'.format(results_evtx['nb_events']))
 
         # assemble timeline and reports
-        result = self.__report_timeline_bo.get_profiling(results_evtx, results_registry, self.__evtx_bo.CHANNELS_MIN)
-        result['report'].append({
+        report = self.__report_bo.assemble_report(results_evtx, results_registry, self.__evtx_bo.CHANNELS_MIN)
+        report['report'].append({
             'title': 'Output files',
             'data': [
                 'timeline in {}'.format(out_timeline),
@@ -70,13 +68,13 @@ class WindowsCommand(AbstractCommand):
                 'writable storage info in {}'.format(out_profiling_storage),
             ],
         })
-        for chunk in result['report']:
+        for chunk in report['report']:
             self._print_text(chunk['title'], chunk['data'])
 
-        timeline = sorted(result['timeline'], key=lambda k: k['start'])
+        timeline = sorted(report['timeline'], key=lambda k: k['start'])
         self._write_formatted(out_timeline, output, timeline)
-        self._write_formatted(out_profiling_host, output, result['profiling']['host'])
-        self._write_formatted(out_profiling_users, output, result['profiling']['users'])
-        self._write_formatted(out_profiling_networks, output, result['profiling']['interfaces'])
-        self._write_formatted(out_profiling_applications, output, result['profiling']['applications'])
-        self._write_formatted(out_profiling_storage, output, result['profiling']['writable_storage'])
+        self._write_formatted(out_profiling_host, output, report['profiling']['host'])
+        self._write_formatted(out_profiling_users, output, report['profiling']['users'])
+        self._write_formatted(out_profiling_networks, output, report['profiling']['interfaces'])
+        self._write_formatted(out_profiling_applications, output, report['profiling']['applications'])
+        self._write_formatted(out_profiling_storage, output, report['profiling']['writable_storage'])

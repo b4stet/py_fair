@@ -2,7 +2,7 @@ class TimelineEntity():
     TIMELINE_TYPE_LOG = 'LOG'
     TIMELINE_TYPE_EVENT = 'EVENT'
 
-    def __init__(self, start, host, event, event_type, source, user='', foreign='', end='', note=''):
+    def __init__(self, start, event, event_type, source, host='', user='', foreign='', end='', note=''):
         self.__start = start
         self.__end = end
         self.__host = host
@@ -21,9 +21,9 @@ class TimelineEntity():
             'user': self.__user,
             'foreign': self.__foreign,
             'event': self.__event,
-            'type': self.__type,
-            'source': self.__source,
             'note': self.__note,
+            'source': self.__source,
+            'type': self.__type,
         }
 
     def get_start(self):

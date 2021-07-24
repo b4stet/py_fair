@@ -33,7 +33,7 @@ class NsrlCommand(AbstractCommand):
             params=[
                 self._get_option_outdir(),
                 self._get_option_bodyfile(),
-                self._get_option_nsrl_files(),
+                self._get_option_nsrl_file(),
             ]
         ))
 

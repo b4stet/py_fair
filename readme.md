@@ -47,14 +47,33 @@ $ pip3 uninstall py_facs
 - `processing`: cheat sheets for manual mining, default values, attacker toolbox patterns
 
 ## Scripts Commands
+- `nsrl`: set of scripts to extract OS and office related files (known goods), to then filter on a disk timeline
+- `windows`: set of scripts to automate some parts of the forensics (eg. profiling host and users)
+- `export`: set of scripts to export csv results in an ODS file, or visualize the timeline
+
+## About export to ODS
+The ODF format was preferred to Open XML one due to issues with xlsx file created in LibreOffice.
+However, the only suitable library found to handle creation, data updates and styles in ODF was `odfpy`.
+As the notion of cell address is absent in ODF, several limitations to the automation are enforced to avoid writing a too complex processor:
+- styles managed are font, size, alignement, color and color background
+- cell borders are not managed by the code
+    - if used, this style property is applied per cell
+    - using table range (in LibreOffice: Data > Select Range > select the table name), it's a 2 clics process to get borders as you wish the first time
+    - code maintains table range, so that borders will be auto updated when adding rows
+- all cells have type `string`, which does not break date sorting since scripts generate all dates in ISO8601 format
+- table should start at cell A1
+- first row of a table should be the header, with non empty, nor duplicate values
+    - otherwise ODF will "compress" using the property `number-column-repeated`
+    - this property is not handled by the code
+    - hence it will break the columns computation
 
 ## Examples
 Windows host profiling on a 120G disk dump:
 ```
 $ py_facs scripts windows profile_host -e l2t_evtx.json  -d reports/ -o csv --hsystem SYSTEM_CLEAN --hsoftware SOFTWARE_CLEAN --hsam SAM_CLEAN
 
-[+] Analyzing registry hives ... done.
-[+] Analyzing evtx ... done. Processed 264382 events
+[+] Analyzing registry hives ........ done.
+[+] Analyzing evtx ........................................................................................................................................................................................................................................................................ done. Processed 264382 events
 [+] Checked start/end of windows event log for main channels
  | Security                                                                        : ok
  | System                                                                          : ok
@@ -111,14 +130,15 @@ $ py_facs scripts windows profile_host -e l2t_evtx.json  -d reports/ -o csv --hs
  | drive letters, and volume GUID from key SYSTEM\MountedDevices
 
 [+] Output files
- | timeline in ../../challenges/training/challenge_stack/forensic/reports/profiling_timeline.csv
- | host profiling in ../../challenges/training/challenge_stack/forensic/reports/profiling_host.csv
- | networks profiling in ../../challenges/training/challenge_stack/forensic/reports/profiling_networks.csv
- | local users profiling in ../../challenges/training/challenge_stack/forensic/reports/profiling_users.csv
- | applications system wide info in ../../challenges/training/challenge_stack/forensic/reports/profiling_applications_system_wide.csv
- | writable storage info in ../../challenges/training/challenge_stack/forensic/reports/profiling_storage.csv
+ | timeline in ./reports/profiling_timeline.csv
+ | host profiling in ./reports/profiling_host.csv
+ | networks profiling in ./reports/profiling_networks.csv
+ | local users profiling in ./reports/profiling_users.csv
+ | applications system wide info in ./reports/profiling_applications_system_wide.csv
+ | writable storage info in ./reports/profiling_storage.csv
 
-real	1m40,572s
-user	1m35,255s
-sys	0m4,975s
+
+real	1m45,933s
+user	1m41,277s
+sys	0m5,420s
 ```

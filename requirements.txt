@@ -4,4 +4,5 @@ regipy
 zipfile
 datetime
 dateutil
+openpyxl
 setuptools

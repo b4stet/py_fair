@@ -68,7 +68,7 @@ class AbstractCommand():
     def _get_option_output(self):
         return click.Option(
             ['--output', '-o', 'output'],
-            help='Output format for the result. Default is json',
+            help='output format for the result. Default is json',
             default='json',
             type=click.Choice(self.OUTPUT_FORMATS)
         )
@@ -76,7 +76,28 @@ class AbstractCommand():
     def _get_option_outdir(self):
         return click.Option(
             ['--outdir', '-d', 'outdir'],
-            help='Output folder for the result',
+            help='output folder for the result',
+            required=True
+        )
+
+    def _get_option_csv(self):
+        return click.Option(
+            ['--csv', '-c', 'csv_file'],
+            help='path to a csv file, comma delimited and with header',
+            required=True
+        )
+
+    def _get_option_workbook(self):
+        return click.Option(
+            ['--workbook', '-w', 'workbook'],
+            help='path to a workbook, ODF format',
+            required=True
+        )
+
+    def _get_option_sheetname(self):
+        return click.Option(
+            ['--sheet', '-s', 'sheetname'],
+            help='name of the sheet to use in the workbook',
             required=True
         )
 
@@ -87,7 +108,7 @@ class AbstractCommand():
             required=True
         )
 
-    def _get_option_nsrl_files(self):
+    def _get_option_nsrl_file(self):
         return click.Option(
             ['--nsrl', '-n', 'nsrl'],
             help='a file in NSRLFile.txt format',
@@ -104,7 +125,7 @@ class AbstractCommand():
     def _get_option_os(self):
         return click.Option(
             ['--os', 'operating_system'],
-            help='Operating System to filter on. Default is windows',
+            help='operating system to filter on. Default is Windows',
             default='windows',
             type=click.Choice(self.SUPPORTED_OS)
         )
