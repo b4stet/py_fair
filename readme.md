@@ -51,6 +51,9 @@ $ pip3 uninstall py_facs
 - `windows`: set of scripts to automate some parts of the forensics (eg. profiling host and users)
 - `export`: set of scripts to export csv results in an ODS file, or visualize the timeline
 
+As data volume can be huge for some artifacts, specific formats are enforced to "stream" files instead of loading them fully in memory.  
+When this is required, the helper of the command indicates the expected format.
+
 ## About export to ODS
 The ODF format was preferred to Open XML one due to issues with xlsx file created in LibreOffice.
 However, the only suitable library found to handle creation, data updates and styles in ODF was `odfpy`.

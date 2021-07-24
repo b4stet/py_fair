@@ -27,7 +27,7 @@ magnify.exe
 rclone.exe
 procdump
 mimikatz
-pipikatz
+pypykatz
 lazagne
 SeDebugPrivilege
 msiexec

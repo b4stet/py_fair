@@ -11,7 +11,7 @@ narrator.exe
 magnify.exe
 rclone.exe
 mimikatz
-pipikatz
+pypykatz
 lazagne
 .kirbi
 .asreproast
