@@ -12,6 +12,7 @@ net.exe
 nltest
 systeminfo.exe
 wermgr
+winver.exe
 shareenum
 sdelete
 psinfo
