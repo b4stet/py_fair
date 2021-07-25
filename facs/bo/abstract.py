@@ -60,6 +60,9 @@ class AbstractBo():
         return dt
 
     def _unixepoch_to_datetime(self, timestamp: int):
+        if timestamp == 0:
+            return None
+
         return datetime.fromtimestamp(timestamp, timezone.utc)
 
     def _isoformat_to_datetime(self, dt: str):

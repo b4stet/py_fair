@@ -171,9 +171,9 @@ class ReportWinProfilingBo(AbstractBo):
             'data': [],
         }
 
-        report['title'] = 'Collected network connections'
+        report['title'] = 'Collected network connections (ethernet, wifi, VPN)'
         report['data'].append('NIC from subkeys of SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\NetworkCards')
-        report['data'].append('interface parameters from subkeys of SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces')
+        report['data'].append('interface parameters from subkeys of SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces (if IP address found)')
         report['data'].append('connections history from subkeys of SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\NetworkList\\Signatures')
 
         for nic in results_registry['networks']['nics']:
@@ -291,7 +291,7 @@ class ReportWinProfilingBo(AbstractBo):
                 event = TimelineEntity(
                     start=elt['first_connection'],
                     host=results_registry['computer_name'],
-                    event='First connection of {}'.format(elt['device_model']),
+                    event='First connection of {}'.format(elt['device_label']),
                     event_type=TimelineEntity.TIMELINE_TYPE_EVENT,
                     source='SYSTEM\\CurrentControlSet\\Enum\\USB',
                     note='{}; {}#{}'.format(elt['device_type'], elt['vid_pid'], elt['serial_number'])
@@ -302,7 +302,7 @@ class ReportWinProfilingBo(AbstractBo):
                 event = TimelineEntity(
                     start=elt['last_connection'],
                     host=results_registry['computer_name'],
-                    event='Last connection of {}'.format(elt['device_model']),
+                    event='Last connection of {}'.format(elt['device_label']),
                     event_type=TimelineEntity.TIMELINE_TYPE_EVENT,
                     source='SYSTEM\\CurrentControlSet\\Enum\\USB',
                     note='{}; {}#{}'.format(elt['device_type'], elt['vid_pid'], elt['serial_number'])
@@ -313,7 +313,7 @@ class ReportWinProfilingBo(AbstractBo):
                 event = TimelineEntity(
                     start=elt['last_removal'],
                     host=results_registry['computer_name'],
-                    event='Last removal of {}'.format(elt['device_model']),
+                    event='Last removal of {}'.format(elt['device_label']),
                     event_type=TimelineEntity.TIMELINE_TYPE_EVENT,
                     source='SYSTEM\\CurrentControlSet\\Enum\\USB',
                     note='{}; {}#{}'.format(elt['device_type'], elt['vid_pid'], elt['serial_number'])
@@ -411,7 +411,7 @@ class ReportWinProfilingBo(AbstractBo):
                 device_type=device['device_type'],
                 driver=device['driver'],
                 vid_pid=device['vid_pid'],
-                device_label=device['label'],
+                device_label=device['device_label'],
                 manufacturer=hardware.get('manufacturer', '') if hardware is not None else '',
                 model=hardware.get('model', '') if hardware is not None else '',
                 revision=hardware.get('revision', '') if hardware is not None else '',
@@ -505,22 +505,24 @@ class ReportWinProfilingBo(AbstractBo):
                 info.append(data.to_dict())
 
             # or match drive letter on disk signature for MBR partitioned devices
-            if hardware.partition_type == AbstractBo._PARTITION_MBR:
+            if hardware['partition_type'] == AbstractBo._PARTITION_MBR:
                 drive_letters_matches = [elt for elt in registry_usb['drive_letters'] if elt['disk_signature'] == hardware['disk_signature']]
                 for match in drive_letters_matches:
                     found = True
                     data.last_known_drive_letter = match['drive_letter']
+                    data.partition_type = hardware['partition_type'],
                     data.disk_signature = match['disk_signature']
                     data.partition_offset = match['partition_offset']
                     data.volume_guid = match['volume_guid']
                     info.append(data.to_dict())
 
             # or match driver letter on partition guid for GPT partitioned devices
-            if hardware.partition_type == AbstractBo._PARTITION_GPT:
+            if hardware['partition_type'] == AbstractBo._PARTITION_GPT:
                 drive_letters_matches = [elt for elt in registry_usb['drive_letters'] if elt['partition_guid'] in hardware['partitions_guid']]
                 for match in drive_letters_matches:
                     found = True
                     data.last_known_drive_letter = match['drive_letter']
+                    data.partition_type = hardware['partition_type'],
                     data.partition_guid = match['partition_guid']
                     data.volume_guid = match['volume_guid']
                     info.append(data.to_dict())
@@ -563,6 +565,7 @@ class ReportWinProfilingBo(AbstractBo):
                 continue
 
             info.append(StorageInfoEntity(
+                device_type=device['device_type'],
                 virtual_volume=device['instance_id'],
                 last_known_drive_letter=device['drive_letter'],
                 volume_guid=device['volume_guid']

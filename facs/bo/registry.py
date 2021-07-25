@@ -25,16 +25,22 @@ class RegistryBo(AbstractBo):
 
         profiling['computer_name'] = self.__get_computer_name(reg_system, current_control_set)
         print('.', end='', flush=True)
+
         profiling['os'] = self.__get_operating_system(reg_software)
         print('.', end='', flush=True)
+
         profiling['time_zone'] = self.__get_timezone(reg_system, current_control_set)
         print('.', end='', flush=True)
+
         profiling['networks'] = self.__get_networks(reg_system, reg_software, current_control_set)
         print('.', end='', flush=True)
+
         profiling['local_users'] = self.__get_local_users(reg_sam)
         print('.', end='', flush=True)
+
         profiling['applications'] = self.__get_installed_applications(reg_software)
         print('.', end='', flush=True)
+
         profiling['usb'] = self.__get_usb_info(reg_system, reg_software, current_control_set)
         print('.', end='', flush=True)
 
@@ -85,7 +91,7 @@ class RegistryBo(AbstractBo):
             'connections': [],
         }
 
-        # collect NIC
+        # collect NICs
         path = '\\Microsoft\\Windows NT\\CurrentVersion\\NetworkCards'
         key = reg_software.get_key(path)
         for subkey in key.iter_subkeys():
@@ -95,7 +101,7 @@ class RegistryBo(AbstractBo):
                 'description': values['Description'],
             })
 
-        # collect last known parameters (IP, subnet, domain, DHCP, NS, ...)
+        # collect last known parameters for ethernet/wifi interfaces (IP, subnet, domain, DHCP, NS, ...)
         for nic in networks['nics']:
             path = current_control_set + '\\Services\\Tcpip\\Parameters\\Interfaces\\' + nic['guid'].lower()
             key = reg_system.get_key(path)
@@ -110,6 +116,22 @@ class RegistryBo(AbstractBo):
                 subparameters = self.__decode_tcpip_interface_key(nic, subkey)
                 if subparameters is not None:
                     networks['parameters'].append(subparameters)
+
+        # collect last known parameters for VPN interfaces
+        path = current_control_set + '\\Services\\Tcpip\\Parameters\\Interfaces'
+        key = reg_system.get_key(path)
+        for subkey in key.iter_subkeys():
+            nic = {
+                'guid': subkey.header.key_name_string.decode('utf8'),
+                'description': 'VPN',
+            }
+            subparameters = self.__decode_tcpip_interface_key(nic, subkey, is_vpn=True)
+            if subparameters is not None:
+                networks['parameters'].append(subparameters)
+                networks['nics'].append({
+                    'guid': nic,
+                    'description': 'VPN',
+                })
 
         # collect connections
         parameters_indexed = {parameters['network_hint']: parameters for parameters in networks['parameters']}
@@ -129,7 +151,7 @@ class RegistryBo(AbstractBo):
                 first_connected_at = self._systemtime_to_datetime(values_profile['DateCreated'])
                 last_connected_at = self._systemtime_to_datetime(values_profile['DateLastConnected'])
                 parameters = parameters_indexed.get(ssid)
-                if parameters is not None:
+                if parameters is not None and parameters['last_lease_start'] is not None and parameters['last_lease_end'] is not None:
                     lease_start = parameters['last_lease_start']
                     lease_end = parameters['last_lease_end']
                     if first_connected_at >= lease_start and first_connected_at <= lease_end:
@@ -152,32 +174,31 @@ class RegistryBo(AbstractBo):
 
         return networks
 
-    def __decode_tcpip_interface_key(self, nic, key):
+    def __decode_tcpip_interface_key(self, nic, key, is_vpn=False):
         values = {value.name: value.value for value in key.get_values()}
 
         if values.get('DhcpIPAddress') is None:
             return None
 
+        if is_vpn is True and values.get('VPNInterface') is None:
+            return None
+
         network_hint = ''
-        if values.get('DhcpIPAddress') is not None:
+        if values.get('DhcpNetworkHint') is not None:
             for idx in range(0, len(values['DhcpNetworkHint']) - 1, 2):
                 network_hint += values['DhcpNetworkHint'][idx + 1] + values['DhcpNetworkHint'][idx]
-
-        domain = ''
-        if values.get('DhcpDomain') is not None:
-            domain = values['DhcpDomain']
 
         return {
             'nic_guid': nic['guid'],
             'network_hint': bytes.fromhex(network_hint).decode('utf-8'),
             'ip': values['DhcpIPAddress'],
-            'subnet_mask': values['DhcpSubnetMask'],
-            'dhcp_server': values['DhcpServer'],
-            'dns_servers': values['DhcpNameServer'],
-            'gateway': ','.join(values['DhcpDefaultGateway']),
-            'domain': domain,
-            'last_lease_start': self._unixepoch_to_datetime(values['LeaseObtainedTime']),
-            'last_lease_end': self._unixepoch_to_datetime(values['LeaseTerminatesTime']),
+            'subnet_mask': values.get('DhcpSubnetMask', ''),
+            'dhcp_server': values.get('DhcpServer', ''),
+            'dns_servers': values.get('DhcpNameServer', ''),
+            'gateway': ','.join(values.get('DhcpDefaultGateway', [])),
+            'domain': values.get('DhcpDomain', ''),
+            'last_lease_start': self._unixepoch_to_datetime(values.get('LeaseObtainedTime', 0)),
+            'last_lease_end': self._unixepoch_to_datetime(values.get('LeaseTerminatesTime', 0)),
         }
 
     def __get_local_users(self, reg_sam):
