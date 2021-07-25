@@ -1,8 +1,7 @@
 click
 PyYAML
 regipy
-zipfile
 odfpy
 datetime
-dateutil
+python-dateutil
 setuptools
