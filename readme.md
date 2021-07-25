@@ -49,7 +49,7 @@ $ pip3 uninstall py_facs
 ## Scripts Commands
 - `nsrl`: set of scripts to extract OS and office related files (known goods), to then filter on a disk timeline
 - `windows`: set of scripts to automate some parts of the forensics (eg. profiling host and users)
-- `export`: set of scripts to export csv results in an ODS file, or visualize the timeline
+- `report`: set of scripts to export csv results in an ODS file, or visualize the timeline
 
 As data volume can be huge for some artifacts, specific formats are enforced to "stream" files instead of loading them fully in memory.  
 When this is required, the helper of the command indicates the expected format.
@@ -71,7 +71,7 @@ As the notion of address/coordinates is not attached to a cell in ODF, several l
     - hence it will break the columns computation
 
 ## Examples
-Windows host profiling on a 120G disk dump:
+### Windows host profiling
 ```
 $ py_facs scripts windows profile_host -e l2t_evtx.json  -d reports/ -o csv --hsystem SYSTEM_CLEAN --hsoftware SOFTWARE_CLEAN --hsam SAM_CLEAN
 
@@ -95,13 +95,13 @@ $ py_facs scripts windows profile_host -e l2t_evtx.json  -d reports/ -o csv --hs
 [+] Checked evidences of log tampering
  | From Security channel, provider Microsoft-Windows-Eventlog, EID 1100/1102/1104
  | From System channel, provider Eventlog, EID 6005/6006
- | Found 18 event(s)
+ | Found 13 event(s)
 
 [+] Checked evidences of host start/stop
  | From Security channel, provider Microsoft-Windows-Eventlog, EID 4608/4609
  | From System channel, provider Microsoft-Windows-Kernel-General, EID 12/13
  | From System channel, provider User32, EID 1074
- | Found 25 event(s)
+ | Found 19 event(s)
 
 [+] Collected system information
  | computer name from key SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName
@@ -118,9 +118,9 @@ $ py_facs scripts windows profile_host -e l2t_evtx.json  -d reports/ -o csv --hs
  | system wide installation from key SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
  | uninstalled applications from Application channel, provider MsiInstaller, EID 11724
 
-[+] Collected network connections
+[+] Collected network connections (ethernet, wifi, VPN)
  | NIC from subkeys of SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkCards
- | interface parameters from subkeys of SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces
+ | interface parameters from subkeys of SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces (if IP address found)
  | connections history from subkeys of SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Signatures
 
 [+] Collected information about writable storage (PCI, UAS drives, USB mass storage, MTP devices)
@@ -130,7 +130,7 @@ $ py_facs scripts windows profile_host -e l2t_evtx.json  -d reports/ -o csv --hs
  | device types from key SYSTEM\CurrentControlSet\Enum\USB, property {a8b865dd-2e3d-4094-ad97-e593a70c75d6}
  | models from key SYSTEM\CurrentControlSet\Enum\USB, property {540b947e-8b40-45bc-a8a2-6a0b894cbda2}
  | first/last connections from key SYSTEM\CurrentControlSet\Enum\USB, property {83da6326-97a6-4088-9453-a1923f573b29}
- | drive letters, and volume GUID from key SYSTEM\MountedDevices
+ | drive letters, and volume GUID from key SYSTEM\MountedDevices (do check manually slack space)
 
 [+] Output files
  | timeline in ./reports/profiling_timeline.csv
@@ -143,5 +143,5 @@ $ py_facs scripts windows profile_host -e l2t_evtx.json  -d reports/ -o csv --hs
 
 real	1m45,933s
 user	1m41,277s
-sys	0m5,420s
+sys	    0m 5,420s
 ```
