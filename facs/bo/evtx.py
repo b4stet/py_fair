@@ -14,6 +14,8 @@ class EvtxBo(AbstractBo):
         'Microsoft-Windows-TerminalServices-RDPClient/Operational',
         'Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational',
         'Microsoft-Windows-TerminalServices-LocalSessionManager/Operational',
+        'Microsoft-Windows-Partition/Diagnostic',
+        'Microsoft-Windows-Kernel-PnP/Configuration',
     ]
 
     def get_profiling_from_evtx(self, fd_evtx):

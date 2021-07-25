@@ -411,6 +411,7 @@ class ReportWinProfilingBo(AbstractBo):
                 device_type=device['device_type'],
                 driver=device['driver'],
                 vid_pid=device['vid_pid'],
+                device_label=device['label'],
                 manufacturer=hardware.get('manufacturer', '') if hardware is not None else '',
                 model=hardware.get('model', '') if hardware is not None else '',
                 revision=hardware.get('revision', '') if hardware is not None else '',
@@ -429,7 +430,7 @@ class ReportWinProfilingBo(AbstractBo):
 
             # match drive letter on disk signature for MBR partitioned devices
             if data.partition_type == AbstractBo._PARTITION_MBR:
-                drive_letters_matches = [elt for elt in registry_usb['drive_letters'] if elt['disk_signature'] == hardware[0]['disk_signature']]
+                drive_letters_matches = [elt for elt in registry_usb['drive_letters'] if elt['disk_signature'] == hardware['disk_signature']]
                 for match in drive_letters_matches:
                     found = True
                     data.last_known_drive_letter = match['drive_letter']
@@ -440,7 +441,7 @@ class ReportWinProfilingBo(AbstractBo):
 
             # match driver letter on partition guid for GPT partitioned devices
             if data.partition_type == AbstractBo._PARTITION_GPT:
-                drive_letters_matches = [elt for elt in registry_usb['drive_letters'] if elt['partition_guid'] in hardware[0]['partitions_guid']]
+                drive_letters_matches = [elt for elt in registry_usb['drive_letters'] if elt['partition_guid'] in hardware['partitions_guid']]
                 for match in drive_letters_matches:
                     found = True
                     data.last_known_drive_letter = match['drive_letter']
@@ -469,6 +470,7 @@ class ReportWinProfilingBo(AbstractBo):
             data = StorageInfoEntity(
                 device_type=device['device_type'],
                 driver=device['driver'],
+                device_label=device['device_label'],
                 vid_pid=device['vid_pid'],
                 manufacturer=hardware.get('manufacturer', '') if hardware is not None else '',
                 model=hardware.get('model', '') if hardware is not None else '',
@@ -502,6 +504,27 @@ class ReportWinProfilingBo(AbstractBo):
                     data.user_label = labels[0]['user_label']
                 info.append(data.to_dict())
 
+            # or match drive letter on disk signature for MBR partitioned devices
+            if hardware.partition_type == AbstractBo._PARTITION_MBR:
+                drive_letters_matches = [elt for elt in registry_usb['drive_letters'] if elt['disk_signature'] == hardware['disk_signature']]
+                for match in drive_letters_matches:
+                    found = True
+                    data.last_known_drive_letter = match['drive_letter']
+                    data.disk_signature = match['disk_signature']
+                    data.partition_offset = match['partition_offset']
+                    data.volume_guid = match['volume_guid']
+                    info.append(data.to_dict())
+
+            # or match driver letter on partition guid for GPT partitioned devices
+            if hardware.partition_type == AbstractBo._PARTITION_GPT:
+                drive_letters_matches = [elt for elt in registry_usb['drive_letters'] if elt['partition_guid'] in hardware['partitions_guid']]
+                for match in drive_letters_matches:
+                    found = True
+                    data.last_known_drive_letter = match['drive_letter']
+                    data.partition_guid = match['partition_guid']
+                    data.volume_guid = match['volume_guid']
+                    info.append(data.to_dict())
+
             # if device was not listed in mounted devices subkey
             if found is False:
                 info.append(data.to_dict())
@@ -523,7 +546,7 @@ class ReportWinProfilingBo(AbstractBo):
             info.append(StorageInfoEntity(
                 device_type=device['device_type'],
                 driver=device['driver'],
-                model=device['device_model'],
+                device_label=device['device_label'],
                 vid_pid=device['vid_pid'],
                 serial_number=device['serial_number'],
                 user_label=labels[0]['user_label']

@@ -383,7 +383,7 @@ class RegistryBo(AbstractBo):
 
                 sk = sk_properties.get_subkey('{540b947e-8b40-45bc-a8a2-6a0b894cbda2}')
                 values = self.__get_raw_values(reg_system, sk.get_subkey('0004'))
-                device_model = values['(default)'].value.decode('utf-16le')[:-1].strip(' ')
+                device_label = values['(default)'].value.decode('utf-16le')[:-1].strip(' ')
 
                 sk = sk_properties.get_subkey('{83da6326-97a6-4088-9453-a1923f573b29}')
                 first_connection = sk.get_subkey('0064')
@@ -391,7 +391,7 @@ class RegistryBo(AbstractBo):
                 last_removal = sk.get_subkey('0067')
 
                 info['connections'].append({
-                    'device_model': device_model,
+                    'device_label': device_label,
                     'vid_pid': vid_pid,
                     'serial_number': serial_number,
                     'device_type': device_type,

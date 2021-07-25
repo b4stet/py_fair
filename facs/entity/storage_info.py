@@ -4,11 +4,12 @@ class StorageInfoEntity():
         manufacturer='', model='', revision='', bytes_capacity='', disk_serial_number='',
         partition_type='', disk_signature='', partition_offset='', partition_guid='',
         disk_guid='', adapter_guid='', registry_guid='', volume_guid='',
-        vendor_product='', vid_pid='', serial_number='',
+        vendor_product='', vid_pid='', serial_number='', device_label='',
         virtual_volume=''
     ):
         self.last_known_drive_letter = last_known_drive_letter
         self.user_label = user_label
+        self.device_label = device_label
         self.device_type = device_type
         self.driver = driver
         self.manufacturer = manufacturer
@@ -33,6 +34,7 @@ class StorageInfoEntity():
         return {
             'last_known_drive_letter': self.last_known_drive_letter,
             'user_label': self.user_label,
+            'device_label': self.device_label,
             'device_type': self.device_type,
             'driver': self.driver,
             'manufacturer': self.manufacturer,
