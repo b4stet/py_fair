@@ -21,7 +21,7 @@ responder.py
 dumphash.py
 rubeus.exe
 svhost.exe
-svch0st.exe
+h0st
 launcher.bat
 launcher.vbs
 anydesk

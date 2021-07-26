@@ -47,9 +47,8 @@ msbuild.exe
 csc.exe
 regsvr32.exe
 esentutl.exe
-wevutil.exe
+wevtutil.exe
 svhost.exe
-svch0st.exe
 rdpclip.exe
 stheme.exe
 mstsc.exe
