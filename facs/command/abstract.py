@@ -118,7 +118,7 @@ class AbstractCommand():
     def _get_option_nsrl_folder(self):
         return click.Option(
             ['--nsrl', '-n', 'nsrl'],
-            help='path of NSRL files (NSRLFile.txt.zip and NSRLProd.txt)',
+            help='path to NSRL files (NSRLFile.txt.zip and NSRLProd.txt)',
             required=True,
         )
 
@@ -133,34 +133,35 @@ class AbstractCommand():
     def _get_option_evtx(self):
         return click.Option(
             ['--evtx', '-e', 'evtx'],
-            help='path of evtx, as output by plaso in json_line format',
+            help='path to evtx, as output by plaso in json_line format',
             required=True,
         )
 
     def _get_option_hive_sam(self):
         return click.Option(
             ['--hsam', 'hive_sam'],
-            help='path of a clean SAM hive',
+            help='path to a clean SAM hive',
             required=True,
         )
 
     def _get_option_hive_software(self):
         return click.Option(
             ['--hsoftware', 'hive_software'],
-            help='path of a clean SOFTWARE hive',
+            help='path to a clean SOFTWARE hive',
             required=True,
         )
 
     def _get_option_hive_system(self):
         return click.Option(
             ['--hsystem', 'hive_system'],
-            help='path of a clean SYSTEM hive',
+            help='path to a clean SYSTEM hive',
             required=True,
         )
 
-    def _get_option_hive_ntuser(self):
+    def _get_option_hive_ntusers(self):
         return click.Option(
-            ['--hntuser', 'hive_ntuser'],
-            help='path of a clean NTUSER.DAT hive',
+            ['--hntuser', 'hive_ntusers'],
+            help='path to a clean NTUSER.DAT hive with username it belongs to. Can be repeated.',
             required=True,
+            nargs=2, type=click.Tuple([str, str]), multiple=True
         )

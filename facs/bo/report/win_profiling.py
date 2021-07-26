@@ -45,6 +45,9 @@ class ReportWinProfilingBo(AbstractBo):
         timeline_global.extend(timeline)
         report_global.append(report)
 
+        profiling_autorun, report = self.__get_profiling_autorun(results_registry)
+        report_global.append(report)
+
         return {
             'timeline': timeline_global,
             'report': report_global,
@@ -54,6 +57,7 @@ class ReportWinProfilingBo(AbstractBo):
                 'interfaces': profiling_interfaces,
                 'applications': profiling_applications,
                 'writable_storage': profiling_storage,
+                'autorun': profiling_autorun,
             }
         }
 
@@ -572,3 +576,80 @@ class ReportWinProfilingBo(AbstractBo):
             ).to_dict())
 
         return info
+
+    def __get_profiling_autorun(self, results_registry):
+        profiling = []
+        report = {
+            'title': '',
+            'data': [],
+        }
+
+        report['title'] = 'Collected information autostart services and applications'
+        report['data'].append('Windows services from subkeys of SYSTEM\\CurrentControlSet\\Services')
+        report['data'].append('Shell value at logon from key SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon')
+        report['data'].append('Commands executed at each run of cmd.exe from key SOFTWARE\\Microsoft\\Command Processor')
+        report['data'].append('Autostart app and service from key SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run')
+        report['data'].append('Autostart app and service from key SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce')
+
+        # assemble windows services
+        for service in results_registry['autorun']['windows_services']['data']:
+            profiling.append({
+                'key': results_registry['autorun']['windows_services']['key'] + service['subkey_name'],
+                'last_modified_at': service['last_modified_at'],
+                'name': service['display_name'],
+                'start_type': service['start_type'],
+                'service_type': service['service_type'],
+                'value': service['path'],
+                'comment': 'Windows services',
+            })
+
+        # assemble shell value
+        winlogon = results_registry['autorun']['winlogon_shell']
+        profiling.append({
+            'key': winlogon['key'],
+            'last_modified_at': winlogon['last_modified_at'],
+            'name': 'Shell',
+            'start_type': '',
+            'service_type': '',
+            'value': winlogon['data']['observed'],
+            'comment': 'Expected: {}'.format(winlogon['data']['expected'])
+        })
+
+        # assemble cmd results
+        cmd = results_registry['autorun']['cmd_command_processor']
+        for command in cmd['data']:
+            profiling.append({
+                'key': cmd['key'],
+                'last_modified_at': cmd['last_modified_at'],
+                'name': command['name'],
+                'start_type': '',
+                'service_type': '',
+                'value': command['value'],
+                'comment': 'Executed at each run of cmd.exe'
+            })
+
+        # assemble run/run once values
+        run = results_registry['autorun']['run']
+        for app in run['data']:
+            profiling.append({
+                'key': run['key'],
+                'last_modified_at': run['last_modified_at'],
+                'name': app['name'],
+                'start_type': '',
+                'service_type': '',
+                'value': app['path'],
+                'comment': 'Program automaticcaly started at system startup'
+            })
+
+        run_once = results_registry['autorun']['run_once']
+        for app in run_once['data']:
+            profiling.append({
+                'key': run_once['key'],
+                'last_modified_at': run_once['last_modified_at'],
+                'name': app['name'],
+                'start_type': '',
+                'service_type': '',
+                'value': app['path'],
+                'comment': 'Program automaticcaly started at system startup'
+            })
+        return profiling, report

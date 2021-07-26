@@ -13,6 +13,14 @@ class RegistryBo(AbstractBo):
         '243': 'mobile',
     }
 
+    __START_TYPES = {
+        '0': 'boot (kernel)',
+        '1': 'system (I/O subsystem)',
+        '2': 'autoload (Service Control Manager)',
+        '3': 'on demand (Service Control Manager)',
+        '4': 'disabled (Service Control Manager)',
+    }
+
     def get_profiling_from_registry(self, hive_system, hive_software, hive_sam):
         profiling = {}
         reg_system = RegistryHive(hive_system)
@@ -42,6 +50,9 @@ class RegistryBo(AbstractBo):
         print('.', end='', flush=True)
 
         profiling['usb'] = self.__get_usb_info(reg_system, reg_software, current_control_set)
+        print('.', end='', flush=True)
+
+        profiling['autorun'] = self.__get_autorun_info(reg_system, reg_software, current_control_set)
         print('.', end='', flush=True)
 
         return profiling
@@ -505,6 +516,83 @@ class RegistryBo(AbstractBo):
             data['instance_id'] = value.decode('utf-16le')
 
         return data
+
+    def __get_autorun_info(self, reg_system, reg_software, current_control_set):
+        startup = {
+            'windows_services': {},
+            'winlogon_shell': {},
+            'cmd_command_processor': {},
+            'run': {},
+            'run_once': {},
+        }
+
+        # collect windows services
+        path = current_control_set + '\\Services'
+        key = reg_system.get_key(path)
+        startup['windows_services']['key'] = 'HKLM\\SYSTEM' + path
+        startup['windows_services']['data'] = []
+        for subkey in key.iter_subkeys():
+            values = {value.name: value.value for value in subkey.get_values()}
+
+            if 'ImagePath' not in values.keys():
+                continue
+
+            startup['windows_services']['data'].append({
+                'last_modified_at': self._filetime_to_datetime(subkey.header.last_modified),
+                'subkey_name': subkey.header.key_name_string.decode('utf8'),
+                'display_name': values.get('DisplayName', ''),
+                'path': values['ImagePath'],
+                'start_type': self.__START_TYPES.get(str(values['Start']), values['Start']),
+                'service_type': values['Type'],
+            })
+
+        # collect winlogon shell value
+        path = '\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon'
+        key = reg_software.get_key(path)
+        startup['winlogon_shell']['key'] = 'HKLM\\SOFTWARE' + path
+        startup['winlogon_shell']['last_modified_at'] = self._filetime_to_datetime(subkey.header.last_modified)
+        values = {value.name: value.value for value in key.get_values()}
+        startup['winlogon_shell']['data'] = {
+            'expected': 'explorer.exe',
+            'observed': values['Shell'],
+        }
+
+        # collect command processor values (executed when cmd run)
+        path = '\\Microsoft\\Command Processor'
+        key = reg_software.get_key(path)
+        startup['cmd_command_processor']['key'] = 'HKLM\\SOFTWARE' + path
+        startup['cmd_command_processor']['last_modified_at'] = self._filetime_to_datetime(subkey.header.last_modified)
+        startup['cmd_command_processor']['data'] = []
+        for value in key.get_values():
+            startup['cmd_command_processor']['data'].append({
+                'name': value.name,
+                'value': value.value,
+            })
+
+        # collect run/run once subkeys
+        path = '\\Microsoft\\Windows\\CurrentVersion\\Run'
+        key = reg_software.get_key(path)
+        startup['run']['key'] = 'HKLM\\SOFTWARE' + path
+        startup['run']['last_modified_at'] = self._filetime_to_datetime(subkey.header.last_modified)
+        startup['run']['data'] = []
+        for value in key.get_values():
+            startup['run']['data'].append({
+                'name': value.name,
+                'path': value.value,
+            })
+
+        path = '\\Microsoft\\Windows\\CurrentVersion\\RunOnce'
+        key = reg_software.get_key(path)
+        startup['run_once']['key'] = 'HKLM\\SOFTWARE' + path
+        startup['run_once']['last_modified_at'] = self._filetime_to_datetime(subkey.header.last_modified)
+        startup['run_once']['data'] = []
+        for value in key.get_values():
+            startup['run_once']['data'].append({
+                'name': value.name,
+                'path': value.value,
+            })
+
+        return startup
 
     def __get_raw_values(self, registry, name_key_record):
         # because regipy method get_values() skips values for unsupported value types

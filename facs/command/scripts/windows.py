@@ -1,5 +1,7 @@
 import click
 import os
+import sys
+import json
 from facs.command.abstract import AbstractCommand
 from facs.entity.timeline import TimelineEntity
 
@@ -18,7 +20,7 @@ class WindowsCommand(AbstractCommand):
         )
 
         group.add_command(click.Command(
-            name='profile_host', help='profile a host based on evtx and registry',
+            name='profile_host', help='profile the subject system from evtx and registry',
             callback=self.do_profile_host,
             params=[
                 self._get_option_evtx(),
@@ -29,6 +31,16 @@ class WindowsCommand(AbstractCommand):
                 self._get_option_output(),
             ]
         ))
+
+        # group.add_command(click.Command(
+        #     name='profile_user', help='profile the users from their ntuser.dat hive',
+        #     callback=self.do_profile_user,
+        #     params=[
+        #         self._get_option_hive_ntusers(),
+        #         self._get_option_outdir(),
+        #         self._get_option_output(),
+        #     ]
+        # ))
 
         return group
 
@@ -42,6 +54,7 @@ class WindowsCommand(AbstractCommand):
         out_profiling_networks = os.path.join(outdir, 'profiling_networks.' + output)
         out_profiling_applications = os.path.join(outdir, 'profiling_applications_system_wide.' + output)
         out_profiling_storage = os.path.join(outdir, 'profiling_storage.' + output)
+        out_profiling_autorun = os.path.join(outdir, 'profiling_autorun.' + output)
 
         # extract info from system, software and sam hive
         print('[+] Analyzing registry hives ', end='', flush=True)
@@ -66,6 +79,7 @@ class WindowsCommand(AbstractCommand):
                 'local users profiling in {}'.format(out_profiling_users),
                 'applications system wide info in {}'.format(out_profiling_applications),
                 'writable storage info in {}'.format(out_profiling_storage),
+                'autorun info in {}'.format(out_profiling_autorun),
             ],
         })
         for chunk in report['report']:
@@ -78,3 +92,12 @@ class WindowsCommand(AbstractCommand):
         self._write_formatted(out_profiling_networks, output, report['profiling']['interfaces'])
         self._write_formatted(out_profiling_applications, output, report['profiling']['applications'])
         self._write_formatted(out_profiling_storage, output, report['profiling']['writable_storage'])
+        self._write_formatted(out_profiling_autorun, output, report['profiling']['autorun'])
+
+    # def do_profile_user(self, hive_ntusers, outdir, output):
+    #     # if not os.path.exists(outdir):
+    #     #     raise ValueError('Out directory {} does not exist.'.format(outdir))
+
+    #     for hive_path, username in hive_ntusers:
+    #         out = 'profiling_{}.{}'.format(username, output)
+    #         out = os.path.join(outdir, out)

@@ -132,6 +132,13 @@ $ py_facs scripts windows profile_host -e l2t_evtx.json  -d reports/ -o csv --hs
  | first/last connections from key SYSTEM\CurrentControlSet\Enum\USB, property {83da6326-97a6-4088-9453-a1923f573b29}
  | drive letters, and volume GUID from key SYSTEM\MountedDevices (do check manually slack space)
 
+[+] Collected information autostart services and applications
+ | Windows services from subkeys of SYSTEM\CurrentControlSet\Services
+ | Shell value at logon from key SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+ | Commands executed at each run of cmd.exe from key SOFTWARE\Microsoft\Command Processor
+ | Autostart app and service from key SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+ | Autostart app and service from key SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce
+
 [+] Output files
  | timeline in ./reports/profiling_timeline.csv
  | host profiling in ./reports/profiling_host.csv
@@ -139,9 +146,9 @@ $ py_facs scripts windows profile_host -e l2t_evtx.json  -d reports/ -o csv --hs
  | local users profiling in ./reports/profiling_users.csv
  | applications system wide info in ./reports/profiling_applications_system_wide.csv
  | writable storage info in ./reports/profiling_storage.csv
+ | autorun info in ./reports/profiling_autorun.csv
 
-
-real	1m45,933s
-user	1m41,277s
-sys	    0m 5,420s
+real	2m16,768s
+user	2m4,409s
+sys	0m12,374s
 ```
