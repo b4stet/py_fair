@@ -71,7 +71,7 @@ class EvtxBo(AbstractBo):
                     event_processed = self.__process_security_1100_1102_1104(info, data)
                     cleaning = self._append_to_timeline(event_processed, cleaning)
 
-            # check time changes, logging tampered and system start/stop from System channel
+            # check time changes, logging tampered and system start/stop/sleep/wake_up from System channel
             if channel == 'System':
                 if provider == 'Microsoft-Windows-Kernel-General' and event_id == '1':
                     data = self.__extract_system_1(event['xml_string'])
@@ -81,6 +81,11 @@ class EvtxBo(AbstractBo):
                 if provider == 'Microsoft-Windows-Kernel-General' and event_id in ['12', '13']:
                     data = self.__extract_system_12_13(event['xml_string'])
                     event_processed = self.__process_system_12_13(info, data)
+                    start_stop = self._append_to_timeline(event_processed, start_stop)
+
+                if provider == 'Microsoft-Windows-Power-Troubleshooter' and event_id == '1':
+                    data = self.__extract_system_power_1(event['xml_string'])
+                    event_processed = self.__process_system_power_1(info, data)
                     start_stop = self._append_to_timeline(event_processed, start_stop)
 
                 if provider == 'User32' and event_id == '1074':
@@ -111,8 +116,7 @@ class EvtxBo(AbstractBo):
                 if provider == 'Microsoft-Windows-Kernel-PnP' and event_id in ['410', '430']:
                     data = self.__extract_kernel_pnp_410_430(event['xml_string'])
                     event_processed = self.__process_kernel_pnp_410_430(info, data)
-                    if event_processed is not None:
-                        pnp_connections = self._append_to_timeline(event_processed, pnp_connections)
+                    pnp_connections = self._append_to_timeline(event_processed, pnp_connections)
 
         return {
             'nb_events': nb_events,
@@ -302,6 +306,33 @@ class EvtxBo(AbstractBo):
             event_type=TimelineEntity.TIMELINE_TYPE_EVENT,
             source=source,
             note=note
+        )
+
+    def __extract_system_power_1(self, evtx_xml):
+        event = minidom.parseString(evtx_xml)
+        data = event.getElementsByTagName('EventData')[0].getElementsByTagName('Data')
+        info = {}
+        for elt in data:
+            attribute = elt.getAttribute('Name')
+            if attribute == 'SleepTime':
+                info['sleep_start'] = self._isoformat_to_datetime(elt.firstChild.data)
+
+            if attribute == 'WakeTime':
+                info['sleep_end'] = self._isoformat_to_datetime(elt.firstChild.data)
+
+        return info
+
+    def __process_system_power_1(self, info, data):
+        source = 'EID {}; channel {} ; provider {}'.format(info['event_id'], info['channel'], info['provider'])
+
+        return TimelineEntity(
+            start=str(data['sleep_start']),
+            end=str(data['sleep_end']),
+            host=info['computer'],
+            user=info['sid'],
+            event='sleeping time',
+            event_type=TimelineEntity.TIMELINE_TYPE_EVENT,
+            source=source,
         )
 
     def __extract_system_12_13(self, evtx_xml):

@@ -100,6 +100,7 @@ $ py_facs scripts windows profile_host -e l2t_evtx.json  -d reports/ -o csv --hs
 [+] Checked evidences of host start/stop
  | From Security channel, provider Microsoft-Windows-Eventlog, EID 4608/4609
  | From System channel, provider Microsoft-Windows-Kernel-General, EID 12/13
+ | From System channel, provider Microsoft-Windows-Power-Troubleshooter, EID 1
  | From System channel, provider User32, EID 1074
  | Found 19 event(s)
 
