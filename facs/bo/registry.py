@@ -224,7 +224,7 @@ class RegistryBo(AbstractBo):
             accounts_creation[subkey.header.key_name_string.decode('utf8')] = self._filetime_to_datetime(subkey.header.last_modified)
 
         # collect group membership info
-        group_members = {}
+        group_members_sids = {}
         path = '\\SAM\\Domains\\Builtin\\Aliases'
         key = reg_sam.get_key(path)
         for subkey in key.iter_subkeys():
@@ -264,10 +264,20 @@ class RegistryBo(AbstractBo):
                 members.append('-'.join(sid))
                 offset_start += step
 
-            group_members[group_name] = {
-                'sids': members,
-                'rids': [sid.split('-')[-1] for sid in members],
-            }
+            group_members_sids[group_name] = members
+
+        # reindex group membership per user rid
+        rids_info = {}
+        for group_name, sids in group_members_sids.items():
+            for sid in sids:
+                rid = sid.split('-')[-1]
+                if rid not in rids_info.keys():
+                    rids_info[rid] = {
+                        'sid': sid,
+                        'memberships': []
+                    }
+
+                rids_info[rid]['memberships'].append(group_name)
 
         # collect account info
         path = '\\SAM\\Domains\\Account\\Users'
@@ -284,7 +294,8 @@ class RegistryBo(AbstractBo):
                 ms_account += values['InternetUserName'].decode('utf-16le')
 
             rid = int.from_bytes(values['F'][0x30:0x34], byteorder='little', signed=False)
-            membership = [name for name, members in group_members.items() if str(rid) in members['rids']]
+            sid = rids_info[str(rid)]['sid'] if rids_info.get(str(rid), None) is not None else ''
+            memberships = ','.join(rids_info[str(rid)]['memberships']) if rids_info.get(str(rid), None) is not None else ''
 
             ft = int.from_bytes(values['F'][0x08:0x0B], byteorder='little', signed=False)
             last_login = self._filetime_to_datetime(ft)
@@ -314,10 +325,11 @@ class RegistryBo(AbstractBo):
 
             users.append({
                 'rid': rid,
+                'sid': sid,
                 'username': username,
                 'full_name': full_name,
                 'ms_account': ms_account,
-                'groups_membership': ','.join(membership),
+                'groups_membership': memberships,
                 'nb_logins_invalid': int.from_bytes(values['F'][0x40:0x42], byteorder='little', signed=False),
                 'nb_logins_total': int.from_bytes(values['F'][0x42:0x44], byteorder='little', signed=False),
                 'account_disabled': account_disabled,
