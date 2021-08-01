@@ -160,7 +160,7 @@ class AbstractCommand():
 
     def _get_option_hive_ntusers(self):
         return click.Option(
-            ['--hntuser', 'hive_ntusers'],
+            ['--huser', 'hive_users'],
             help='path to a clean NTUSER.DAT hive with username it belongs to. Can be repeated.',
             required=True,
             nargs=2, type=click.Tuple([str, str]), multiple=True

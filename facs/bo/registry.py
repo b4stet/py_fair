@@ -1,5 +1,6 @@
 import copy
 from regipy.registry import RegistryHive
+from regipy.exceptions import RegistryKeyNotFoundException, NoRegistrySubkeysException
 from regipy.structs import VALUE_KEY
 from regipy.utils import boomerang_stream
 from facs.bo.abstract import AbstractBo
@@ -21,7 +22,7 @@ class RegistryBo(AbstractBo):
         '4': 'disabled (Service Control Manager)',
     }
 
-    def get_profiling_from_registry(self, hive_system, hive_software, hive_sam):
+    def get_profiling_from_host_registries(self, hive_system, hive_software, hive_sam):
         profiling = {}
         reg_system = RegistryHive(hive_system)
         reg_software = RegistryHive(hive_software)
@@ -56,6 +57,228 @@ class RegistryBo(AbstractBo):
         print('.', end='', flush=True)
 
         return profiling
+
+    def get_profiling_from_user_registry(self, hive_user):
+        profiling = {}
+        reg_user = RegistryHive(hive_user)
+
+        profiling['rdp_usage'] = self.__get_user_rdp_usage(reg_user)
+        print('.', end='', flush=True)
+
+        profiling['usb_share_usage'] = self.__get_user_usb_share_usage(reg_user)
+        print('.', end='', flush=True)
+
+        profiling['autorun'] = self.__get_user_autorun_info(reg_user)
+        print('.', end='', flush=True)
+
+        profiling['app_used'] = self.__get_user_app(reg_user)
+        print('.', end='', flush=True)
+
+        profiling['cloud'] = self.__get_user_cloud_accounts(reg_user)
+        print('.', end='', flush=True)
+
+        return profiling
+
+    def __get_user_rdp_usage(self, reg_user):
+        destinations = []
+
+        base_path = '\\software\\Microsoft\\Terminal Server Client'
+        try:
+            key = reg_user.get_key(base_path + '\\Default')
+            values = {value.name: value.value for value in key.get_values()}
+            for name, value in values.items():
+                destination = {
+                    'last_connected_at': '',
+                    'mru_position': name.replace('MRU', ''),
+                    'destination_server': value,
+                }
+
+                if name == 'MRU0':
+                    destination['last_modified_at'] = self._filetime_to_datetime(key.header.last_modified)
+
+                subkey = reg_user.get_key(base_path + '\\Servers\\' + value)
+                destination['username'] = subkey.get_value('UsernameHint')
+                destinations.append(destination)
+        except NoRegistrySubkeysException:
+            pass
+
+        return destinations
+
+    def __get_user_usb_share_usage(self, reg_user):
+        usage = []
+
+        path = '\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\MountPoints2'
+        try:
+            key = reg_user.get_key(path)
+            for subkey in key.iter_subkeys():
+                # process only subkey which are volume GUID
+                if subkey.header.key_name_string.decode('utf8').startswith('{') is False:
+                    continue
+
+                # connection implies the creation of a subsubkey 'shell'
+                if subkey.header.subkey_count == 0:
+                    continue
+
+                usage.append({
+                    'volume_guid': subkey.header.key_name_string.decode('utf8'),
+                    'last_connected_at': self._filetime_to_datetime(subkey.header.last_modified),
+                })
+        except RegistryKeyNotFoundException:
+            pass
+
+        return usage
+
+    def __get_user_autorun_info(self, reg_user):
+        startup = {
+            'winlogon_shell': {},
+            'cmd_command_processor': {},
+            'run': {},
+            'run_once': {},
+        }
+
+        # collect winlogon shell value
+        path = '\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon'
+        key = reg_user.get_key(path)
+        startup['winlogon_shell']['key'] = 'HKCU' + path
+        startup['winlogon_shell']['last_modified_at'] = self._filetime_to_datetime(key.header.last_modified)
+        values = {value.name: value.value for value in key.get_values()}
+        startup['winlogon_shell']['data'] = {
+            'expected': 'explorer.exe',
+            'observed': values.get('Shell', ''),
+        }
+
+        # collect command processor values (executed when cmd run)
+        path = '\\Software\\Microsoft\\Command Processor'
+        startup['cmd_command_processor']['key'] = 'HKCU' + path
+        try:
+            key = reg_user.get_key(path)
+            startup['cmd_command_processor']['last_modified_at'] = self._filetime_to_datetime(key.header.last_modified)
+            startup['cmd_command_processor']['data'] = []
+            for value in key.get_values():
+                startup['cmd_command_processor']['data'].append({
+                    'name': value.name,
+                    'value': value.value,
+                })
+        except RegistryKeyNotFoundException:
+            startup['cmd_command_processor']['last_modified_at'] = ''
+            startup['cmd_command_processor']['data'] = []
+
+        # collect run/run once subkeys
+        path = '\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'
+        key = reg_user.get_key(path)
+        startup['run']['key'] = 'HKCU' + path
+        startup['run']['last_modified_at'] = self._filetime_to_datetime(key.header.last_modified)
+        startup['run']['data'] = []
+        for value in key.get_values():
+            startup['run']['data'].append({
+                'name': value.name,
+                'path': value.value,
+            })
+
+        path = '\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce'
+        key = reg_user.get_key(path)
+        startup['run_once']['key'] = 'HKCU' + path
+        startup['run_once']['last_modified_at'] = self._filetime_to_datetime(key.header.last_modified)
+        startup['run_once']['data'] = []
+        for value in key.get_values():
+            startup['run_once']['data'].append({
+                'name': value.name,
+                'path': value.value,
+            })
+
+        return startup
+
+    def __get_user_app(self, reg_user):
+        apps = {}
+
+        path = '\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Compatibility Assistant\\Store'
+        key = reg_user.get_key(path)
+        apps['key'] = 'HKCU' + path
+        apps['last_modified_at'] = self._filetime_to_datetime(key.header.last_modified)
+        apps['apps_executed'] = [value.name for value in key.get_values()]
+
+        return apps
+
+    def __get_user_cloud_accounts(self, reg_user):
+        info = {}
+
+        # collect microsoft accounts if any
+        info['microsoft'] = []
+        path = '\\Software\\Microsoft\\IdentityCRL\\UserExtendedProperties'
+        try:
+            key = reg_user.get_key(path)
+            for subkey in key.iter_subkeys():
+                info['microsoft'].append({
+                    'email': subkey.header.key_name_string.decode('utf8'),
+                    'cid': subkey.get_value('cid')
+                })
+        except RegistryKeyNotFoundException:
+            pass
+
+        # collect Google accounts if any
+        info['google'] = []
+        base_path = '\\Software\\Google'
+        try:
+            key = reg_user.get_key(base_path + '\\DriveFS\\Share')
+            values = {value.name: value.value for value in key.get_values()}
+            info['google'].append({
+                'sync_type': 'DriveFS',
+                'mount_point': values['MountPoint'],
+                'metadata_path': values['BasePath'],
+            })
+        except RegistryKeyNotFoundException:
+            pass
+
+        try:
+            key = reg_user.get_key(base_path + '\\Drive')
+            values = {value.name: value.value for value in key.get_values()}
+            info['google'].append({
+                'sync_type': 'Drive Backup and Sync',
+                'metadata_path': values['Path'],
+            })
+        except RegistryKeyNotFoundException:
+            pass
+
+        # collect OneDrive accounts if any
+        info['onedrive'] = []
+        base_path = '\\Software\\Microsoft\\OneDrive\\Accounts'
+        try:
+            key = reg_user.get_key(base_path + '\\Personal')
+            values = {value.name: value.value for value in key.get_values()}
+            if values.get('UserEmail', None) is not None:
+                key_synced = key.get_subkey('Tenants')
+                synced_folders = []
+                for subkey in key_synced.iter_subkeys():
+                    synced_folders += [value.name for value in subkey.get_values()]
+
+                info['onedrive'].append({
+                    'sync_type': 'OneDrive Personal',
+                    'email': values['UserEmail'],
+                    'cid': values['cid'],
+                    'synced_folders': synced_folders,
+                })
+        except NoRegistrySubkeysException:
+            pass
+
+        try:
+            key = reg_user.get_key(base_path + '\\Business1')
+            values = {value.name: value.value for value in key.get_values()}
+            key_synced = key.get_subkey('Tenants')
+            synced_folders = []
+            for subkey in key_synced.iter_subkeys():
+                synced_folders += [value.name for value in subkey.get_values()]
+
+            info['onedrive'].append({
+                'sync_type': 'OneDrive for Business',
+                'email': values['UserEmail'],
+                'cid': values['cid'],
+                'sharepoint_url': values['SPOResourceId'],
+                'synced_folders': synced_folders,
+            })
+        except (RegistryKeyNotFoundException, NoRegistrySubkeysException):
+            pass
+
+        return info
 
     def __get_control_sets(self, reg_system):
         key = reg_system.get_key('\\Select')
@@ -562,7 +785,7 @@ class RegistryBo(AbstractBo):
         path = '\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon'
         key = reg_software.get_key(path)
         startup['winlogon_shell']['key'] = 'HKLM\\SOFTWARE' + path
-        startup['winlogon_shell']['last_modified_at'] = self._filetime_to_datetime(subkey.header.last_modified)
+        startup['winlogon_shell']['last_modified_at'] = self._filetime_to_datetime(key.header.last_modified)
         values = {value.name: value.value for value in key.get_values()}
         startup['winlogon_shell']['data'] = {
             'expected': 'explorer.exe',
@@ -573,7 +796,7 @@ class RegistryBo(AbstractBo):
         path = '\\Microsoft\\Command Processor'
         key = reg_software.get_key(path)
         startup['cmd_command_processor']['key'] = 'HKLM\\SOFTWARE' + path
-        startup['cmd_command_processor']['last_modified_at'] = self._filetime_to_datetime(subkey.header.last_modified)
+        startup['cmd_command_processor']['last_modified_at'] = self._filetime_to_datetime(key.header.last_modified)
         startup['cmd_command_processor']['data'] = []
         for value in key.get_values():
             startup['cmd_command_processor']['data'].append({
@@ -585,7 +808,7 @@ class RegistryBo(AbstractBo):
         path = '\\Microsoft\\Windows\\CurrentVersion\\Run'
         key = reg_software.get_key(path)
         startup['run']['key'] = 'HKLM\\SOFTWARE' + path
-        startup['run']['last_modified_at'] = self._filetime_to_datetime(subkey.header.last_modified)
+        startup['run']['last_modified_at'] = self._filetime_to_datetime(key.header.last_modified)
         startup['run']['data'] = []
         for value in key.get_values():
             startup['run']['data'].append({
@@ -596,7 +819,7 @@ class RegistryBo(AbstractBo):
         path = '\\Microsoft\\Windows\\CurrentVersion\\RunOnce'
         key = reg_software.get_key(path)
         startup['run_once']['key'] = 'HKLM\\SOFTWARE' + path
-        startup['run_once']['last_modified_at'] = self._filetime_to_datetime(subkey.header.last_modified)
+        startup['run_once']['last_modified_at'] = self._filetime_to_datetime(key.header.last_modified)
         startup['run_once']['data'] = []
         for value in key.get_values():
             startup['run_once']['data'].append({

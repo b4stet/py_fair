@@ -32,15 +32,15 @@ class WindowsCommand(AbstractCommand):
             ]
         ))
 
-        # group.add_command(click.Command(
-        #     name='profile_user', help='profile the users from their ntuser.dat hive',
-        #     callback=self.do_profile_user,
-        #     params=[
-        #         self._get_option_hive_ntusers(),
-        #         self._get_option_outdir(),
-        #         self._get_option_output(),
-        #     ]
-        # ))
+        group.add_command(click.Command(
+            name='profile_users', help='profile the users on the subject system from their ntuser.dat hive',
+            callback=self.do_profile_users,
+            params=[
+                self._get_option_hive_ntusers(),
+                self._get_option_outdir(),
+                self._get_option_output(),
+            ]
+        ))
 
         return group
 
@@ -58,7 +58,7 @@ class WindowsCommand(AbstractCommand):
 
         # extract info from system, software and sam hive
         print('[+] Analyzing registry hives ', end='', flush=True)
-        results_registry = self.__registry_bo.get_profiling_from_registry(hive_system, hive_software, hive_sam)
+        results_registry = self.__registry_bo.get_profiling_from_host_registries(hive_system, hive_software, hive_sam)
         print(' done.')
 
         # extract info from windows events
@@ -69,7 +69,7 @@ class WindowsCommand(AbstractCommand):
         print(' done. Processed {} events'.format(results_evtx['nb_events']))
 
         # assemble timeline and reports
-        report = self.__report_bo.assemble_report(results_evtx, results_registry, self.__evtx_bo.CHANNELS_MIN)
+        report = self.__report_bo.assemble_host_report(results_evtx, results_registry, self.__evtx_bo.CHANNELS_MIN)
         report['report'].append({
             'title': 'Output files',
             'data': [
@@ -94,10 +94,18 @@ class WindowsCommand(AbstractCommand):
         self._write_formatted(out_profiling_storage, output, report['profiling']['writable_storage'])
         self._write_formatted(out_profiling_autorun, output, report['profiling']['autorun'])
 
-    # def do_profile_user(self, hive_ntusers, outdir, output):
-    #     # if not os.path.exists(outdir):
-    #     #     raise ValueError('Out directory {} does not exist.'.format(outdir))
+    def do_profile_users(self, hive_users, outdir, output):
+        if not os.path.exists(outdir):
+            raise ValueError('Out directory {} does not exist.'.format(outdir))
 
-    #     for hive_path, username in hive_ntusers:
-    #         out = 'profiling_{}.{}'.format(username, output)
-    #         out = os.path.join(outdir, out)
+        results = {}
+        for hive_user, username in hive_users:
+            out = 'profiling_{}.{}'.format(username, output)
+            out = os.path.join(outdir, out)
+
+            print('[+] Analyzing registry hive for user {} '.format(username), end='', flush=True)
+            profiling = self.__registry_bo.get_profiling_from_user_registry(hive_user)
+            results[username] = {'outfile': out, **profiling}
+            print(' done.')
+
+        print(results)

@@ -7,7 +7,7 @@ from facs.bo.abstract import AbstractBo
 
 
 class ReportWinProfilingBo(AbstractBo):
-    def assemble_report(self, results_evtx, results_registry, channels):
+    def assemble_host_report(self, results_evtx, results_registry, channels):
         timeline_global = []
         report_global = []
 
@@ -124,9 +124,10 @@ class ReportWinProfilingBo(AbstractBo):
             'data': [],
         }
 
-        report['title'] = 'Checked evidences of host start/stop'
+        report['title'] = 'Checked evidences of host start/stop/sleep/wake up'
         report['data'].append('From Security channel, provider Microsoft-Windows-Eventlog, EID 4608/4609')
         report['data'].append('From System channel, provider Microsoft-Windows-Kernel-General, EID 12/13')
+        report['data'].append('From System channel, provider Microsoft-Windows-Power-Troubleshooter, EID 1')
         report['data'].append('From System channel, provider User32, EID 1074')
         report['data'].append('Found {} event(s)'.format(len(start_stop)))
 
@@ -638,7 +639,7 @@ class ReportWinProfilingBo(AbstractBo):
                 'start_type': '',
                 'service_type': '',
                 'value': app['path'],
-                'comment': 'Program automaticcaly started at system startup'
+                'comment': 'Program automatically started at system startup'
             })
 
         run_once = results_registry['autorun']['run_once']
@@ -650,6 +651,6 @@ class ReportWinProfilingBo(AbstractBo):
                 'start_type': '',
                 'service_type': '',
                 'value': app['path'],
-                'comment': 'Program automaticcaly started at system startup'
+                'comment': 'Program automatically started at system startup'
             })
         return profiling, report
