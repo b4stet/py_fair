@@ -123,7 +123,7 @@ mount:
     - description: 'mount LVM disk dump'
       command: 'losetup -Pf + pvdisplay + vgchange -a y <volume name> + mount'
     - description: 'mount with imagemounter (pip package)'
-      command: 'imount -v -m xmount /dev/loop0, if failing, the dd might be usable in /tmp/image_mounter_XXX'
+      command: 'imount -v -k -m xmount /dev/loop0, if failing, the dd might be usable in /tmp/image_mounter_XXX'
     - description: 'mount partition in user space (mount under /media/ or /run/media/$USER)'
       command: 'udiskctl mount --block-device /dev/<block device> --options ro,noatime,noexec,<ntfs options>'
     - description: 'list mounted devices'
