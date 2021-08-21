@@ -49,12 +49,12 @@ class WindowsCommand(AbstractCommand):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
 
         out_timeline = os.path.join(outdir, 'profiling_timeline.' + output)
-        out_profiling_host = os.path.join(outdir, 'profiling_host.' + output)
-        out_profiling_users = os.path.join(outdir, 'profiling_users.' + output)
-        out_profiling_networks = os.path.join(outdir, 'profiling_networks.' + output)
-        out_profiling_applications = os.path.join(outdir, 'profiling_applications_system_wide.' + output)
-        out_profiling_storage = os.path.join(outdir, 'profiling_storage.' + output)
-        out_profiling_autorun = os.path.join(outdir, 'profiling_autorun.' + output)
+        out_profiling_host = os.path.join(outdir, 'profiling_host_info.' + output)
+        out_profiling_users = os.path.join(outdir, 'profiling_host_users.' + output)
+        out_profiling_networks = os.path.join(outdir, 'profiling_host_networks.' + output)
+        out_profiling_applications = os.path.join(outdir, 'profiling_host_applications.' + output)
+        out_profiling_storage = os.path.join(outdir, 'profiling_host_storage.' + output)
+        out_profiling_autorun = os.path.join(outdir, 'profiling_host_autorun.' + output)
 
         # extract info from system, software and sam hive
         print('[+] Analyzing registry hives ', end='', flush=True)
@@ -98,14 +98,25 @@ class WindowsCommand(AbstractCommand):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
 
-        results = {}
         for hive_user, username in hive_users:
-            out = 'profiling_{}.{}'.format(username, output)
-            out = os.path.join(outdir, out)
-
+            # process
             print('[+] Analyzing registry hive for user {} '.format(username), end='', flush=True)
             profiling = self.__registry_bo.get_profiling_from_user_registry(hive_user)
-            results[username] = {'outfile': out, **profiling}
             print(' done.')
 
-        print(results)
+            # assemble report
+            report = self.__report_bo.assemble_user_report(profiling)
+            for chunk in report['report']:
+                self._print_text(chunk['title'], chunk['data'])
+
+            report_output = {
+                'title': 'Output files',
+                'data': [],
+            }
+
+            for key, data in report['profiling'].items():
+                out = 'profiling_user_{}_{}.{}'.format(username, key, output)
+                out = os.path.join(outdir, out)
+                report_output['data'].append('{} in {}'.format(key, out))
+                self._write_formatted(out, output, data)
+            self._print_text(report_output['title'], report_output['data'])

@@ -94,7 +94,7 @@ class RegistryBo(AbstractBo):
                 }
 
                 if name == 'MRU0':
-                    destination['last_modified_at'] = self._filetime_to_datetime(key.header.last_modified)
+                    destination['last_connected_at'] = self._filetime_to_datetime(key.header.last_modified)
 
                 subkey = reg_user.get_key(base_path + '\\Servers\\' + value)
                 destination['username'] = subkey.get_value('UsernameHint')
@@ -202,7 +202,7 @@ class RegistryBo(AbstractBo):
     def __get_user_cloud_accounts(self, reg_user):
         info = {}
 
-        # collect microsoft accounts if any
+        # collect Microsoft accounts if any
         info['microsoft'] = []
         path = '\\Software\\Microsoft\\IdentityCRL\\UserExtendedProperties'
         try:
@@ -216,31 +216,37 @@ class RegistryBo(AbstractBo):
             pass
 
         # collect Google accounts if any
-        info['google'] = []
+        info['google'] = {
+            'drive_fs': {},
+            'backup_sync': {},
+        }
         base_path = '\\Software\\Google'
         try:
             key = reg_user.get_key(base_path + '\\DriveFS\\Share')
             values = {value.name: value.value for value in key.get_values()}
-            info['google'].append({
+            info['google']['drive_fs'] = {
                 'sync_type': 'DriveFS',
                 'mount_point': values['MountPoint'],
                 'metadata_path': values['BasePath'],
-            })
+            }
         except RegistryKeyNotFoundException:
             pass
 
         try:
             key = reg_user.get_key(base_path + '\\Drive')
             values = {value.name: value.value for value in key.get_values()}
-            info['google'].append({
+            info['google']['backup_sync'] = {
                 'sync_type': 'Drive Backup and Sync',
                 'metadata_path': values['Path'],
-            })
+            }
         except RegistryKeyNotFoundException:
             pass
 
         # collect OneDrive accounts if any
-        info['onedrive'] = []
+        info['onedrive'] = {
+            'personal': {},
+            'business': {},
+        }
         base_path = '\\Software\\Microsoft\\OneDrive\\Accounts'
         try:
             key = reg_user.get_key(base_path + '\\Personal')
@@ -251,12 +257,12 @@ class RegistryBo(AbstractBo):
                 for subkey in key_synced.iter_subkeys():
                     synced_folders += [value.name for value in subkey.get_values()]
 
-                info['onedrive'].append({
+                info['onedrive']['personal'] = {
                     'sync_type': 'OneDrive Personal',
                     'email': values['UserEmail'],
                     'cid': values['cid'],
-                    'synced_folders': synced_folders,
-                })
+                    'synced_folders': ';'.join(synced_folders),
+                }
         except NoRegistrySubkeysException:
             pass
 
@@ -268,13 +274,13 @@ class RegistryBo(AbstractBo):
             for subkey in key_synced.iter_subkeys():
                 synced_folders += [value.name for value in subkey.get_values()]
 
-            info['onedrive'].append({
+            info['onedrive']['business'] = {
                 'sync_type': 'OneDrive for Business',
                 'email': values['UserEmail'],
                 'cid': values['cid'],
                 'sharepoint_url': values['SPOResourceId'],
-                'synced_folders': synced_folders,
-            })
+                'synced_folders': ';'.join(synced_folders),
+            }
         except (RegistryKeyNotFoundException, NoRegistrySubkeysException):
             pass
 

@@ -22,6 +22,7 @@ $ python3 -m facs.cli <command> <subcommand> --help
 ```
 $ python3 -m venv facs_env
 $ source ./facs_env/bin/activate
+$ python -m pip install pip wheel setuptools --upgrade
 $ pip3 install -r requirements.txt
 ```
 

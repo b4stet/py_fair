@@ -61,6 +61,73 @@ class ReportWinProfilingBo(AbstractBo):
             }
         }
 
+    def assemble_user_report(self, results_registry):
+        report = []
+
+        report.append({
+            'title': 'Collected RDP connections',
+            'data': [
+                'destination servers from key HKU\\software\\Microsoft\\Terminal Server Client\\Default',
+                'username from subkeys of HKU\\software\\Microsoft\\Terminal Server Client\\Servers',
+            ],
+        })
+
+        report.append({
+            'title': 'Collected connections to share and/or USB devices',
+            'data': [
+                'from HKU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\MountPoints2'
+            ]
+        })
+
+        profiling_autorun, profiling_report = self.__get_profiling_autorun(results_registry, is_host=False)
+        report.append(profiling_report)
+
+        report.append({
+            'title': 'Collected applications executed',
+            'data': [
+                'from key HKU\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Compatibility Assistant\\Store'
+            ]
+        })
+        profiling_apps = []
+        profiling_apps.append({
+            'key': '{}'.format(results_registry['app_used']['key']),
+            'value': 'last modified at {}'.format(results_registry['app_used']['last_modified_at']),
+        })
+        profiling_apps.extend([{'key': 'application', 'value': app} for app in results_registry['app_used']['apps_executed']])
+
+        report.append({
+            'title': 'Collected Cloud accounts and synchronisation information',
+            'data': [
+                'Microsoft accounts from subkeys of HKU\\Software\\Microsoft\\IdentityCRL\\UserExtendedProperties',
+                'Google DriveFS from key HKU\\Software\\Google\\DriveFS\\Share',
+                'Google Backup and Sync from key HKU\\Software\\Google\\Drive',
+                'OneDrive personal from key HKU\\Software\\Microsoft\\OneDrive\\Accounts\\Personal',
+                'OneDrive for Business from key HKU\\\\Software\\Microsoft\\OneDrive\\Accounts\\Business1',
+            ]
+        })
+        profiling_cloud = []
+        info = ';'.join(['{}:{}'.format(key, value) for account in results_registry['cloud']['microsoft'] for key, value in account.items() ])
+        profiling_cloud.append({'provider': 'Microsoft', 'info': info})
+        info = ';'.join(['{}:{}'.format(key, value) for key, value in results_registry['cloud']['google']['drive_fs'].items()])
+        profiling_cloud.append({'provider': 'Google DriveFS', 'info': info})
+        info = ';'.join(['{}:{}'.format(key, value) for key, value in results_registry['cloud']['google']['backup_sync'].items()])
+        profiling_cloud.append({'provider': 'Google Backup&Sync', 'info': info})
+        info = ';'.join(['{}:{}'.format(key, value) for key, value in results_registry['cloud']['onedrive']['personal'].items()])
+        profiling_cloud.append({'provider': 'OneDrive Personal', 'info': info})
+        info = ';'.join(['{}:{}'.format(key, value) for key, value in results_registry['cloud']['onedrive']['business'].items()])
+        profiling_cloud.append({'provider': 'OneDrive Business', 'info': info})
+
+        return {
+            'report': report,
+            'profiling': {
+                'connections_rdp': results_registry['rdp_usage'],
+                'connections_usb_n_share': results_registry['usb_share_usage'],
+                'autorun': profiling_autorun,
+                'executed_apps': profiling_apps,
+                'cloud': profiling_cloud,
+            }
+        }
+
     def __get_profiling_log_start_end(self, computer, start_end, channels):
         timeline = []
         report = {
@@ -98,10 +165,10 @@ class ReportWinProfilingBo(AbstractBo):
         }
 
         report['title'] = 'Checked evidences of system backdating'
-        report['data'].append('Looked for clock drift bigger than 10 minutes')
-        report['data'].append('From Security channel, provider Microsoft-Windows-Security-Auditing, EID 4616 where user is not "LOCAL SERVICE" or "SYSTEM"')
-        report['data'].append('From System channel, provider Microsoft-Windows-Kernel-General, EID 1 where reason is not 2')
-        report['data'].append('Found: {} event(s)'.format(len(backdating)))
+        report['data'].append('looked for clock drift bigger than 10 minutes')
+        report['data'].append('from Security channel, provider Microsoft-Windows-Security-Auditing, EID 4616 where user is not "LOCAL SERVICE" or "SYSTEM"')
+        report['data'].append('from System channel, provider Microsoft-Windows-Kernel-General, EID 1 where reason is not 2')
+        report['data'].append('found: {} event(s)'.format(len(backdating)))
 
         return backdating, report
 
@@ -112,9 +179,9 @@ class ReportWinProfilingBo(AbstractBo):
         }
 
         report['title'] = 'Checked evidences of log tampering'
-        report['data'].append('From Security channel, provider Microsoft-Windows-Eventlog, EID 1100/1102/1104')
-        report['data'].append('From System channel, provider Eventlog, EID 6005/6006')
-        report['data'].append('Found {} event(s)'.format(len(cleaning)))
+        report['data'].append('from Security channel, provider Microsoft-Windows-Eventlog, EID 1100/1102/1104')
+        report['data'].append('from System channel, provider Eventlog, EID 6005/6006')
+        report['data'].append('found {} event(s)'.format(len(cleaning)))
 
         return cleaning, report
 
@@ -125,11 +192,11 @@ class ReportWinProfilingBo(AbstractBo):
         }
 
         report['title'] = 'Checked evidences of host start/stop/sleep/wake up'
-        report['data'].append('From Security channel, provider Microsoft-Windows-Eventlog, EID 4608/4609')
-        report['data'].append('From System channel, provider Microsoft-Windows-Kernel-General, EID 12/13')
-        report['data'].append('From System channel, provider Microsoft-Windows-Power-Troubleshooter, EID 1')
-        report['data'].append('From System channel, provider User32, EID 1074')
-        report['data'].append('Found {} event(s)'.format(len(start_stop)))
+        report['data'].append('from Security channel, provider Microsoft-Windows-Eventlog, EID 4608/4609')
+        report['data'].append('from System channel, provider Microsoft-Windows-Kernel-General, EID 12/13')
+        report['data'].append('from System channel, provider Microsoft-Windows-Power-Troubleshooter, EID 1')
+        report['data'].append('from System channel, provider User32, EID 1074')
+        report['data'].append('found {} event(s)'.format(len(start_stop)))
 
         return start_stop, report
 
@@ -578,31 +645,38 @@ class ReportWinProfilingBo(AbstractBo):
 
         return info
 
-    def __get_profiling_autorun(self, results_registry):
+    def __get_profiling_autorun(self, results_registry, is_host=True):
         profiling = []
         report = {
             'title': '',
             'data': [],
         }
 
-        report['title'] = 'Collected information autostart services and applications'
-        report['data'].append('Windows services from subkeys of SYSTEM\\CurrentControlSet\\Services')
-        report['data'].append('Shell value at logon from key SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon')
-        report['data'].append('Commands executed at each run of cmd.exe from key SOFTWARE\\Microsoft\\Command Processor')
-        report['data'].append('Autostart app and service from key SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run')
-        report['data'].append('Autostart app and service from key SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce')
+        report['title'] = 'Collected autostart services and applications'
+        if is_host is True:
+            report['data'].append('Windows services from subkeys of SYSTEM\\CurrentControlSet\\Services')
+            report['data'].append('shell value at logon from key SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon')
+            report['data'].append('commands executed at each run of cmd.exe from key SOFTWARE\\Microsoft\\Command Processor')
+            report['data'].append('autostart app and service from key SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run')
+            report['data'].append('autostart app and service from key SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce')
+        else:
+            report['data'].append('shell value at logon from key NTUSER\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon')
+            report['data'].append('commands executed at each run of cmd.exe from key NTUSER\\Software\\Microsoft\\Command Processor')
+            report['data'].append('autostart app and service from key NTUSER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run')
+            report['data'].append('autostart app and service from key NTUSER\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce')
 
         # assemble windows services
-        for service in results_registry['autorun']['windows_services']['data']:
-            profiling.append({
-                'key': results_registry['autorun']['windows_services']['key'] + service['subkey_name'],
-                'last_modified_at': service['last_modified_at'],
-                'name': service['display_name'],
-                'start_type': service['start_type'],
-                'service_type': service['service_type'],
-                'value': service['path'],
-                'comment': 'Windows services',
-            })
+        if is_host is True:
+            for service in results_registry['autorun']['windows_services']['data']:
+                profiling.append({
+                    'key': results_registry['autorun']['windows_services']['key'] + service['subkey_name'],
+                    'last_modified_at': service['last_modified_at'],
+                    'name': service['display_name'],
+                    'start_type': service['start_type'],
+                    'service_type': service['service_type'],
+                    'value': service['path'],
+                    'comment': 'Windows services',
+                })
 
         # assemble shell value
         winlogon = results_registry['autorun']['winlogon_shell']
