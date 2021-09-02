@@ -1,9 +1,5 @@
 import click
-import json
-import sys
-import os
 from facs.command.abstract import AbstractCommand
-from facs.entity.timeline import TimelineEntity
 
 
 class ProcessingCommand(AbstractCommand):

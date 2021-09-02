@@ -74,42 +74,45 @@ As the notion of address/coordinates is not attached to a cell in ODF, several l
 ## Examples
 ### Windows host profiling
 ```
-$ py_facs scripts windows profile_host -e l2t_evtx.json  -d reports/ -o csv --hsystem SYSTEM_CLEAN --hsoftware SOFTWARE_CLEAN --hsam SAM_CLEAN
+$ time py_facs scripts windows profile_host -d reports/ -o csv -e l2t_evtx.json  --hsystem SYSTEM_CLEAN --hsoftware SOFTWARE_CLEAN --hsam SAM_CLEAN
 
-[+] Analyzing registry hives ........ done.
-[+] Analyzing evtx ........................................................................................................................................................................................................................................................................ done. Processed 264382 events
+[+] Analyzing evtx ..............................................................................................................
+.................................................................................................................................
+......................... done. Processed 264382 events
+[+] Analyzing registry hives ...... done.
+
 [+] Checked start/end of windows event log for main channels
- | Security                                                                        : ok
- | System                                                                          : ok
- | Application                                                                     : ok
+ | Security                                                                        : found
+ | System                                                                          : found
+ | Application                                                                     : found
  | Microsoft-Windows-TaskScheduler/Operational                                     : not found
  | Microsoft-Windows-TerminalServices-RDPClient/Operational                        : not found
- | Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational          : ok
- | Microsoft-Windows-TerminalServices-LocalSessionManager/Operational              : ok
+ | Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational          : found
+ | Microsoft-Windows-TerminalServices-LocalSessionManager/Operational              : found
+ | Microsoft-Windows-Partition/Diagnostic                                          : found
+ | Microsoft-Windows-Kernel-PnP/Configuration                                      : found
 
 [+] Checked evidences of system backdating
- | Looked for clock drift bigger than 10 minutes
- | From Security channel, provider Microsoft-Windows-Security-Auditing, EID 4616 where user is not "LOCAL SERVICE" or "SYSTEM"
- | From System channel, provider Microsoft-Windows-Kernel-General, EID 1 where reason is not 2
- | Found: 0 event(s)
+ | looked for clock drifts bigger than 10 minutes
+ | from Security channel, provider Microsoft-Windows-Security-Auditing, EID 4616 where user is not "LOCAL SERVICE" or "SYSTEM"
+ | from System channel, provider Microsoft-Windows-Kernel-General, EID 1 where reason is not 2
 
 [+] Checked evidences of log tampering
- | From Security channel, provider Microsoft-Windows-Eventlog, EID 1100/1102/1104
- | From System channel, provider Eventlog, EID 6005/6006
- | Found 13 event(s)
+ | from Security channel, provider Microsoft-Windows-Eventlog, EID 1100/1102/1104
+ | from System channel, provider Eventlog, EID 6005/6006
 
-[+] Checked evidences of host start/stop
- | From Security channel, provider Microsoft-Windows-Eventlog, EID 4608/4609
- | From System channel, provider Microsoft-Windows-Kernel-General, EID 12/13
- | From System channel, provider Microsoft-Windows-Power-Troubleshooter, EID 1
- | From System channel, provider User32, EID 1074
- | Found 19 event(s)
+[+] Checked evidences of host start/stop/sleep/wake up
+ | from Security channel, provider Microsoft-Windows-Eventlog, EID 4608/4609
+ | from System channel, provider Microsoft-Windows-Kernel-General, EID 12/13
+ | from System channel, provider Microsoft-Windows-Power-Troubleshooter, EID 1
+ | from System channel, provider User32, EID 1074
 
 [+] Collected system information
  | computer name from key SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName
  | OS info from key SYSTEM\Microsoft\Windows NT\CurrentVersion
  | time zone info from key SYSTEM\CurrentControlSet\Control\TimeZoneInformation
  | control sets from key SYSTEM\Select
+ | NICs from subkeys of SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkCards
 
 [+] Collected local accounts information
  | accounts from key SAM\SAM\Domains\Account\Users
@@ -120,8 +123,14 @@ $ py_facs scripts windows profile_host -e l2t_evtx.json  -d reports/ -o csv --hs
  | system wide installation from key SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
  | uninstalled applications from Application channel, provider MsiInstaller, EID 11724
 
+[+] Collected autostart services and applications
+ | Windows services from subkeys of SYSTEM\CurrentControlSet\Services
+ | shell value at logon from key SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+ | commands executed at each run of cmd.exe from key SOFTWARE\Microsoft\Command Processor
+ | autostart app and service from key SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+ | autostart app and service from key SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce
+
 [+] Collected network connections (ethernet, wifi, VPN)
- | NIC from subkeys of SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkCards
  | interface parameters from subkeys of SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces (if IP address found)
  | connections history from subkeys of SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Signatures
 
@@ -134,23 +143,58 @@ $ py_facs scripts windows profile_host -e l2t_evtx.json  -d reports/ -o csv --hs
  | first/last connections from key SYSTEM\CurrentControlSet\Enum\USB, property {83da6326-97a6-4088-9453-a1923f573b29}
  | drive letters, and volume GUID from key SYSTEM\MountedDevices (do check manually slack space)
 
-[+] Collected information autostart services and applications
- | Windows services from subkeys of SYSTEM\CurrentControlSet\Services
- | Shell value at logon from key SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
- | Commands executed at each run of cmd.exe from key SOFTWARE\Microsoft\Command Processor
- | Autostart app and service from key SOFTWARE\Microsoft\Windows\CurrentVersion\Run
- | Autostart app and service from key SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce
-
 [+] Output files
- | timeline in ./reports/profiling_timeline.csv
- | host profiling in ./reports/profiling_host.csv
- | networks profiling in ./reports/profiling_networks.csv
- | local users profiling in ./reports/profiling_users.csv
- | applications system wide info in ./reports/profiling_applications_system_wide.csv
- | writable storage info in ./reports/profiling_storage.csv
- | autorun info in ./reports/profiling_autorun.csv
+ | reports/profile_host_host_info.csv
+ | reports/profile_host_local_users.csv
+ | reports/profile_host_applications.csv
+ | reports/profile_host_autoruns.csv
+ | reports/profile_host_networks.csv
+ | reports/profile_host_usb.csv
+ | reports/timeline.csv
 
-real	2m16,768s
-user	2m4,409s
-sys	0m12,374s
+
+real	1m42.560s
+user	1m29.658s
+sys	    0m12.837s
+```
+
+### Windows User hive profiling
+```
+$ time py_facs scripts windows profile_users -d reports/ -o csv --huser NTUSER_CLEAN stack 
+[+] Analyzing registry hive for user stack ..... done.
+
+[+] Collected RDP connections
+ | destination servers from key HKU\software\Microsoft\Terminal Server Client\Default
+ | username from subkeys of HKU\software\Microsoft\Terminal Server Client\Servers
+
+[+] Collected connections to network shares and USB devices
+ | from HKU\Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2
+
+[+] Collected autostart services and applications
+ | shell value at logon from key NTUSER\Software\Microsoft\Windows NT\CurrentVersion\Winlogon
+ | commands executed at each run of cmd.exe from key NTUSER\Software\Microsoft\Command Processor
+ | autostart app and service from key NTUSER\Software\Microsoft\Windows\CurrentVersion\Run
+ | autostart app and service from key NTUSER\Software\Microsoft\Windows\CurrentVersion\RunOnce
+
+[+] Collected applications executed by the user
+ | from key HKU\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Compatibility Assistant\Store
+
+[+] Collected Cloud accounts and synchronisation information
+ | Microsoft accounts from subkeys of HKU\Software\Microsoft\IdentityCRL\UserExtendedProperties
+ | Google DriveFS from key HKU\Software\Google\DriveFS\Share
+ | Google Backup and Sync from key HKU\Software\Google\Drive
+ | OneDrive personal from key HKU\Software\Microsoft\OneDrive\Accounts\Personal
+ | OneDrive for Business from key HKU\\Software\Microsoft\OneDrive\Accounts\Business1
+
+[+] Output files for user stack
+ | reports/profile_user_stack_rdp_connections.csv
+ | reports/profile_user_stack_usb_shares_usage.csv
+ | reports/profile_user_stack_autoruns.csv
+ | reports/profile_user_stack_applications.csv
+ | reports/profile_user_stack_cloud_accounts.csv
+
+
+real	0m0.462s
+user	0m0.260s
+sys	    0m0.035s
 ```

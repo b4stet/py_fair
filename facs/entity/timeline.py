@@ -15,8 +15,8 @@ class TimelineEntity():
 
     def to_dict(self):
         return {
-            'start': self.__start,
-            'end': self.__end,
+            'start': str(self.__start),
+            'end': str(self.__end),
             'host': self.__host,
             'user': self.__user,
             'foreign': self.__foreign,

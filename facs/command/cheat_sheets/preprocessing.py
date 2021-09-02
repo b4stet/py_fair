@@ -1,9 +1,4 @@
 import click
-import csv
-import os
-import sys
-import io
-import zipfile
 from facs.command.abstract import AbstractCommand
 
 

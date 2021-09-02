@@ -1,12 +1,12 @@
+from facs.entity.report import ReportEntity
 import json
-import sys
 from xml.dom import minidom
 from facs.entity.timeline import TimelineEntity
-from facs.bo.abstract import AbstractBo
+from facs.analyzer.abstract import AbstractAnalyzer
 
 
-class EvtxBo(AbstractBo):
-    CHANNELS_MIN = [
+class EvtxAnalyzer(AbstractAnalyzer):
+    __CHANNELS_MIN = [
         'Security',
         'System',
         'Application',
@@ -18,15 +18,16 @@ class EvtxBo(AbstractBo):
         'Microsoft-Windows-Kernel-PnP/Configuration',
     ]
 
-    def get_profiling_from_evtx(self, fd_evtx):
-        computer = None
-        cleaning = []
-        backdating = []
-        start_stop = []
-        start_end = {channel: {'start': None, 'end': None} for channel in self.CHANNELS_MIN}
-        uninstalled = []
-        storage_info = []
-        pnp_connections = []
+    def collect_common_events(self, fd_evtx):
+        collection = {
+            'app_uninstalled': [],
+            'storage_info': [],
+            'pnp_connections': [],
+        }
+        log_start_end = {channel: {'start': None, 'end': None} for channel in self.__CHANNELS_MIN}
+        timeline = []
+        computer_name = None
+        report = {}
 
         nb_events = 0
         for line in fd_evtx:
@@ -44,95 +45,136 @@ class EvtxBo(AbstractBo):
             provider = info['provider']
             event_id = info['event_id']
 
-            if computer is None:
-                computer = info['computer']
+            if computer_name is None:
+                computer_name = info['computer']
 
             # collect start/end of logs
-            if channel in self.CHANNELS_MIN:
-                if start_end[channel]['start'] is None or info['datetime'] < start_end[channel]['start']:
-                    start_end[channel]['start'] = info['datetime']
+            if channel in self.__CHANNELS_MIN:
+                if log_start_end[channel]['start'] is None or info['datetime'] < log_start_end[channel]['start']:
+                    log_start_end[channel]['start'] = info['datetime']
 
-                if start_end[channel]['end'] is None or info['datetime'] > start_end[channel]['end']:
-                    start_end[channel]['end'] = info['datetime']
+                if log_start_end[channel]['end'] is None or info['datetime'] > log_start_end[channel]['end']:
+                    log_start_end[channel]['end'] = info['datetime']
 
             # check time changes, logging tampered and windows start/stop from Security channel
             if channel == 'Security':
                 if provider == 'Microsoft-Windows-Security-Auditing' and event_id == '4616':
                     data = self.__extract_security_4616(event['xml_string'])
                     event_processed = self.__process_security_4616(info, data)
-                    backdating = self._append_to_timeline(event_processed, backdating)
+                    timeline = self._append_to_timeline(event_processed, timeline)
 
                 if provider == 'Microsoft-Windows-Security-Auditing' and event_id in ['4608', '4609']:
                     event_processed = self.__process_security_4608_4609(info)
-                    start_stop = self._append_to_timeline(event_processed, start_stop)
+                    timeline = self._append_to_timeline(event_processed, timeline)
 
                 if provider == 'Microsoft-Windows-Eventlog' and event_id in ['1100', '1102', '1104']:
                     data = self.__extract_security_1100_1102_1104(event['xml_string'])
                     event_processed = self.__process_security_1100_1102_1104(info, data)
-                    cleaning = self._append_to_timeline(event_processed, cleaning)
+                    timeline = self._append_to_timeline(event_processed, timeline)
 
             # check time changes, logging tampered and system start/stop/sleep/wake_up from System channel
             if channel == 'System':
                 if provider == 'Microsoft-Windows-Kernel-General' and event_id == '1':
                     data = self.__extract_system_1(event['xml_string'])
                     event_processed = self.__process_system_1(info, data)
-                    backdating = self._append_to_timeline(event_processed, backdating)
+                    timeline = self._append_to_timeline(event_processed, timeline)
 
                 if provider == 'Microsoft-Windows-Kernel-General' and event_id in ['12', '13']:
                     data = self.__extract_system_12_13(event['xml_string'])
                     event_processed = self.__process_system_12_13(info, data)
-                    start_stop = self._append_to_timeline(event_processed, start_stop)
+                    timeline = self._append_to_timeline(event_processed, timeline)
 
                 if provider == 'Microsoft-Windows-Power-Troubleshooter' and event_id == '1':
                     data = self.__extract_system_power_1(event['xml_string'])
                     event_processed = self.__process_system_power_1(info, data)
-                    start_stop = self._append_to_timeline(event_processed, start_stop)
+                    timeline = self._append_to_timeline(event_processed, timeline)
 
                 if provider == 'User32' and event_id == '1074':
                     data = self.__extract_system_1074(event['xml_string'])
                     event_processed = self.__process_system_1074(info, data)
-                    start_stop = self._append_to_timeline(event_processed, start_stop)
+                    timeline = self._append_to_timeline(event_processed, timeline)
 
                 if provider == 'EventLog' and event_id in ['6005', '6006']:
                     event_processed = self.__process_system_6005_6006(info)
-                    cleaning = self._append_to_timeline(event_processed, cleaning)
+                    timeline = self._append_to_timeline(event_processed, timeline)
 
-            # look for uninstalled applications
+            # look for app_uninstalled applications
             if channel == 'Application':
                 if provider == 'MsiInstaller' and event_id == '11724':
                     data = self.__extract_application_11724(event['xml_string'])
                     event_processed = self.__process_application_11724(info, data)
-                    uninstalled = self._append_to_timeline(event_processed, uninstalled)
+                    collection['app_uninstalled'] = self._append_to_timeline(event_processed, collection['app_uninstalled'])
 
             # collect info on storage devices (internal, external drives, USB MSC keys)
             if channel == 'Microsoft-Windows-Partition/Diagnostic':
                 if provider == 'Microsoft-Windows-Partition' and event_id == '1006':
                     device = self.__extract_partition_1006(event['xml_string'])
-                    if device is not None and device not in storage_info:
-                        storage_info.append(device)
+                    if device is not None and device not in collection['storage_info']:
+                        collection['storage_info'].append(device)
 
             # collect device connections to an USB port
             if channel == 'Microsoft-Windows-Kernel-PnP/Configuration':
                 if provider == 'Microsoft-Windows-Kernel-PnP' and event_id in ['410', '430']:
                     data = self.__extract_kernel_pnp_410_430(event['xml_string'])
                     event_processed = self.__process_kernel_pnp_410_430(info, data)
-                    pnp_connections = self._append_to_timeline(event_processed, pnp_connections)
+                    collection['pnp_connections'] = self._append_to_timeline(event_processed, collection['pnp_connections'])
 
-        return {
-            'nb_events': nb_events,
-            'computer_name': computer,
-            'time_changed': backdating,
-            'log_tampered': cleaning,
-            'log_start_end': start_end,
-            'host_start_stop': start_stop,
-            'app_uninstalled': uninstalled,
-            'storage_info': storage_info,
-            'pnp_connections': pnp_connections,
-        }
+        # insert log start/end in the timeline
+        report['log_start_end'] = ReportEntity(
+            title='Checked start/end of windows event log for main channels',
+            details=[]
+        )
+        for channel in self.__CHANNELS_MIN:
+            if log_start_end[channel]['start'] is None:
+                report['log_start_end'].details.append('{:80}: not found'.format(channel))
+                continue
+
+            report['log_start_end'].details.append('{:80}: found'.format(channel))
+
+            event = TimelineEntity(
+                start=log_start_end[channel]['start'],
+                end=log_start_end[channel]['end'],
+                host=computer_name,
+                event='log start/end',
+                event_type=TimelineEntity.TIMELINE_TYPE_LOG,
+                source='{}.evtx'.format(channel)
+            )
+
+            timeline.append(event.to_dict())
+
+        # list what was done
+        report['time_changed'] = ReportEntity(
+            title='Checked evidences of system backdating',
+            details=[
+                'looked for clock drifts bigger than 10 minutes',
+                'from Security channel, provider Microsoft-Windows-Security-Auditing, EID 4616 where user is not "LOCAL SERVICE" or "SYSTEM"',
+                'from System channel, provider Microsoft-Windows-Kernel-General, EID 1 where reason is not 2',
+            ]
+        )
+
+        report['log_tampered'] = ReportEntity(
+            title='Checked evidences of log tampering',
+            details=[
+                'from Security channel, provider Microsoft-Windows-Eventlog, EID 1100/1102/1104',
+                'from System channel, provider Eventlog, EID 6005/6006',
+            ]
+        )
+
+        report['host_start_stop'] = ReportEntity(
+            title='Checked evidences of host start/stop/sleep/wake up',
+            details=[
+                'from Security channel, provider Microsoft-Windows-Eventlog, EID 4608/4609',
+                'from System channel, provider Microsoft-Windows-Kernel-General, EID 12/13',
+                'from System channel, provider Microsoft-Windows-Power-Troubleshooter, EID 1',
+                'from System channel, provider User32, EID 1074',
+            ]
+        )
+
+        return nb_events, report, timeline, collection
 
     def __extract_common(self, evtx_xml):
         try:
-            # because plaso create sometimes invalid xml string
+            # because plaso create sometimes but rarely invalid xml string
             event = minidom.parseString(evtx_xml)
         except Exception:
             return None
@@ -195,7 +237,7 @@ class EvtxBo(AbstractBo):
         source = 'EID {}; channel {} ; provider {}'.format(info['event_id'], info['channel'], info['provider'])
 
         return TimelineEntity(
-            start=str(info['datetime']),
+            start=info['datetime'],
             host=info['computer'],
             user=user,
             event='system time changed',
@@ -236,7 +278,7 @@ class EvtxBo(AbstractBo):
         source = 'EID {}; channel {} ; provider {}'.format(info['event_id'], info['channel'], info['provider'])
 
         return TimelineEntity(
-            start=str(info['datetime']),
+            start=info['datetime'],
             host=info['computer'],
             user=user,
             event=data['event'],
@@ -255,7 +297,7 @@ class EvtxBo(AbstractBo):
         source = 'EID {}; channel {} ; provider {}'.format(info['event_id'], info['channel'], info['provider'])
 
         return TimelineEntity(
-            start=str(info['datetime']),
+            start=info['datetime'],
             host=info['computer'],
             user=info['sid'],
             event=event,
@@ -299,7 +341,7 @@ class EvtxBo(AbstractBo):
         source = 'EID {}; channel {} ; provider {}'.format(info['event_id'], info['channel'], info['provider'])
 
         return TimelineEntity(
-            start=str(info['datetime']),
+            start=info['datetime'],
             host=info['computer'],
             user=info['sid'],
             event='system time changed',
@@ -326,8 +368,8 @@ class EvtxBo(AbstractBo):
         source = 'EID {}; channel {} ; provider {}'.format(info['event_id'], info['channel'], info['provider'])
 
         return TimelineEntity(
-            start=str(data['sleep_start']),
-            end=str(data['sleep_end']),
+            start=data['sleep_start'],
+            end=data['sleep_end'],
             host=info['computer'],
             user=info['sid'],
             event='sleeping time',
@@ -362,7 +404,7 @@ class EvtxBo(AbstractBo):
         note += str(data['time'])
 
         return TimelineEntity(
-            start=str(info['datetime']),
+            start=info['datetime'],
             host=info['computer'],
             user=info['sid'],
             event=data['event'],
@@ -398,7 +440,7 @@ class EvtxBo(AbstractBo):
         note = 'reason: {}, process: {}'.format(data['reason'], data['process'])
 
         return TimelineEntity(
-            start=str(info['datetime']),
+            start=info['datetime'],
             host=info['computer'],
             user=data['user'],
             event=data['event'],
@@ -418,7 +460,7 @@ class EvtxBo(AbstractBo):
             event += 'stopped'
 
         return TimelineEntity(
-            start=str(info['datetime']),
+            start=info['datetime'],
             host=info['computer'],
             user=info['sid'],
             event=event,
@@ -438,7 +480,7 @@ class EvtxBo(AbstractBo):
         source = 'EID {}; channel {} ; provider {}'.format(info['event_id'], info['channel'], info['provider'])
 
         return TimelineEntity(
-            start=str(info['datetime']),
+            start=info['datetime'],
             host=info['computer'],
             user=info['sid'],
             event=data['event'],
@@ -532,7 +574,7 @@ class EvtxBo(AbstractBo):
         note = '{}#{}'.format(data['vid_pid'], data['serial_number'])
 
         return TimelineEntity(
-            start=str(info['datetime']),
+            start=info['datetime'],
             host=info['computer'],
             user=info['sid'],
             event='USB device started',

@@ -2,10 +2,11 @@ import csv
 from odf.opendocument import OpenDocumentSpreadsheet, load
 from odf import style, text, table
 
-from facs.bo.abstract import AbstractBo
 
+class ReportOdsBo():
+    def __init__(self):
+        pass
 
-class ReportOdsBo(AbstractBo):
     def get_book(self, book_path=None):
         book = None
         if book_path is None:

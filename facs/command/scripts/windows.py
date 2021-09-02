@@ -1,17 +1,17 @@
 import click
 import os
-import sys
-import json
+from regipy.registry import RegistryHive
+
 from facs.command.abstract import AbstractCommand
-from facs.entity.timeline import TimelineEntity
+from facs.entity.report import ReportEntity
 
 
 class WindowsCommand(AbstractCommand):
 
-    def __init__(self, evtx_bo, registry_bo, report_bo):
-        self.__evtx_bo = evtx_bo
-        self.__registry_bo = registry_bo
-        self.__report_bo = report_bo
+    def __init__(self, evtx_analyzer, host_registry_analyzer, user_registry_analyzer):
+        self.__evtx_analyzer = evtx_analyzer
+        self.__host_reg_analyzer = host_registry_analyzer
+        self.__user_reg_analyzer = user_registry_analyzer
 
     def get_commands(self):
         group = click.Group(
@@ -48,75 +48,124 @@ class WindowsCommand(AbstractCommand):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
 
-        out_timeline = os.path.join(outdir, 'profiling_timeline.' + output)
-        out_profiling_host = os.path.join(outdir, 'profiling_host_info.' + output)
-        out_profiling_users = os.path.join(outdir, 'profiling_host_users.' + output)
-        out_profiling_networks = os.path.join(outdir, 'profiling_host_networks.' + output)
-        out_profiling_applications = os.path.join(outdir, 'profiling_host_applications.' + output)
-        out_profiling_storage = os.path.join(outdir, 'profiling_host_storage.' + output)
-        out_profiling_autorun = os.path.join(outdir, 'profiling_host_autorun.' + output)
-
-        # extract info from system, software and sam hive
-        print('[+] Analyzing registry hives ', end='', flush=True)
-        results_registry = self.__registry_bo.get_profiling_from_host_registries(hive_system, hive_software, hive_sam)
-        print(' done.')
-
         # extract info from windows events
         print('[+] Analyzing evtx ', end='', flush=True)
         fd_evtx = open(evtx, mode='r', encoding='utf8')
-        results_evtx = self.__evtx_bo.get_profiling_from_evtx(fd_evtx)
+        nb_events, report, timeline, collection = self.__evtx_analyzer.collect_common_events(fd_evtx)
         fd_evtx.close()
-        print(' done. Processed {} events'.format(results_evtx['nb_events']))
+        print(' done. Processed {} events'.format(nb_events))
 
-        # assemble timeline and reports
-        report = self.__report_bo.assemble_host_report(results_evtx, results_registry, self.__evtx_bo.CHANNELS_MIN)
-        report['report'].append({
-            'title': 'Output files',
-            'data': [
-                'timeline in {}'.format(out_timeline),
-                'host profiling in {}'.format(out_profiling_host),
-                'networks profiling in {}'.format(out_profiling_networks),
-                'local users profiling in {}'.format(out_profiling_users),
-                'applications system wide info in {}'.format(out_profiling_applications),
-                'writable storage info in {}'.format(out_profiling_storage),
-                'autorun info in {}'.format(out_profiling_autorun),
-            ],
-        })
-        for chunk in report['report']:
-            self._print_text(chunk['title'], chunk['data'])
+        # extract info from hives, and correlate with evtx in some cases
+        print('[+] Analyzing registry hives ', end='', flush=True)
 
-        timeline = sorted(report['timeline'], key=lambda k: k['start'])
-        self._write_formatted(out_timeline, output, timeline)
-        self._write_formatted(out_profiling_host, output, report['profiling']['host'])
-        self._write_formatted(out_profiling_users, output, report['profiling']['users'])
-        self._write_formatted(out_profiling_networks, output, report['profiling']['interfaces'])
-        self._write_formatted(out_profiling_applications, output, report['profiling']['applications'])
-        self._write_formatted(out_profiling_storage, output, report['profiling']['writable_storage'])
-        self._write_formatted(out_profiling_autorun, output, report['profiling']['autorun'])
+        analysis = {}
+        reg_system = RegistryHive(hive_system)
+        reg_software = RegistryHive(hive_software)
+        reg_sam = RegistryHive(hive_sam)
+        self.__host_reg_analyzer.set_current_control_set(reg_system)
+        self.__host_reg_analyzer.set_computer_name(reg_system)
+
+        report['host_info'], analysis['host_info'] = self.__host_reg_analyzer.collect_host_info(reg_system, reg_software)
+        analysis['host_info'] = [a.to_dict() for a in analysis['host_info']]
+        print('.', end='', flush=True)
+
+        report['local_users'], analysis['local_users'] = self.__host_reg_analyzer.collect_local_users(reg_sam)
+        analysis['local_users'] = [a.to_dict() for a in analysis['local_users']]
+        print('.', end='', flush=True)
+
+        report['applications'], analysis['applications'] = self.__host_reg_analyzer.collect_applications(collection['app_uninstalled'], reg_software)
+        analysis['applications'] = [a.to_dict() for a in analysis['applications']]
+        print('.', end='', flush=True)
+
+        report['autoruns'], analysis['autoruns'] = self.__host_reg_analyzer.analyze_autoruns(reg_system, reg_software)
+        analysis['autoruns'] = [a.to_dict() for a in analysis['autoruns']]
+        print('.', end='', flush=True)
+
+        report['networks'], timeline_networks, analysis['networks'] = self.__host_reg_analyzer.analyze_networks(reg_system, reg_software)
+        analysis['networks'] = [a.to_dict() for a in analysis['networks']]
+        timeline.extend(timeline_networks)
+        print('.', end='', flush=True)
+
+        report['usb'], timeline_usb, analysis['usb'] = self.__host_reg_analyzer.analyze_usb(collection['storage_info'], collection['pnp_connections'], reg_system, reg_software)
+        analysis['usb'] = [a.to_dict() for a in analysis['usb']]
+        timeline.extend(timeline_usb)
+        print('.', end='', flush=True)
+
+        print(' done.')
+
+        # list what was analyzed
+        for paragraph in report.values():
+            self._print_text(paragraph.title, paragraph.details)
+
+        # write analysis
+        output_files = ReportEntity(
+            title='Output files',
+            details=[]
+        )
+        for topic, results in analysis.items():
+            outfile = 'profile_host_{}.{}'.format(topic, output)
+            outfile = os.path.join(outdir, outfile)
+            output_files.details.append('{}'.format(outfile))
+            self._write_formatted(outfile, output, results)
+
+        # write timeline
+        timeline = sorted(timeline, key=lambda k: k['start'])
+        outfile = 'timeline.{}'.format(output)
+        outfile = os.path.join(outdir, outfile)
+        output_files.details.append('{}'.format(outfile))
+        self._write_formatted(outfile, output, timeline)
+
+        self._print_text(output_files.title, output_files.details)
 
     def do_profile_users(self, hive_users, outdir, output):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
 
+        first = True
         for hive_user, username in hive_users:
             # process
             print('[+] Analyzing registry hive for user {} '.format(username), end='', flush=True)
-            profiling = self.__registry_bo.get_profiling_from_user_registry(hive_user)
-            print(' done.')
 
-            # assemble report
-            report = self.__report_bo.assemble_user_report(profiling)
-            for chunk in report['report']:
-                self._print_text(chunk['title'], chunk['data'])
+            reg_user = RegistryHive(hive_user)
+            report = {}
+            analysis = {}
+            report['rdp_connections'], analysis['rdp_connections'] = self.__user_reg_analyzer.analyze_rdp_connections(reg_user)
+            analysis['rdp_connections'] = [a.to_dict() for a in analysis['rdp_connections']]
+            print('.', end='', flush=True)
 
-            report_output = {
-                'title': 'Output files',
-                'data': [],
-            }
+            report['usb_shares_usage'], analysis['usb_shares_usage'] = self.__user_reg_analyzer.analyze_usb_shares_usage(reg_user)
+            analysis['usb_shares_usage'] = [a.to_dict() for a in analysis['usb_shares_usage']]
+            print('.', end='', flush=True)
 
-            for key, data in report['profiling'].items():
-                out = 'profiling_user_{}_{}.{}'.format(username, key, output)
-                out = os.path.join(outdir, out)
-                report_output['data'].append('{} in {}'.format(key, out))
-                self._write_formatted(out, output, data)
-            self._print_text(report_output['title'], report_output['data'])
+            report['autoruns'], analysis['autoruns'] = self.__user_reg_analyzer.analyze_autoruns(reg_user)
+            analysis['autoruns'] = [a.to_dict() for a in analysis['autoruns']]
+            print('.', end='', flush=True)
+
+            report['applications'], analysis['applications'] = self.__user_reg_analyzer.analyze_applications(reg_user)
+            analysis['applications'] = [a.to_dict() for a in analysis['applications']]
+            print('.', end='', flush=True)
+
+            report['cloud_accounts'], analysis['cloud_accounts'] = self.__user_reg_analyzer.analyze_cloud_accounts(reg_user)
+            analysis['cloud_accounts'] = [a.to_dict() for a in analysis['cloud_accounts']]
+            print('.', end='', flush=True)
+
+            print(' done.\n')
+
+            # list what was analyzed
+            if first is True:
+                for paragraph in report.values():
+                    self._print_text(paragraph.title, paragraph.details)
+
+            # write analysis
+            output_files = ReportEntity(
+                title='Output files for user {}'.format(username),
+                details=[]
+            )
+            for topic, results in analysis.items():
+                outfile = 'profile_user_{}_{}.{}'.format(username, topic, output)
+                outfile = os.path.join(outdir, outfile)
+                output_files.details.append('{}'.format(outfile))
+                self._write_formatted(outfile, output, results)
+            self._print_text(output_files.title, output_files.details)
+
+            first = False
