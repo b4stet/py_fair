@@ -13,14 +13,14 @@ from facs.command.scripts.windows import WindowsCommand
 from facs.command.scripts.nsrl import NsrlCommand
 from facs.command.scripts.report import ReportCommand
 
-from facs.bo.report.ods import ReportOdsBo
+from facs.loader.ods import OdsBo
 
 
 from facs.analyzer.registry_user import UserRegistryAnalyzer
 from facs.analyzer.registry_host import HostRegistryAnalyzer
 from facs.analyzer.evtx import EvtxAnalyzer
 
-ods_bo = ReportOdsBo()
+ods_loader = OdsBo()
 
 user_registry_analyzer = UserRegistryAnalyzer()
 host_registry_analyser = HostRegistryAnalyzer()
@@ -39,7 +39,7 @@ cheat_sheets.add_command(ProcessingCommand().get_commands())
 scripts = click.Group('scripts')
 scripts.add_command(NsrlCommand().get_commands())
 scripts.add_command(WindowsCommand(evtx_analyzer, host_registry_analyser, user_registry_analyzer).get_commands())
-scripts.add_command(ReportCommand(ods_bo).get_commands())
+scripts.add_command(ReportCommand(ods_loader).get_commands())
 
 cli = click.Group('cli', context_settings=dict(terminal_width=160))
 cli.add_command(cheat_sheets)
