@@ -12,6 +12,9 @@ ioc_ttp:
   - 'https://github.com/SigmaHQ/sigma'
   - 'https://labs.inquest.net/'
   - 'https://blog.group-ib.cm/revil_raas'
+  - 'https://github.com/pan-unit42/iocs'
+  - 'https://thedfirreport.com/services'
+  - 'https://github.com/vadim-hunter/Detection-Ideas-Rules'
 
 malware:
   - 'https://www.crowdstrike.com/cybersecurity-101/malware/'
@@ -59,6 +62,8 @@ challenges:
   - 'https://dfirmadness.com/category/labs/the-hunt/'
   - 'https://socvel.com/'
   - 'https://zer1t0.gitlab.io/challenges/'
+  - 'https://www.ashemery.com/dfir.html'
+  - 'https://blueteamlabs.online/'
 
 
 blogs:
@@ -81,7 +86,7 @@ blogs:
   - 'https://www.winitor.com/articles'
   - 'https://nasbench.medium.com/'
   - 'https://www.sekoia.io/en/hunting-and-detecting-cobalt-strike/'
-  - 'https://github.com/vadim-hunter/Detection-Ideas-Rules'
+  - 'https://github.com/sinwindie/OSINT'
 
 
 system:
