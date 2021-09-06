@@ -532,7 +532,7 @@ class HostRegistryAnalyzer(AbstractAnalyzer):
         for device in evtx_storage:
             # identify internal storage: their serial number is not listed in enum subkey
             is_internal = any(1 for elt in usb_connections if elt['serial_number'] == device['serial_number'])
-            if is_internal is False:
+            if is_internal is True:
                 continue
 
             storage = StorageInfoEntity(

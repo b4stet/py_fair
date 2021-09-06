@@ -122,7 +122,7 @@ class UserRegistryAnalyzer(AbstractAnalyzer):
             analysis.append(AutorunEntity(
                 reg_key='HKU' + path,
                 last_modified_at=self._filetime_to_datetime(key.header.last_modified),
-                description='Program automatically started atuser logon',
+                description='Program automatically started at user logon',
                 name=value.name,
                 value=value.value
             ))
