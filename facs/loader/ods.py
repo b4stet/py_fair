@@ -21,7 +21,7 @@ class OdsBo():
         sheets = book.spreadsheet.getElementsByType(table.Table)
         return next((sheet for sheet in sheets if sheet.getAttribute('name') == sheetname), None)
 
-    def add_sheet(self, book, sheetname, csv_file):
+    def add_sheet(self, book, sheetname, csv_file, column_types=None):
         sheet = table.Table(name=sheetname)
         with open(csv_file, mode='r', encoding='utf-8') as f:
             reader = csv.DictReader(f, delimiter=',')
@@ -42,8 +42,12 @@ class OdsBo():
             for line in reader:
                 row = table.TableRow()
                 for col in reader.fieldnames:
-                    cell = table.TableCell(valuetype='string')
-                    cell.addElement(text.P(text=line[col]))
+                    value_type = column_types.get(col, 'string')
+                    if value_type == 'float':
+                        cell = table.TableCell(valuetype=value_type, value=int(line[col]))
+                    else:
+                        cell = table.TableCell(valuetype='string')
+                        cell.addElement(text.P(text=line[col]))
                     row.addElement(cell)
                 sheet.addElement(row)
                 max_row += 1
@@ -61,7 +65,7 @@ class OdsBo():
         book.spreadsheet.addElement(dbs)
         return book
 
-    def update_sheet(self, book, sheet, csv_file):
+    def update_sheet(self, book, sheet, csv_file, column_types=None):
         # retrieve table limits
         sheetname = sheet.getAttribute('name')
 
@@ -84,9 +88,13 @@ class OdsBo():
             for line in reader:
                 row = table.TableRow()
                 line_matched = [line[col] if col in reader.fieldnames else '' for col in sheet_header]
-                for value in line_matched:
-                    cell = table.TableCell(valuetype="string")
-                    cell.addElement(text.P(text=value))
+                value_types = [column_types.get(col, 'string') for col in sheet_header]
+                for value, value_type in zip(line_matched, value_types):
+                    if value_type == 'float':
+                        cell = table.TableCell(valuetype=value_type, value=int(value))
+                    else:
+                        cell = table.TableCell(valuetype='string')
+                        cell.addElement(text.P(text=value))
                     row.addElement(cell)
                 sheet.addElement(row)
                 max_row += 1

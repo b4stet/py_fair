@@ -8,10 +8,11 @@ from facs.entity.report import ReportEntity
 
 class WindowsCommand(AbstractCommand):
 
-    def __init__(self, evtx_analyzer, host_registry_analyzer, user_registry_analyzer):
+    def __init__(self, evtx_analyzer, host_registry_analyzer, user_registry_analyzer, artifact_analyzer):
         self.__evtx_analyzer = evtx_analyzer
         self.__host_reg_analyzer = host_registry_analyzer
         self.__user_reg_analyzer = user_registry_analyzer
+        self.__artifact_analyzer = artifact_analyzer
 
     def get_commands(self):
         group = click.Group(
@@ -37,6 +38,16 @@ class WindowsCommand(AbstractCommand):
             callback=self.do_profile_users,
             params=[
                 self._get_option_hive_ntusers(),
+                self._get_option_outdir(),
+                self._get_option_output(),
+            ]
+        ))
+
+        group.add_command(click.Command(
+            name='analyze_prefetchs', help='analyze prefecths on the subject system (first/last/nb execution, mapped_files)',
+            callback=self.do_analyze_prefetchs,
+            params=[
+                self._get_option_prefetch(),
                 self._get_option_outdir(),
                 self._get_option_output(),
             ]
@@ -169,3 +180,19 @@ class WindowsCommand(AbstractCommand):
             self._print_text(output_files.title, output_files.details)
 
             first = False
+
+    def do_analyze_prefetchs(self, prefetch, outdir, output):
+        if not os.path.exists(outdir):
+            raise ValueError('Out directory {} does not exist.'.format(outdir))
+
+        fd_prefetchs = open(prefetch, mode='r', encoding='utf8')
+        prefetchs = self.__artifact_analyzer.analyze_prefetchs(fd_prefetchs)
+        fd_prefetchs.close()
+
+        outfile = 'prefetchs.{}'.format(output)
+        outfile = os.path.join(outdir, outfile)
+        self._write_formatted(outfile, output, prefetchs)
+        self._print_text(
+            title='Wrote results in {}'.format(outfile),
+            data=[]
+        )

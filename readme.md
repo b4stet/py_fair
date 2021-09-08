@@ -64,7 +64,7 @@ As the notion of address/coordinates is not attached to a cell in ODF, several l
     - when used, this style property is applied per cell ... not friendly to handle properly without cell addresses
     - using table range (in LibreOffice: Data > Select Range > select the table name), it's a 2 clics process to get borders as you wish the first time
     - the code maintains table range, so that borders will be auto updated when adding rows
-- all cells have type `string`, which does not break date sorting since scripts generate all dates in ISO8601 format
+- cell types suppported are limited to `string` and `float`, which does not break date sorting since scripts generate all dates in ISO8601 format
 - table should start at cell A1
 - first row of a table should be the header, with non empty, nor duplicate values
     - otherwise ODF will "compress" using the property `number-column-repeated`

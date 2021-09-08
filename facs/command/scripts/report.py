@@ -22,6 +22,7 @@ class ReportCommand(AbstractCommand):
                 self._get_option_outdir(),
                 self._get_option_csv(),
                 self._get_option_sheetname(),
+                self._get_option_column_types(),
             ]
         ))
 
@@ -32,12 +33,13 @@ class ReportCommand(AbstractCommand):
                 self._get_option_workbook(),
                 self._get_option_csv(),
                 self._get_option_sheetname(),
+                self._get_option_column_types(),
             ]
         ))
 
         return group
 
-    def create(self, csv_file, sheetname, outdir):
+    def create(self, csv_file, sheetname, column_types, outdir):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
 
@@ -46,20 +48,22 @@ class ReportCommand(AbstractCommand):
             raise ValueError('Output file {} already exist. Aborting.'.format(out_workbook))
 
         book = self.__ods_loader.get_book()
-        book = self.__ods_loader.add_sheet(book, sheetname, csv_file)
+        column_types_indexed = {col_name: col_type for col_name, col_type in column_types}
+        book = self.__ods_loader.add_sheet(book, sheetname, csv_file, column_types_indexed)
         book.save(out_workbook)
         print('[+] Saved the report in {}'.format(out_workbook))
 
-    def update(self, csv_file, workbook, sheetname):
+    def update(self, csv_file, workbook, sheetname, column_types):
         book = self.__ods_loader.get_book(workbook)
 
         sheet = self.__ods_loader.get_sheet_by_name(book, sheetname)
+        column_types_indexed = {col_name: col_type for col_name, col_type in column_types}
         if sheet is None:
             print('[+] Adding new sheet {}'.format(sheetname))
-            book = self.__ods_loader.add_sheet(book, sheetname, csv_file)
+            book = self.__ods_loader.add_sheet(book, sheetname, csv_file, column_types_indexed)
         else:
             print('[+] Updating sheet {}'.format(sheetname))
-            book = self.__ods_loader.update_sheet(book, sheet, csv_file)
+            book = self.__ods_loader.update_sheet(book, sheet, csv_file, column_types_indexed)
 
         book.save(workbook)
         print('[+] Saved the report in {}'.format(workbook))

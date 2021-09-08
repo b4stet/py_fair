@@ -25,6 +25,8 @@ class AbstractCommand():
         'windows',
     ]
 
+    SUPPORTED_COLUMN_TYPES = ['float', 'string']
+
     def __init__(self, data=None):
         file_path = os.path.dirname(os.path.dirname(__file__)) + '/data/' + data
         with open(file_path, mode='r', encoding='utf-8') as f:
@@ -101,6 +103,14 @@ class AbstractCommand():
             required=True
         )
 
+    def _get_option_column_types(self):
+        return click.Option(
+            ['--columns', 'column_types'],
+            help='Type of columns to be enforced on cells (default is str). Can be repeated.',
+            required=False,
+            nargs=2, type=click.Tuple([str, click.Choice(self.SUPPORTED_COLUMN_TYPES)]), multiple=True
+        )
+
     def _get_option_bodyfile(self):
         return click.Option(
             ['--body', '-b', 'body'],
@@ -134,6 +144,13 @@ class AbstractCommand():
         return click.Option(
             ['--evtx', '-e', 'evtx'],
             help='path to evtx, as output by plaso in json_line format',
+            required=True,
+        )
+
+    def _get_option_prefetch(self):
+        return click.Option(
+            ['--prefetch', '-p', 'prefetch'],
+            help='path to prefetch parsed, as output by plaso in json_line format',
             required=True,
         )
 
