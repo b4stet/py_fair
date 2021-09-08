@@ -1,5 +1,5 @@
 manual_mining:
-  - description: 'look for known suspicious filenames on disk (LOL, old privesc tricks, attacker toolbox, ...)'
+  - description: 'look for known suspicious filenames on disk (LotL, old privesc tricks, attacker toolbox, ...)'
     note: 'see wordlist_windows_disk.txt'
   - description: 'look for known suspicious executions in the time frame'
     note: 'see wordlist_windows_execution.txt'
@@ -11,6 +11,8 @@ manual_mining:
     note: 'browse sysvol on DC'
   - description: 'look for specific logs (RAT, AV, Cloud ...)'
     note: 'py_facs cheat_sheets logs windows'
+  - description: 'look for ADS Zone.Identifier = 3 (from internet)'
+    note: 'grep disk timeline for Zone.Identifier'
 
 patterns:
   - tool: 'mimikatz'

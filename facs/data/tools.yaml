@@ -140,3 +140,7 @@ misc:
     note: 'docker run -it --rm --entrypoint bash <image>'
   - description: 'search strings in raw image'
     note: 'grep -abi <pattern> disk.raw'
+  - description: 'list Windows events with a description'
+    note: '(Get-Winevent -ListProvider *).Events | Select-Object -Propert Id, Description'
+  - description: 'parse a prefetch (libscca)'
+    note: 'sccainfo file.pf'

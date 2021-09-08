@@ -37,6 +37,7 @@ windows:
     - 'https://github.com/poorbillionaire/usn-journal-parser'
     - 'regipy (python module)'
     - 'plaso-tools'
+    - 'libscca'
 
   cheat_sheet:
     - description: 'identify VSC (Volume Shadow Copy)'
@@ -56,6 +57,6 @@ windows:
     - description: 'dump all registries (SOFTWARE hive is big and can take up to 2 hours)'
       command: 'registry-dump -o registries.json <path to clean hives>'
     - description: 'Create windows events timeline of a host with plaso'
-      command: 'log2timeline --parsers winevtx --storage-file l2t_evtx.plaso </evtx/folder> && psort -o json_line -w l2t_evtx.csv l2t_evtx.plaso'
-
-  
+      command: 'log2timeline --parsers winevtx --storage-file l2t_evtx.plaso </evtx/folder> && psort -o json_line -w l2t_evtx.json l2t_evtx.plaso'
+    - description: 'Extract info from prefetch'
+      command: 'log2timeline --parsers prefetch --storage-file l2t_prefetch.plaso </prefetch/folder> && psort -o json_line -w l2t_prefetch.json l2t_prefetch.plaso'
