@@ -30,6 +30,13 @@ class HostRegistryAnalyzer(AbstractAnalyzer):
         '4': 'disabled (Service Control Manager)',
     }
 
+    __PREFETCHER_STATUSES = {
+        '0': 'disabled',
+        '1': 'application prefetching enabled',
+        '2': 'boot prefetching enabled',
+        '3': 'boot and application prefetching enabled'
+    }
+
     __STORAGE_INTERNAL_DRIVE = 'internal storage'
     __STORAGE_EXTERNAL_DRIVE = 'uas_mass_storage'
     __STORAGE_MSC = 'usb_mass_storage'
@@ -65,7 +72,8 @@ class HostRegistryAnalyzer(AbstractAnalyzer):
                 'OS info from key SYSTEM\\Microsoft\\Windows NT\\CurrentVersion',
                 'time zone info from key SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation',
                 'control sets from key SYSTEM\\Select',
-                'NICs from subkeys of SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\NetworkCards'
+                'NICs from subkeys of SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\NetworkCards',
+                'prefetch status from key SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management\\PrefetchParameters'
             ]
         )
 
@@ -118,6 +126,14 @@ class HostRegistryAnalyzer(AbstractAnalyzer):
                 value='{} ({})'.format(values['ServiceName'], values['Description'])
             ))
 
+        # collect prefetch status
+        path = self.__current_control_set + '\\Control\\Session Manager\\Memory Management\\PrefetchParameters'
+        key = reg_system.get_key(path)
+        prefetcher_status = key.get_value('EnablePrefetcher')
+        analysis.append(HostInfoEntity(
+            title='prefetcher status',
+            value=self.__PREFETCHER_STATUSES.get(str(prefetcher_status), prefetcher_status)
+        ))
         return report, analysis
 
     def collect_local_users(self, reg_sam):
