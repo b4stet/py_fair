@@ -144,3 +144,7 @@ misc:
     note: '(Get-Winevent -ListProvider *).Events | Select-Object -Propert Id, Description'
   - description: 'parse a prefetch (libscca)'
     note: 'sccainfo file.pf'
+  - description: 'convert date to unix epoch timestamp'
+    note: 'date -u +%s'
+  - description: 'convert unix epoch timestamp to date'
+    note: 'date -d @<timestamp>'
