@@ -222,6 +222,7 @@ class WindowsCommand(AbstractCommand):
                     nb_events, nb_dropped, events = self.__evtx_analyzer.extract_generic(file)
                     if events is not None:
                         fout.write('\n'.join(json.dumps(event) for event in events))
+                        fout.write('\n')
                         nb_event_total += nb_events
                         nb_dropped_total += nb_dropped
                     print(' done ({} events extracted, {} dropped)'.format(nb_events, nb_dropped), flush=True)

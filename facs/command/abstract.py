@@ -143,7 +143,7 @@ class AbstractCommand():
     def _get_option_evtx(self):
         return click.Option(
             ['--evtx', '-e', 'evtx'],
-            help='path to evtx, as output by plaso in json_line format',
+            help='path to evtx, as output by "py_facs scripts windows extract_evtx"',
             required=True,
         )
 
