@@ -1,6 +1,10 @@
 from facs.entity.report import ReportEntity
 import json
 from xml.dom import minidom
+import pyevtx
+# from Evtx.Evtx import Evtx
+import multiprocessing
+import concurrent.futures
 from facs.entity.timeline import TimelineEntity
 from facs.analyzer.abstract import AbstractAnalyzer
 
@@ -14,11 +18,9 @@ class EvtxAnalyzer(AbstractAnalyzer):
         'Microsoft-Windows-TerminalServices-RDPClient/Operational',
         'Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational',
         'Microsoft-Windows-TerminalServices-LocalSessionManager/Operational',
-        'Microsoft-Windows-Partition/Diagnostic',
-        'Microsoft-Windows-Kernel-PnP/Configuration',
     ]
 
-    def collect_common_events(self, fd_evtx):
+    def collect_profiling_events(self, fd_evtx):
         collection = {
             'app_uninstalled': [],
             'storage_info': [],
@@ -49,12 +51,11 @@ class EvtxAnalyzer(AbstractAnalyzer):
                 computer_name = info['computer']
 
             # collect start/end of logs
-            if channel in self.__CHANNELS_MIN:
-                if log_start_end[channel]['start'] is None or info['datetime'] < log_start_end[channel]['start']:
-                    log_start_end[channel]['start'] = info['datetime']
+            if log_start_end[channel]['start'] is None or info['datetime'] < log_start_end[channel]['start']:
+                log_start_end[channel]['start'] = info['datetime']
 
-                if log_start_end[channel]['end'] is None or info['datetime'] > log_start_end[channel]['end']:
-                    log_start_end[channel]['end'] = info['datetime']
+            if log_start_end[channel]['end'] is None or info['datetime'] > log_start_end[channel]['end']:
+                log_start_end[channel]['end'] = info['datetime']
 
             # check time changes, logging tampered and windows start/stop from Security channel
             if channel == 'Security':
@@ -119,18 +120,20 @@ class EvtxAnalyzer(AbstractAnalyzer):
                     event_processed = self.__process_kernel_pnp_410_430(info, data)
                     collection['pnp_connections'] = self._append_to_timeline(event_processed, collection['pnp_connections'])
 
-        # insert log start/end in the timeline
+        # report if major evtx were found
         report['log_start_end'] = ReportEntity(
             title='Checked start/end of windows event log for main channels',
             details=[]
         )
         for channel in self.__CHANNELS_MIN:
+            found = 'found'
             if log_start_end[channel]['start'] is None:
-                report['log_start_end'].details.append('{:80}: not found'.format(channel))
-                continue
+                found = 'not found'
 
-            report['log_start_end'].details.append('{:80}: found'.format(channel))
+            report['log_start_end'].details.append('{:80}: {}'.format(channel, found))
 
+        # insert all evtx start/end in the timeline
+        for channel in log_start_end:
             event = TimelineEntity(
                 start=log_start_end[channel]['start'],
                 end=log_start_end[channel]['end'],
@@ -190,6 +193,256 @@ class EvtxAnalyzer(AbstractAnalyzer):
         }
 
         return info
+
+    def extract_generic(self, evtx_file):
+        evtx = pyevtx.file()
+        evtx.open(evtx_file)
+
+        nb_events = evtx.get_number_of_records()
+        if nb_events == 0:
+            return 0, None
+
+        events = []
+        for record in evtx.records:
+            try:
+                xml = record.get_xml_string()
+            except Exception:
+                continue
+
+            dom = minidom.parseString(xml)
+            event = {'raw': xml}
+
+            # system info
+            event.update(self._parse_common_data(dom))
+
+            # specific info
+            if len(dom.getElementsByTagName('EventData')) > 0:
+                parsed = self._parse_event_data(dom)
+                if parsed is not None:
+                    event.update(parsed)
+            elif len(dom.getElementsByTagName('ProcessingErrorData')) > 0:
+                event.update(self._parse_error_data(dom))
+            elif len(dom.getElementsByTagName('UserData')) > 0:
+                parsed = self._parse_user_data(dom)
+                if parsed is not None:
+                    event.update(parsed)
+
+            # enrich with tags
+            event = self._enrich(event)
+
+            events.append(event)
+
+        evtx.close()
+
+        return nb_events, events
+
+    def _parse_common_data(self, dom):
+        return {
+            'datetime': str(self._isoformat_to_datetime(dom.getElementsByTagName('TimeCreated')[0].getAttribute('SystemTime'))),
+            'channel': dom.getElementsByTagName('Channel')[0].firstChild.data,
+            'provider': dom.getElementsByTagName('Provider')[0].getAttribute('Name'),
+            'eid': dom.getElementsByTagName('EventID')[0].firstChild.data,
+            'computer': dom.getElementsByTagName('Computer')[0].firstChild.data,
+            'writer_sid': dom.getElementsByTagName('Security')[0].getAttribute('UserID'),
+        }
+
+    def _parse_event_data(self, dom):
+        data = dom.getElementsByTagName('EventData')[0]
+        event_data = {
+            'misc': [],
+        }
+        for child in data.childNodes:
+            if child.nodeType != minidom.Node.ELEMENT_NODE:
+                continue
+
+            if child.tagName == 'Data':
+                if child.hasAttribute('Name') is True:
+                    event_data[child.getAttribute('Name')] = child.firstChild.data if child.firstChild is not None else ''
+                else:
+                    event_data['misc'].append(child.firstChild.data if child.firstChild is not None else '')
+            else:
+                event_data[child.tagName] = child.firstChild.data if child.firstChild is not None else ''
+
+        event_data['misc'] = ';'.join(event_data['misc'])
+        if event_data['misc'] == '':
+            del event_data['misc']
+
+        if len(event_data) == 0:
+            return None
+
+        return event_data
+
+    def _parse_error_data(self, dom):
+        data = dom.getElementsByTagName('ProcessingErrorData')[0]
+        return {
+            'error_code': data.getElementsByTagName('ErrorCode')[0].firstChild.data,
+            'item_name':  data.getElementsByTagName('DataItemName')[0].firstChild.data,
+            'payload':  data.getElementsByTagName('EventPayload')[0].firstChild.data,
+        }
+
+    def _parse_user_data(self, dom):
+        data = dom.getElementsByTagName('UserData')[0]
+        event = {}
+
+        content = data.firstChild
+        if content.hasChildNodes() is False:
+            return None
+
+        for child in content.childNodes:
+            if child.nodeType != minidom.Node.ELEMENT_NODE:
+                continue
+
+            if child.hasChildNodes() is False:
+                event[child.tagName] = ''
+            if child.hasChildNodes() is True and child.firstChild.nodeType == minidom.Node.TEXT_NODE:
+                event[child.tagName] = child.firstChild.data
+            if child.hasChildNodes() is True and child.firstChild.nodeType == minidom.Node.ELEMENT_NODE:
+                elts = []
+                for subchild in child.childNodes:
+                    text = subchild.firstChild.data if subchild.firstChild is not None else ''
+                    elts.append(text)
+                event[child.tagName] = ';'.join([elt for elt in elts if elt != ''])
+
+        return event
+
+    def _enrich(self, event):
+        event['timestamp'] = self._isoformat_to_unixepoch(event['datetime'])
+        event['source'] = 'log_evtx'
+
+        # add tags for known events
+        event['tags'] = []
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4608', '4609']:
+            event['tags'].append('os_start_stop')
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Eventlog' and event['eid'] in ['1100', '1102', '1104']:
+            event['tags'].append('logging_altered')
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4624', '4625', '4648']:
+            event['tags'].append('authn')
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4634', '4647']:
+            event['tags'].append('logoff')
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4672', '4964']:
+            event['tags'].append('authn_privileged')
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4768', '4771', '4772']:
+            event['tags'].extend(['dc', 'authn_domain_kerberos', 'tgt_request'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4769', '4770', '4773']:
+            event['tags'].extend(['dc', 'authz_domain_kerberos', 'tgs_request'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4776', '4777']:
+            event['tags'].extend(['dc', 'authn_domain_ntlm'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4825', '4778', '4779']:
+            event['tags'].extend(['rdp_incoming'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] == '4720':
+            event['tags'].extend('user_new')
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4728', '4732', '4756']:
+            event['tags'].extend(['user_groups_modified'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4798', '4799']:
+            event['tags'].extend(['user_groups_enumeration'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['5140', '5141', '5142', '5143', '5144', '5145']:
+            event['tags'].extend(['network_share_access'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4688', '4689']:
+            event['tags'].extend(['process_execution'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] == '4697':
+            event['tags'].extend(['service_new'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] == '4698':
+            event['tags'].extend(['scheduled_jobs_new'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['5024', '5025']:
+            event['tags'].extend(['local_firewall_start_stop'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['5156', '5157']:
+            event['tags'].extend(['network_connection_allowed_blocked'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] == '6416':
+            event['tags'].extend(['external_device_new'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] == '4693':
+            event['tags'].extend(['dpapi_key_recovery'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4932', '4933']:
+            event['tags'].extend(['dc', 'dc_replication_start_stop'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] == '4657':
+            event['tags'].extend(['reg_key_modified'])
+
+        if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] == '6416':
+            event['tags'].extend(['external_device_new'])
+
+        if event['channel'] == 'System' and event['provider'] == 'Microsoft-Windows-Kernel-General' and event['eid'] in ['12', '13']:
+            event['tags'].extend(['system_start_stop'])
+
+        if event['channel'] == 'System' and event['provider'] == 'Service Control Manager' and event['eid'] == '7045':
+            event['tags'].extend(['service_new'])
+
+        if event['channel'] == 'System' and event['provider'] == 'Service Control Manager' and event['eid'] in ['7034', '7035', '7040']:
+            event['tags'].extend(['service_start_stop'])
+
+        if event['channel'] == 'Microsoft-Windows-TaskScheduler/Operational' and event['eid'] == '106':
+            event['tags'].extend(['scheduled_jobs_new'])
+
+        if event['channel'] == 'Microsoft-Windows-TaskScheduler/Operational' and event['eid'] in ['200', '201']:
+            event['tags'].extend(['scheduled_jobs_execution'])
+
+        if event['channel'] == 'Microsoft-Windows-TerminalServices-RDPClient/Operational' and event['eid'] in ['1024', '1029', '1102']:
+            event['tags'].extend(['rdp_outgoing'])
+
+        if event['channel'] == 'Microsoft-Windows-RemoteDesktopServices-RdpCoreTS/Operational' and event['eid'] == '131':
+            event['tags'].extend(['rdp_incoming'])
+
+        if event['channel'] == 'Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational' and event['eid'] == '1149':
+            event['tags'].extend(['rdp_incoming'])
+
+        if event['channel'] == 'Microsoft-Windows-TerminalServices-LocalSessionManager/Operational' and event['eid'] in ['21', '22', '24', '25']:
+            event['tags'].extend(['rdp_incoming'])
+
+        if event['channel'] == 'Microsoft-Windows-WinRM/Operational' and event['eid'] == '6':
+            event['tags'].extend(['winrm_source_execution'])
+
+        if event['channel'] == 'Microsoft-Windows-WinRM/Operational' and event['eid'] == '169':
+            event['tags'].extend(['winrm_destination_execution'])
+
+        if event['channel'] == 'Windows Powershell' and event['eid'] in ['400', '403']:
+            event['tags'].extend(['powershell_start_stop'])
+
+        if event['channel'] == 'Microsoft-Windows-PowerShell/Operational' and event['eid'] in ['4013', '4104']:
+            event['tags'].extend(['powershell_execution'])
+
+        if event['channel'] == 'Microsoft-Windows-Shell-Core/Operational' and event['eid'] in ['9707', '9708']:
+            event['tags'].extend(['reg_runkey_execution'])
+
+        if event['channel'] == 'Microsoft-Windows-Bits-Client/Operational' and event['eid'] == '59':
+            event['tags'].extend(['bits_download_upload'])
+
+        if event['channel'] == 'Microsoft-Windows-DNS-Client/Operational' and event['eid'] == '3006':
+            event['tags'].append('dns_query')
+
+        if event['channel'] == 'Microsoft-Windows-DriverFrameworks-UserMode/Operational' and event['eid'] in ['2101', '2102']:
+            event['tags'].extend(['external_device_connection'])
+
+        if event['channel'] == 'Microsoft-Windows-MBAM/Operational' and event['eid'] in ['39', '40']:
+            event['tags'].extend(['external_device_mounting'])
+
+        if event['channel'] == 'OAlerts' and event['eid'] == '300':
+            event['tags'].extend(['graphical', 'office_doc_access'])
+
+        # catch all
+        if len(event['tags']) == 0:
+            event['tags'] = 'no_tags'
+
+        return event
 
     def __extract_security_4616(self, evtx_xml):
         event = minidom.parseString(evtx_xml)

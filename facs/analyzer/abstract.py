@@ -54,5 +54,9 @@ class AbstractAnalyzer():
 
         return datetime.fromtimestamp(timestamp, timezone.utc)
 
-    def _isoformat_to_datetime(self, dt: str):
-        return parser.isoparse(dt)
+    def _isoformat_to_datetime(self, iso: str):
+        return parser.isoparse(iso)
+
+    def _isoformat_to_unixepoch(self, iso: str):
+        dt = parser.isoparse(iso)
+        return dt.timestamp()

@@ -61,7 +61,7 @@ class AbstractCommand():
             writer.writeheader()
             writer.writerows(data)
 
-    def _print_text(self, title: str, data: list):
+    def _print_text(self, title: str, data: list = []):
         print('[+]', title)
         for elt in data:
             print(' |', elt)
@@ -144,6 +144,13 @@ class AbstractCommand():
         return click.Option(
             ['--evtx', '-e', 'evtx'],
             help='path to evtx, as output by plaso in json_line format',
+            required=True,
+        )
+
+    def _get_option_evtx_path(self):
+        return click.Option(
+            ['--evtx', '-e', 'evtx_path'],
+            help='path to evtx folder',
             required=True,
         )
 

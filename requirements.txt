@@ -4,4 +4,6 @@ regipy
 odfpy
 datetime
 python-dateutil
+python-evtx
+pycodestyle
 setuptools

@@ -1,5 +1,8 @@
 import click
 import os
+import json
+import sys
+import time
 from regipy.registry import RegistryHive
 
 from facs.command.abstract import AbstractCommand
@@ -53,6 +56,15 @@ class WindowsCommand(AbstractCommand):
             ]
         ))
 
+        group.add_command(click.Command(
+            name='extract_evtx', help='extract all evtx in json',
+            callback=self.do_extract_evtx,
+            params=[
+                self._get_option_evtx_path(),
+                self._get_option_outdir(),
+            ]
+        ))
+
         return group
 
     def do_profile_host(self, evtx, hive_sam, hive_system, hive_software, outdir, output):
@@ -62,7 +74,7 @@ class WindowsCommand(AbstractCommand):
         # extract info from windows events
         print('[+] Analyzing evtx ', end='', flush=True)
         fd_evtx = open(evtx, mode='r', encoding='utf8')
-        nb_events, report, timeline, collection = self.__evtx_analyzer.collect_common_events(fd_evtx)
+        nb_events, report, timeline, collection = self.__evtx_analyzer.collect_profiling_events(fd_evtx)
         fd_evtx.close()
         print(' done. Processed {} events'.format(nb_events))
 
@@ -192,7 +204,32 @@ class WindowsCommand(AbstractCommand):
         outfile = 'prefetchs.{}'.format(output)
         outfile = os.path.join(outdir, outfile)
         self._write_formatted(outfile, output, prefetchs)
-        self._print_text(
-            title='Wrote results in {}'.format(outfile),
-            data=[]
-        )
+        self._print_text(title='Wrote results in {}'.format(outfile))
+
+    def do_extract_evtx(self, evtx_path, outdir):
+        if not os.path.exists(outdir):
+            raise ValueError('Out directory {} does not exist.'.format(outdir))
+
+        if not os.path.exists(evtx_path):
+            raise ValueError('Evtx directory {} does not exist.'.format(evtx_path))
+
+        outfile = os.path.join(outdir, 'evtx.json')
+        with open(outfile, mode='w', encoding='utf8') as fout:
+            for evtx in os.listdir(evtx_path):
+                # if evtx.endswith('.evtx'):
+                if evtx == 'Microsoft-Windows-DriverFrameworks-UserMode%4Operational.evtx':
+                    file = os.path.join(evtx_path, evtx)
+                    print('[+] Extracting events from {} ... '.format(file), end='', flush=True)
+                    nb_events, events = self.__evtx_analyzer.extract_generic(file)
+                    if events is not None:
+                        fout.write('\n'.join(json.dumps(event) for event in events))
+                    print(' done ({} events)'.format(nb_events), flush=True)
+
+        # outfile = os.path.join(outdir, 'evtx.json')
+        # with open(outfile, mode='w', encoding='utf8') as fout:
+        #     data = []
+        #     for events in events_all:
+        #         data.extend([json.dumps(event) for event in events])
+        #     fout.write('\n'.join(data))
+
+        # self._print_text(title='Wrote results ({} events) in {}'.format(len(data), outfile))

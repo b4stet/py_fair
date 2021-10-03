@@ -15,7 +15,7 @@ class ArtifactAnalyzer(AbstractAnalyzer):
                     'first_known_execution': None,
                 }
 
-            # because plaso timestamp in 'Creation Time' is wrong
+            # plaso timestamp in 'Creation Time' relates to volumne creation time (not first execution)
             if execution['timestamp_desc'] == 'Previous Last Time Executed':
                 exec_time = self._filetime_to_datetime(execution['date_time']['timestamp'])
                 if prefetchs[prefetch_name]['first_known_execution'] is None or exec_time < prefetchs[prefetch_name]['first_known_execution']:
