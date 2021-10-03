@@ -1,5 +1,4 @@
 import click
-import cProfile
 
 from facs.command.cheat_sheets.library import LibraryCommand
 from facs.command.cheat_sheets.systems import SystemsCommand
@@ -49,6 +48,4 @@ cli.add_command(cheat_sheets)
 cli.add_command(scripts)
 
 if __name__ == '__main__':
-    # cli()
-    windows = WindowsCommand(evtx_analyzer, host_registry_analyser, user_registry_analyzer, artifact_analyzer)
-    windows.do_extract_evtx("../../challenges/training/challenge_stack/mnt/Windows/System32/winevt/Logs/", "../../challenges/training/challenge_stack/forensic/")
+    cli()

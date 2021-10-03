@@ -2,9 +2,6 @@ from facs.entity.report import ReportEntity
 import json
 from xml.dom import minidom
 import pyevtx
-# from Evtx.Evtx import Evtx
-import multiprocessing
-import concurrent.futures
 from facs.entity.timeline import TimelineEntity
 from facs.analyzer.abstract import AbstractAnalyzer
 
@@ -200,43 +197,46 @@ class EvtxAnalyzer(AbstractAnalyzer):
 
         nb_events = evtx.get_number_of_records()
         if nb_events == 0:
-            return 0, None
+            return 0, 0, None
 
         events = []
+        nb_dropped = 0
         for record in evtx.records:
             try:
                 xml = record.get_xml_string()
+                dom = minidom.parseString(xml)
             except Exception:
+                # when xmlns is missing, an error is raised
+                nb_dropped += 1
                 continue
 
-            dom = minidom.parseString(xml)
             event = {'raw': xml}
 
             # system info
-            event.update(self._parse_common_data(dom))
+            event.update(self.__parse_common_data(dom))
 
             # specific info
             if len(dom.getElementsByTagName('EventData')) > 0:
-                parsed = self._parse_event_data(dom)
+                parsed = self.__parse_event_data(dom)
                 if parsed is not None:
                     event.update(parsed)
             elif len(dom.getElementsByTagName('ProcessingErrorData')) > 0:
-                event.update(self._parse_error_data(dom))
+                event.update(self.__parse_error_data(dom))
             elif len(dom.getElementsByTagName('UserData')) > 0:
-                parsed = self._parse_user_data(dom)
+                parsed = self.__parse_user_data(dom)
                 if parsed is not None:
                     event.update(parsed)
 
             # enrich with tags
-            event = self._enrich(event)
+            event = self.__enrich(event)
 
             events.append(event)
 
         evtx.close()
 
-        return nb_events, events
+        return nb_events, nb_dropped, events
 
-    def _parse_common_data(self, dom):
+    def __parse_common_data(self, dom):
         return {
             'datetime': str(self._isoformat_to_datetime(dom.getElementsByTagName('TimeCreated')[0].getAttribute('SystemTime'))),
             'channel': dom.getElementsByTagName('Channel')[0].firstChild.data,
@@ -246,7 +246,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
             'writer_sid': dom.getElementsByTagName('Security')[0].getAttribute('UserID'),
         }
 
-    def _parse_event_data(self, dom):
+    def __parse_event_data(self, dom):
         data = dom.getElementsByTagName('EventData')[0]
         event_data = {
             'misc': [],
@@ -272,7 +272,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
 
         return event_data
 
-    def _parse_error_data(self, dom):
+    def __parse_error_data(self, dom):
         data = dom.getElementsByTagName('ProcessingErrorData')[0]
         return {
             'error_code': data.getElementsByTagName('ErrorCode')[0].firstChild.data,
@@ -280,7 +280,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
             'payload':  data.getElementsByTagName('EventPayload')[0].firstChild.data,
         }
 
-    def _parse_user_data(self, dom):
+    def __parse_user_data(self, dom):
         data = dom.getElementsByTagName('UserData')[0]
         event = {}
 
@@ -305,7 +305,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
 
         return event
 
-    def _enrich(self, event):
+    def __enrich(self, event):
         event['timestamp'] = self._isoformat_to_unixepoch(event['datetime'])
         event['source'] = 'log_evtx'
 

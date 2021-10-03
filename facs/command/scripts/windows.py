@@ -1,8 +1,6 @@
 import click
 import os
 import json
-import sys
-import time
 from regipy.registry import RegistryHive
 
 from facs.command.abstract import AbstractCommand
@@ -213,23 +211,19 @@ class WindowsCommand(AbstractCommand):
         if not os.path.exists(evtx_path):
             raise ValueError('Evtx directory {} does not exist.'.format(evtx_path))
 
+        nb_event_total = 0
+        nb_dropped_total = 0
         outfile = os.path.join(outdir, 'evtx.json')
         with open(outfile, mode='w', encoding='utf8') as fout:
             for evtx in os.listdir(evtx_path):
-                # if evtx.endswith('.evtx'):
-                if evtx == 'Microsoft-Windows-DriverFrameworks-UserMode%4Operational.evtx':
+                if evtx.endswith('.evtx'):
                     file = os.path.join(evtx_path, evtx)
                     print('[+] Extracting events from {} ... '.format(file), end='', flush=True)
-                    nb_events, events = self.__evtx_analyzer.extract_generic(file)
+                    nb_events, nb_dropped, events = self.__evtx_analyzer.extract_generic(file)
                     if events is not None:
                         fout.write('\n'.join(json.dumps(event) for event in events))
-                    print(' done ({} events)'.format(nb_events), flush=True)
+                        nb_event_total += nb_events
+                        nb_dropped_total += nb_dropped
+                    print(' done ({} events extracted, {} dropped)'.format(nb_events, nb_dropped), flush=True)
 
-        # outfile = os.path.join(outdir, 'evtx.json')
-        # with open(outfile, mode='w', encoding='utf8') as fout:
-        #     data = []
-        #     for events in events_all:
-        #         data.extend([json.dumps(event) for event in events])
-        #     fout.write('\n'.join(data))
-
-        # self._print_text(title='Wrote results ({} events) in {}'.format(len(data), outfile))
+        self._print_text(title='Wrote results ({} events, {} dropped) in {}'.format(nb_event_total, nb_dropped_total, outfile))

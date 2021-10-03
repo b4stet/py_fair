@@ -198,3 +198,70 @@ real	0m0.462s
 user	0m0.260s
 sys	    0m0.035s
 ```
+
+### Windows evtx extraction
+Note about 'dropped events': some events are retrieved by `libevtx` but the xml string cannot be parsed as a DOM document because of missing namespace.
+```
+$ py_facs scripts windows extract_evtx -e mnt/Windows/System32/winevt/Logs/ -d forensic/facs/ | tee forensic/facs/extract_evtx.log
+[+] Extracting events from mnt/Windows/System32/winevt/Logs/Microsoft-Windows-Diagnosis-Scripted%4Admin.evtx ...  done (6 events extracted, 0 dropped)
+[+] Extracting events from mnt/Windows/System32/winevt/Logs/AMSI%4Operational.evtx ...  done (0 events extracted, 0 dropped)
+[+] Extracting events from mnt/Windows/System32/winevt/Logs/Application.evtx ...  done (3150 events extracted, 0 dropped)
+[+] Extracting events from mnt/Windows/System32/winevt/Logs/HardwareEvents.evtx ...  done (0 events extracted, 0 dropped)
+...
+[+] Extracting events from mnt/Windows/System32/winevt/Logs/Security.evtx ...  done (7732 events extracted, 0 dropped)
+[+] Extracting events from mnt/Windows/System32/winevt/Logs/System.evtx ...  done (3934 events extracted, 0 dropped)
+[+] Extracting events from mnt/Windows/System32/winevt/Logs/Windows PowerShell.evtx ...  done (24 events extracted, 0 dropped)
+
+[+] Wrote results (129325 events, 7936 dropped) in forensic/facs/evtx.json
+
+
+real	0m58.454s
+user	0m57.876s
+sys	0m0.272s
+```
+
+The resulting ndjson contains all keys from EventData/ProcessingErrorData/UserData. For instance, on an EID 4624, it looks like:
+```
+{
+  "raw": "<Event xmlns=\"http://schemas.microsoft.com/win/2004/08/events/event\">\n  <System>\n    <Provider Name=\"Microsoft-Windows-Security-Auditing\" Guid=\"{54849625-5478-4994-A5BA-3E3B0328C30D}\"/>\n    <EventID>4624</EventID>\n    <Version>2</Version>\n    <Level>0</Level>\n    <Task>12544</Task>\n    <Opcode>0</Opcode>\n    <Keywords>0x8020000000000000</Keywords>\n    <TimeCreated SystemTime=\"2018-01-08T13:55:13.409186900Z\"/>\n    <EventRecordID>48623</EventRecordID>\n    <Correlation/>\n    <Execution ProcessID=\"772\" ThreadID=\"5012\"/>\n    <Channel>Security</Channel>\n    <Computer>DESKTOP-SOI9AFH</Computer>\n    <Security/>\n  </System>\n  <EventData>\n    <Data Name=\"SubjectUserSid\">S-1-5-18</Data>\n    <Data Name=\"SubjectUserName\">DESKTOP-SOI9AFH$</Data>\n    <Data Name=\"SubjectDomainName\">WORKGROUP</Data>\n    <Data Name=\"SubjectLogonId\">0x00000000000003e7</Data>\n    <Data Name=\"TargetUserSid\">S-1-5-21-3001495921-1769015868-3887507880-1001</Data>\n    <Data Name=\"TargetUserName\">stackinit@outlook.com</Data>\n    <Data Name=\"TargetDomainName\">MicrosoftAccount</Data>\n    <Data Name=\"TargetLogonId\">0x0000000000bd46d1</Data>\n    <Data Name=\"LogonType\">7</Data>\n    <Data Name=\"LogonProcessName\">Negotiat</Data>\n    <Data Name=\"AuthenticationPackageName\">Negotiate</Data>\n    <Data Name=\"WorkstationName\">DESKTOP-SOI9AFH</Data>\n    <Data Name=\"LogonGuid\">{00000000-0000-0000-0000-000000000000}</Data>\n    <Data Name=\"TransmittedServices\">-</Data>\n    <Data Name=\"LmPackageName\">-</Data>\n    <Data Name=\"KeyLength\">0</Data>\n    <Data Name=\"ProcessId\">0x0000000000000304</Data>\n    <Data Name=\"ProcessName\">C:\\Windows\\System32\\lsass.exe</Data>\n    <Data Name=\"IpAddress\">-</Data>\n    <Data Name=\"IpPort\">-</Data>\n    <Data Name=\"ImpersonationLevel\">%%1833</Data>\n    <Data Name=\"RestrictedAdminMode\">-</Data>\n    <Data Name=\"TargetOutboundUserName\">-</Data>\n    <Data Name=\"TargetOutboundDomainName\">-</Data>\n    <Data Name=\"VirtualAccount\">%%1843</Data>\n    <Data Name=\"TargetLinkedLogonId\">0x0000000000bd4674</Data>\n    <Data Name=\"ElevatedToken\">%%1843</Data>\n  </EventData>\n</Event>\n",
+  "datetime": "2018-01-08 13:55:13.409186+00:00",
+  "channel": "Security",
+  "provider": "Microsoft-Windows-Security-Auditing",
+  "eid": "4624",
+  "computer": "DESKTOP-SOI9AFH",
+  "writer_sid": "",
+  "SubjectUserSid": "S-1-5-18",
+  "SubjectUserName": "DESKTOP-SOI9AFH$",
+  "SubjectDomainName": "WORKGROUP",
+  "SubjectLogonId": "0x00000000000003e7",
+  "TargetUserSid": "S-1-5-21-3001495921-1769015868-3887507880-1001",
+  "TargetUserName": "account@outlook.com",
+  "TargetDomainName": "MicrosoftAccount",
+  "TargetLogonId": "0x0000000000bd46d1",
+  "LogonType": "7",
+  "LogonProcessName": "Negotiat",
+  "AuthenticationPackageName": "Negotiate",
+  "WorkstationName": "DESKTOP-SOI9AFH",
+  "LogonGuid": "{00000000-0000-0000-0000-000000000000}",
+  "TransmittedServices": "-",
+  "LmPackageName": "-",
+  "KeyLength": "0",
+  "ProcessId": "0x0000000000000304",
+  "ProcessName": "C:\\Windows\\System32\\lsass.exe",
+  "IpAddress": "-",
+  "IpPort": "-",
+  "ImpersonationLevel": "%%1833",
+  "RestrictedAdminMode": "-",
+  "TargetOutboundUserName": "-",
+  "TargetOutboundDomainName": "-",
+  "VirtualAccount": "%%1843",
+  "TargetLinkedLogonId": "0x0000000000bd4674",
+  "ElevatedToken": "%%1843",
+  "timestamp": 1515419713.409186,
+  "source": "log_evtx",
+  "tags": [
+    "authn"
+  ]
+}
+
+```
