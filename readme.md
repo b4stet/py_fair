@@ -76,9 +76,7 @@ As the notion of address/coordinates is not attached to a cell in ODF, several l
 ```
 $ time py_facs scripts windows profile_host -d reports/ -o csv -e l2t_evtx.json  --hsystem SYSTEM_CLEAN --hsoftware SOFTWARE_CLEAN --hsam SAM_CLEAN
 
-[+] Analyzing evtx ..............................................................................................................
-.................................................................................................................................
-......................... done. Processed 264382 events
+[+] Analyzing evtx ......................................................................................................................... done. Processed 121389 events
 [+] Analyzing registry hives ...... done.
 
 [+] Checked start/end of windows event log for main channels
@@ -89,8 +87,6 @@ $ time py_facs scripts windows profile_host -d reports/ -o csv -e l2t_evtx.json 
  | Microsoft-Windows-TerminalServices-RDPClient/Operational                        : not found
  | Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational          : found
  | Microsoft-Windows-TerminalServices-LocalSessionManager/Operational              : found
- | Microsoft-Windows-Partition/Diagnostic                                          : found
- | Microsoft-Windows-Kernel-PnP/Configuration                                      : found
 
 [+] Checked evidences of system backdating
  | looked for clock drifts bigger than 10 minutes
@@ -113,6 +109,7 @@ $ time py_facs scripts windows profile_host -d reports/ -o csv -e l2t_evtx.json 
  | time zone info from key SYSTEM\CurrentControlSet\Control\TimeZoneInformation
  | control sets from key SYSTEM\Select
  | NICs from subkeys of SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkCards
+ | prefetch status from key SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters
 
 [+] Collected local accounts information
  | accounts from key SAM\SAM\Domains\Account\Users
@@ -142,7 +139,7 @@ $ time py_facs scripts windows profile_host -d reports/ -o csv -e l2t_evtx.json 
  | models from key SYSTEM\CurrentControlSet\Enum\USB, property {540b947e-8b40-45bc-a8a2-6a0b894cbda2}
  | first/last connections from key SYSTEM\CurrentControlSet\Enum\USB, property {83da6326-97a6-4088-9453-a1923f573b29}
  | drive letters, and volume GUID from key SYSTEM\MountedDevices (do check manually slack space)
-
+ 
 [+] Output files
  | reports/profile_host_host_info.csv
  | reports/profile_host_local_users.csv
@@ -153,9 +150,10 @@ $ time py_facs scripts windows profile_host -d reports/ -o csv -e l2t_evtx.json 
  | reports/timeline.csv
 
 
-real	1m42.560s
-user	1m29.658s
-sys	    0m12.837s
+real	0m15.904s
+user	0m10.194s
+sys	    0m5.697s
+
 ```
 
 ### Windows User hive profiling
@@ -217,7 +215,7 @@ $ py_facs scripts windows extract_evtx -e mnt/Windows/System32/winevt/Logs/ -d f
 
 real	0m58.454s
 user	0m57.876s
-sys	0m0.272s
+sys	    0m0.272s
 ```
 
 The resulting ndjson contains all keys from EventData/ProcessingErrorData/UserData. For instance, on an EID 4624, it looks like:

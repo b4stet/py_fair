@@ -255,8 +255,13 @@ class EvtxAnalyzer(AbstractAnalyzer):
         data = dom.getElementsByTagName('UserData')[0]
         event = {}
 
-        content = data.firstChild
-        if content.hasChildNodes() is False:
+        content = None
+        for child in data.childNodes:
+            if child.nodeType == minidom.Node.ELEMENT_NODE:
+                content = child
+                break
+
+        if content is None or content.hasChildNodes() is False:
             return None
 
         for child in content.childNodes:
@@ -296,19 +301,19 @@ class EvtxAnalyzer(AbstractAnalyzer):
             event['tags'].append('logoff')
 
         if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4672', '4964']:
-            event['tags'].append('authn_privileged')
+            event['tags'].extend(['authn', 'authn_privileged'])
 
         if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4768', '4771', '4772']:
-            event['tags'].extend(['dc', 'authn_domain_kerberos', 'tgt_request'])
+            event['tags'].extend(['dc', 'authn', 'authn_domain_kerberos', 'tgt_request'])
 
         if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4769', '4770', '4773']:
-            event['tags'].extend(['dc', 'authz_domain_kerberos', 'tgs_request'])
+            event['tags'].extend(['dc', 'authz', 'authz_domain_kerberos', 'tgs_request'])
 
         if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4776', '4777']:
-            event['tags'].extend(['dc', 'authn_domain_ntlm'])
+            event['tags'].extend(['dc', 'authn', 'authn_domain_ntlm'])
 
         if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4825', '4778', '4779']:
-            event['tags'].extend(['rdp_incoming'])
+            event['tags'].extend(['rdp', 'rdp_incoming'])
 
         if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] == '4720':
             event['tags'].extend('user_new')
@@ -323,13 +328,13 @@ class EvtxAnalyzer(AbstractAnalyzer):
             event['tags'].extend(['network_share_access'])
 
         if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4688', '4689']:
-            event['tags'].extend(['process_execution'])
+            event['tags'].extend(['service_process', 'process_execution'])
 
         if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] == '4697':
             event['tags'].extend(['service_new'])
 
         if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] == '4698':
-            event['tags'].extend(['scheduled_jobs_new'])
+            event['tags'].extend(['scheduled_jobs', 'scheduled_jobs_new'])
 
         if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['5024', '5025']:
             event['tags'].extend(['local_firewall_start_stop'])
@@ -341,7 +346,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
             event['tags'].extend(['external_device_new'])
 
         if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] == '4693':
-            event['tags'].extend(['dpapi_key_recovery'])
+            event['tags'].extend(['dc', 'dc_dpapi_key_recovery'])
 
         if event['channel'] == 'Security' and event['provider'] == 'Microsoft-Windows-Security-Auditing' and event['eid'] in ['4932', '4933']:
             event['tags'].extend(['dc', 'dc_replication_start_stop'])
@@ -356,28 +361,28 @@ class EvtxAnalyzer(AbstractAnalyzer):
             event['tags'].extend(['system_start_stop'])
 
         if event['channel'] == 'System' and event['provider'] == 'Service Control Manager' and event['eid'] == '7045':
-            event['tags'].extend(['service_new'])
+            event['tags'].extend(['service_process', 'service_new'])
 
         if event['channel'] == 'System' and event['provider'] == 'Service Control Manager' and event['eid'] in ['7034', '7035', '7040']:
-            event['tags'].extend(['service_start_stop'])
+            event['tags'].extend(['service_process', 'service_start_stop'])
 
         if event['channel'] == 'Microsoft-Windows-TaskScheduler/Operational' and event['eid'] == '106':
-            event['tags'].extend(['scheduled_jobs_new'])
+            event['tags'].extend(['scheduled_jobs', 'scheduled_jobs_new'])
 
         if event['channel'] == 'Microsoft-Windows-TaskScheduler/Operational' and event['eid'] in ['200', '201']:
-            event['tags'].extend(['scheduled_jobs_execution'])
+            event['tags'].extend(['scheduled_jobs', 'scheduled_jobs_execution'])
 
         if event['channel'] == 'Microsoft-Windows-TerminalServices-RDPClient/Operational' and event['eid'] in ['1024', '1029', '1102']:
-            event['tags'].extend(['rdp_outgoing'])
+            event['tags'].extend(['rdp', 'rdp_outgoing'])
 
         if event['channel'] == 'Microsoft-Windows-RemoteDesktopServices-RdpCoreTS/Operational' and event['eid'] == '131':
-            event['tags'].extend(['rdp_incoming'])
+            event['tags'].extend(['rdp', 'rdp_incoming'])
 
         if event['channel'] == 'Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational' and event['eid'] == '1149':
-            event['tags'].extend(['rdp_incoming'])
+            event['tags'].extend(['rdp', 'rdp_incoming'])
 
         if event['channel'] == 'Microsoft-Windows-TerminalServices-LocalSessionManager/Operational' and event['eid'] in ['21', '22', '24', '25']:
-            event['tags'].extend(['rdp_incoming'])
+            event['tags'].extend(['rdp', 'rdp_incoming'])
 
         if event['channel'] == 'Microsoft-Windows-WinRM/Operational' and event['eid'] == '6':
             event['tags'].extend(['winrm_source_execution'])
@@ -386,10 +391,10 @@ class EvtxAnalyzer(AbstractAnalyzer):
             event['tags'].extend(['winrm_destination_execution'])
 
         if event['channel'] == 'Windows Powershell' and event['eid'] in ['400', '403']:
-            event['tags'].extend(['powershell_start_stop'])
+            event['tags'].extend(['powershell', 'powershell_start_stop'])
 
         if event['channel'] == 'Microsoft-Windows-PowerShell/Operational' and event['eid'] in ['4013', '4104']:
-            event['tags'].extend(['powershell_execution'])
+            event['tags'].extend(['powershell', 'powershell_execution'])
 
         if event['channel'] == 'Microsoft-Windows-Shell-Core/Operational' and event['eid'] in ['9707', '9708']:
             event['tags'].extend(['reg_runkey_execution'])
