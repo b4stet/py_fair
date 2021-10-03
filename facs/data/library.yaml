@@ -31,6 +31,7 @@ evtx:
   - 'https://eventopedia.cloudapp.net'
   - 'https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/advanced-security-auditing-faq'
   - 'https://www.microsoft.com/download/details.aspx?id=50034'
+  - 'https://github.com/EricZimmerman/evtx/tree/master/evtx/Maps'
 
 files:
   - 'https://www.winitor.com/pdf/Malware-Analysis-Fundamentals-Files-Tools.pdf'
@@ -87,6 +88,8 @@ blogs:
   - 'https://nasbench.medium.com/'
   - 'https://www.sekoia.io/en/hunting-and-detecting-cobalt-strike/'
   - 'https://github.com/sinwindie/OSINT'
+  - 'https://www.ssi.gouv.fr/agence/publication/analyse-de-lamcache/'
+  - 'https://www.inversecos.com/'
 
 
 system:
