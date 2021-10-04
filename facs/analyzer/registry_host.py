@@ -189,6 +189,9 @@ class HostRegistryAnalyzer(AbstractAnalyzer):
                     sid_bytes = value[offset_start:offset_start + 0x0c]
                     step = 0x0c
 
+                if sid_bytes is None:
+                    continue
+
                 sid = ['S']
                 sid.append(str(sid_bytes[0]))
                 sid.append(str(int.from_bytes(sid_bytes[4:8], byteorder='big', signed=False)))
@@ -859,7 +862,11 @@ class HostRegistryAnalyzer(AbstractAnalyzer):
 
         # collect vid_pid+serial number with first and last connections for external drive, MSC and MTP devices
         path = self.__current_control_set + '\\Enum\\USB'
-        key = reg_system.get_key(path)
+        try:
+            key = reg_system.get_key(path)
+        except (NoRegistrySubkeysException, RegistryKeyNotFoundException):
+            return connections
+
         for subkey in key.iter_subkeys():
             vid_pid = subkey.header.key_name_string.decode('utf8')
             for sk_serial_number in subkey.iter_subkeys():

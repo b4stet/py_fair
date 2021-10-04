@@ -416,7 +416,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
 
         # catch all
         if len(event['tags']) == 0:
-            event['tags'] = 'no_tags'
+            event['tags'].append('no_tags')
 
         return event
 

@@ -36,7 +36,7 @@ class UserRegistryAnalyzer(AbstractAnalyzer):
                     last_connected_at=self._filetime_to_datetime(key.header.last_modified) if name == 'MRU0' else ''
                 ))
 
-        except NoRegistrySubkeysException:
+        except (NoRegistrySubkeysException, RegistryKeyNotFoundException):
             pass
 
         return report, analysis
