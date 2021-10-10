@@ -152,7 +152,7 @@ $ time py_facs scripts windows profile_host -d reports/ -o csv -e l2t_evtx.json 
 
 real	0m15.904s
 user	0m10.194s
-sys	    0m5.697s
+sys	  0m5.697s
 
 ```
 
@@ -194,7 +194,7 @@ $ time py_facs scripts windows profile_users -d reports/ -o csv --huser NTUSER_C
 
 real	0m0.462s
 user	0m0.260s
-sys	    0m0.035s
+sys	  0m0.035s
 ```
 
 ### Windows evtx extraction
@@ -215,7 +215,7 @@ $ py_facs scripts windows extract_evtx -e mnt/Windows/System32/winevt/Logs/ -d f
 
 real	0m58.454s
 user	0m57.876s
-sys	    0m0.272s
+sys	  0m0.272s
 ```
 
 The resulting ndjson contains all keys from EventData/ProcessingErrorData/UserData. For instance, on an EID 4624, it looks like:
