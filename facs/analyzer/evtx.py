@@ -36,6 +36,11 @@ class EvtxAnalyzer(AbstractAnalyzer):
                 print('.', end='', flush=True)
 
             event = json.loads(line)
+
+            # discard events that could not be parsed
+            if event['epoch'] == 0.0:
+                continue
+
             channel = event['channel']
             provider = event['provider']
             event_id = event['eid']
@@ -469,7 +474,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
             event='application successfully removed',
             event_type=TimelineEntity.TIMELINE_TYPE_EVENT,
             source=source,
-            note=event['misc']
+            note=event['Data'][0]
         )
 
     def __collect_partition_diagnostic_1006(self, event):
