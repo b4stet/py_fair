@@ -148,3 +148,5 @@ misc:
     note: 'date -u +%s'
   - description: 'convert unix epoch timestamp to date'
     note: 'date -d @<timestamp>'
+  - description: 'print lines between 2 patterns'
+    note: 'sed -n ''/pattern1/,/pattern2/p'''
