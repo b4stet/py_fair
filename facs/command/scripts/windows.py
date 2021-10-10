@@ -1,6 +1,7 @@
 import click
 import os
 import json
+import yaml
 from regipy.registry import RegistryHive
 
 from facs.command.abstract import AbstractCommand
@@ -60,6 +61,7 @@ class WindowsCommand(AbstractCommand):
             params=[
                 self._get_option_evtx_path(),
                 self._get_option_outdir(),
+                self._get_option_tags(),
             ]
         ))
 
@@ -204,27 +206,30 @@ class WindowsCommand(AbstractCommand):
         self._write_formatted(outfile, output, prefetchs)
         self._print_text(title='Wrote results in {}'.format(outfile))
 
-    def do_extract_evtx(self, evtx_path, outdir):
+    def do_extract_evtx(self, evtx_path, outdir, tags_file=None):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
 
         if not os.path.exists(evtx_path):
             raise ValueError('Evtx directory {} does not exist.'.format(evtx_path))
 
+        tags = None
+        if tags_file is not None:
+            with open(tags_file, mode='r', encoding='utf-8') as f:
+                tags = yaml.safe_load(f)['evtx']
+
         nb_event_total = 0
-        nb_dropped_total = 0
         outfile = os.path.join(outdir, 'evtx.json')
         with open(outfile, mode='w', encoding='utf8') as fout:
             for evtx in os.listdir(evtx_path):
                 if evtx.endswith('.evtx'):
                     file = os.path.join(evtx_path, evtx)
                     print('[+] Extracting events from {} ... '.format(file), end='', flush=True)
-                    nb_events, nb_dropped, events = self.__evtx_analyzer.extract_generic(file)
+                    nb_events, events = self.__evtx_analyzer.extract_generic(file, tags)
                     if events is not None:
                         fout.write('\n'.join(json.dumps(event) for event in events))
                         fout.write('\n')
                         nb_event_total += nb_events
-                        nb_dropped_total += nb_dropped
-                    print(' done ({} events extracted, {} dropped)'.format(nb_events, nb_dropped), flush=True)
+                    print(' done ({} events)'.format(nb_events), flush=True)
 
-        self._print_text(title='Wrote results ({} events, {} dropped) in {}'.format(nb_event_total, nb_dropped_total, outfile))
+        self._print_text(title='Wrote results ({} events) in {}'.format(nb_event_total, outfile))

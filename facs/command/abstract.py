@@ -185,7 +185,13 @@ class AbstractCommand():
     def _get_option_hive_ntusers(self):
         return click.Option(
             ['--huser', 'hive_users'],
-            help='path to a clean NTUSER.DAT hive with username it belongs to. Can be repeated.',
+            help='(ntuser.dat usename) path to a clean NTUSER.DAT hive with username it belongs to. Can be repeated.',
             required=True,
             nargs=2, type=click.Tuple([str, str]), multiple=True
+        )
+
+    def _get_option_tags(self):
+        return click.Option(
+            ['-t', '--tags', 'tags_file'],
+            help='path to a yaml file containing tags'
         )
