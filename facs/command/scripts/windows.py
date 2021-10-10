@@ -218,18 +218,19 @@ class WindowsCommand(AbstractCommand):
             with open(tags_file, mode='r', encoding='utf-8') as f:
                 tags = yaml.safe_load(f)['evtx']
 
-        nb_event_total = 0
+        events_all = []
         outfile = os.path.join(outdir, 'evtx.json')
-        with open(outfile, mode='w', encoding='utf8') as fout:
-            for evtx in os.listdir(evtx_path):
-                if evtx.endswith('.evtx'):
-                    file = os.path.join(evtx_path, evtx)
-                    print('[+] Extracting events from {} ... '.format(file), end='', flush=True)
-                    nb_events, events = self.__evtx_analyzer.extract_generic(file, tags)
-                    if events is not None:
-                        fout.write('\n'.join(json.dumps(event) for event in events))
-                        fout.write('\n')
-                        nb_event_total += nb_events
-                    print(' done ({} events)'.format(nb_events), flush=True)
+        for evtx in os.listdir(evtx_path):
+            if evtx.endswith('.evtx'):
+                file = os.path.join(evtx_path, evtx)
+                print('[+] Extracting events from {} ... '.format(file), end='', flush=True)
+                nb_events, events = self.__evtx_analyzer.extract_generic(file, tags)
+                if events is not None:
+                    events_all.extend(events)
+                print(' done ({} events)'.format(nb_events), flush=True)
 
-        self._print_text(title='Wrote results ({} events) in {}'.format(nb_event_total, outfile))
+        events_all = sorted(events_all, key=lambda k: k['epoch'])
+        with open(outfile, mode='w', encoding='utf8') as fout:
+            fout.write('\n'.join(json.dumps(event) for event in events_all))
+
+        self._print_text(title='Wrote results ({} events) in {}'.format(len(events_all), outfile))

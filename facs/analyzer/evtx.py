@@ -180,12 +180,17 @@ class EvtxAnalyzer(AbstractAnalyzer):
                 # some xml are malformed (namespace missing, text value not properly escaped)
                 events.append({
                     'raw': xml,
-                    'tags': ['no_tags'],
+                    'source': 'log_evtx',
+                    'tags': ['xml_not_parsed'],
+                    'epoch': 0.0,
                 })
                 continue
 
             # extract keys from the xml
-            event = {'raw': xml}
+            event = {
+                'raw': xml,
+                'source': 'log_evtx',
+            }
             event.update(self.__parse_system_data(xml_dict))
             if xml_dict['Event'].get('EventData', None) is not None:
                 event.update(self.__parse_event_or_user_data(xml_dict['Event']['EventData']))
@@ -195,7 +200,10 @@ class EvtxAnalyzer(AbstractAnalyzer):
                 event.update(self.__parse_event_or_user_data(xml_dict['Event']['UserData']))
 
             # enrich with tags
-            event = self.__enrich(event, tags)
+            if tags is None:
+                event['tags'] = ['no_tags']
+            else:
+                event = self.__enrich(event, tags)
 
             events.append(event)
 
@@ -215,6 +223,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
 
         return {
             'datetime': str(self._isoformat_to_datetime(system['TimeCreated']['@SystemTime'])),
+            'epoch': self._isoformat_to_unixepoch(system['TimeCreated']['@SystemTime']),
             'channel': system['Channel'],
             'provider': system['Provider']['@Name'],
             'eid': eid,
@@ -266,20 +275,13 @@ class EvtxAnalyzer(AbstractAnalyzer):
             'payload':  error_data['EventPayload'],
         }
 
-    def __enrich(self, event, known_tags=None):
-        event['timestamp'] = self._isoformat_to_unixepoch(event['datetime'])
-        event['source'] = 'log_evtx'
+    def __enrich(self, event, known_tags):
         event['tags'] = []
-
-        if known_tags is None:
-            event['tags'].append('no_tags')
-            return event
 
         for known in known_tags:
             if known['channel'] == event['channel'] and event['eid'] in known['eids']:
                 if known.get('provider', None) is not None and known['provider'] != event['provider']:
                     continue
-
                 event['tags'].extend(known['tags'])
 
         if len(event['tags']) == 0:
