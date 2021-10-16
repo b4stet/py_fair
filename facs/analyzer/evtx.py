@@ -2,6 +2,7 @@ from facs.entity.report import ReportEntity
 import json
 import pyevtx
 import xmltodict
+import re
 import collections
 from facs.entity.timeline import TimelineEntity
 from facs.analyzer.abstract import AbstractAnalyzer
@@ -17,6 +18,8 @@ class EvtxAnalyzer(AbstractAnalyzer):
         'Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational',
         'Microsoft-Windows-TerminalServices-LocalSessionManager/Operational',
     ]
+
+    __RE_EVTX_COMMON = re.compile(r'(<System>.*?</System>)', re.S)
 
     def collect_profiling_events(self, fd_evtx):
         collection = {
@@ -178,24 +181,22 @@ class EvtxAnalyzer(AbstractAnalyzer):
 
         events = []
         for record in evtx.records:
+            xml = record.get_xml_string()
             try:
-                xml = record.get_xml_string()
                 xml_dict = xmltodict.parse(xml)
             except Exception:
                 # some xml are malformed (namespace missing, text value not properly escaped)
-                events.append({
-                    'raw': xml,
-                    'source': 'log_evtx',
-                    'tags': ['xml_not_parsed'],
-                    'epoch': 0.0,
-                })
+                # only parse system data for them
+                matches = self.__RE_EVTX_COMMON.search(xml)
+                partial = matches.group(1)
+                partial_dict = xmltodict.parse(partial)
+                event = {'raw': xml, 'source': 'log_evtx', 'tags': ['xml_not_parsed']}
+                event.update(self.__parse_system_data(partial_dict, True))
+                events.append(event)
                 continue
 
             # extract keys from the xml
-            event = {
-                'raw': xml,
-                'source': 'log_evtx',
-            }
+            event = {'raw': xml, 'source': 'log_evtx'}
             event.update(self.__parse_system_data(xml_dict))
             if xml_dict['Event'].get('EventData', None) is not None:
                 event.update(self.__parse_event_or_user_data(xml_dict['Event']['EventData']))
@@ -216,8 +217,11 @@ class EvtxAnalyzer(AbstractAnalyzer):
 
         return nb_events, events
 
-    def __parse_system_data(self, xml_dict):
-        system = xml_dict['Event']['System']
+    def __parse_system_data(self, xml_dict, partial=False):
+        if partial is False:
+            system = xml_dict['Event']['System']
+        else:
+            system = xml_dict['System']
         writer_sid = ''
         if system.get('Security', None) is not None:
             writer_sid = system['Security'].get('@UserID', '')
