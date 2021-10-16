@@ -2,6 +2,7 @@ from facs.entity.report import ReportEntity
 import json
 import pyevtx
 import xmltodict
+import heapq
 import re
 import collections
 from facs.entity.timeline import TimelineEntity
@@ -192,7 +193,9 @@ class EvtxAnalyzer(AbstractAnalyzer):
                 partial_dict = xmltodict.parse(partial)
                 event = {'raw': xml, 'source': 'log_evtx', 'tags': ['xml_not_parsed']}
                 event.update(self.__parse_system_data(partial_dict, True))
-                events.append(event)
+                heapq.heappush(events, (event['epoch'], event['eid'], event['record_id'], event))
+
+                # events.append(event)
                 continue
 
             # extract keys from the xml
@@ -211,8 +214,8 @@ class EvtxAnalyzer(AbstractAnalyzer):
             else:
                 event = self.__enrich(event, tags)
 
-            events.append(event)
-
+            heapq.heappush(events, (event['epoch'], event['eid'], event['record_id'], event))
+            # events.append(event)
         evtx.close()
 
         return nb_events, events
@@ -222,6 +225,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
             system = xml_dict['Event']['System']
         else:
             system = xml_dict['System']
+
         writer_sid = ''
         if system.get('Security', None) is not None:
             writer_sid = system['Security'].get('@UserID', '')
@@ -236,6 +240,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
             'channel': system['Channel'],
             'provider': system['Provider']['@Name'],
             'eid': eid,
+            'record_id': system['EventRecordID'],
             'computer': system['Computer'],
             'writer_sid': writer_sid,
         }

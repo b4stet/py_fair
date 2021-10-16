@@ -2,6 +2,7 @@ import click
 import os
 import json
 import yaml
+import heapq
 from regipy.registry import RegistryHive
 
 from facs.command.abstract import AbstractCommand
@@ -219,6 +220,7 @@ class WindowsCommand(AbstractCommand):
                 tags = yaml.safe_load(f)['evtx']
 
         events_all = []
+        nb_events_all = 0
         outfile = os.path.join(outdir, 'evtx.json')
         for evtx in os.listdir(evtx_path):
             if evtx.endswith('.evtx'):
@@ -226,11 +228,13 @@ class WindowsCommand(AbstractCommand):
                 print('[+] Extracting events from {} ... '.format(file), end='', flush=True)
                 nb_events, events = self.__evtx_analyzer.extract_generic(file, tags)
                 if events is not None:
-                    events_all.extend(events)
+                    # events_all.extend(events)
+                    events_all = heapq.merge(events_all, events)
+                    nb_events_all += nb_events
                 print(' done ({} events)'.format(nb_events), flush=True)
 
-        events_all = sorted(events_all, key=lambda k: k['epoch'])
         with open(outfile, mode='w', encoding='utf8') as fout:
-            fout.write('\n'.join(json.dumps(event) for event in events_all))
+            for event in events_all:
+                json.dump(event[3], fout)
 
-        self._print_text(title='Wrote results ({} events) in {}'.format(len(events_all), outfile))
+        self._print_text(title='Wrote results ({} events) in {}'.format(nb_events_all, outfile))
