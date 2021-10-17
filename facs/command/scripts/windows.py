@@ -40,6 +40,7 @@ class WindowsCommand(AbstractCommand):
             name='profile_users', help='profile the users on the subject system from their ntuser.dat hive',
             callback=self.do_profile_users,
             params=[
+                self._get_option_hive_system(),
                 self._get_option_hive_ntusers(),
                 self._get_option_outdir(),
                 self._get_option_output(),
@@ -88,6 +89,8 @@ class WindowsCommand(AbstractCommand):
         reg_sam = RegistryHive(hive_sam)
         self.__host_reg_analyzer.set_current_control_set(reg_system)
         self.__host_reg_analyzer.set_computer_name(reg_system)
+        self.__host_reg_analyzer.set_registry_codepage(reg_system)
+        print(self.__host_reg_analyzer.get_registry_codepage(reg_system))
 
         report['host_info'], analysis['host_info'] = self.__host_reg_analyzer.collect_host_info(reg_system, reg_software)
         analysis['host_info'] = [a.to_dict() for a in analysis['host_info']]
@@ -141,9 +144,13 @@ class WindowsCommand(AbstractCommand):
 
         self._print_text(output_files.title, output_files.details)
 
-    def do_profile_users(self, hive_users, outdir, output):
+    def do_profile_users(self, hive_system, hive_users, outdir, output):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
+
+        reg_system = RegistryHive(hive_system)
+        self.__host_reg_analyzer.set_current_control_set(reg_system)
+        codepage = self.__host_reg_analyzer.get_registry_codepage(reg_system)
 
         first = True
         for hive_user, username in hive_users:
@@ -151,6 +158,7 @@ class WindowsCommand(AbstractCommand):
             print('[+] Analyzing registry hive for user {} '.format(username), end='', flush=True)
 
             reg_user = RegistryHive(hive_user)
+            self.__user_reg_analyzer.set_registry_codepage(codepage)
             report = {}
             analysis = {}
             report['rdp_connections'], analysis['rdp_connections'] = self.__user_reg_analyzer.analyze_rdp_connections(reg_user)
@@ -236,5 +244,6 @@ class WindowsCommand(AbstractCommand):
         with open(outfile, mode='w', encoding='utf8') as fout:
             for event in events_all:
                 json.dump(event[3], fout)
+                fout.write('\n')
 
         self._print_text(title='Wrote results ({} events) in {}'.format(nb_events_all, outfile))

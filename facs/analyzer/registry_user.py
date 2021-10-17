@@ -10,6 +10,9 @@ from facs.entity.autorun import AutorunEntity
 
 
 class UserRegistryAnalyzer(AbstractAnalyzer):
+    def set_registry_codepage(self, codepage):
+        self.__codepage = codepage
+
     def analyze_rdp_connections(self, reg_user):
         # describe what is done
         report = ReportEntity(
@@ -57,7 +60,7 @@ class UserRegistryAnalyzer(AbstractAnalyzer):
             key = reg_user.get_key(path)
             for subkey in key.iter_subkeys():
                 # process only subkeys which name is a volume GUID
-                if subkey.header.key_name_string.decode('utf8').startswith('{') is False:
+                if subkey.header.key_name_string.decode(self.__codepage).startswith('{') is False:
                     continue
 
                 # a connection implies the creation of a subsubkey 'shell'
@@ -65,7 +68,7 @@ class UserRegistryAnalyzer(AbstractAnalyzer):
                     continue
 
                 analysis.append(UserMountPointEntity(
-                    volume_guid=subkey.header.key_name_string.decode('utf8'),
+                    volume_guid=subkey.header.key_name_string.decode(self.__codepage),
                     last_connected_at=self._filetime_to_datetime(subkey.header.last_modified)
                 ))
         except RegistryKeyNotFoundException:
@@ -190,7 +193,7 @@ class UserRegistryAnalyzer(AbstractAnalyzer):
             for subkey in key.iter_subkeys():
                 analysis.append(CloudAccountEntity(
                     provider='Microsoft',
-                    info='email:{} ; cid:{}'.format(subkey.header.key_name_string.decode('utf8'), subkey.get_value('cid'))
+                    info='email:{} ; cid:{}'.format(subkey.header.key_name_string.decode(self.__codepage), subkey.get_value('cid'))
                 ))
         except RegistryKeyNotFoundException:
             pass

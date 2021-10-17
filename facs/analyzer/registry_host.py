@@ -63,6 +63,29 @@ class HostRegistryAnalyzer(AbstractAnalyzer):
         key = reg_system.get_key(path)
         self.__computer_name = key.get_value('ComputerName')
 
+    # https://docs.microsoft.com/en-us/windows/win32/intl/code-page-identifiers
+    # https://docs.python.org/3/library/codecs.html#standard-encodings
+    # it has an impact when decoding key name (bytes.decode())
+    def set_registry_codepage(self, reg_system):
+        path = self.__current_control_set + '\\Control\\Nls\\CodePage'
+        key = reg_system.get_key(path)
+        codepage = key.get_value('OEMCP')
+
+        # because CP850 decode "Invité" as "InvitÚ" ...
+        # both of these codepage are "Western Europe", should be sufficient
+        if codepage == '850':
+            codepage = '1252'
+        self.__codepage = codepage
+
+    def get_registry_codepage(self, reg_system):
+        path = self.__current_control_set + '\\Control\\Nls\\CodePage'
+        key = reg_system.get_key(path)
+        codepage = key.get_value('OEMCP')
+        if codepage == '850':
+            codepage = '1252'
+
+        return codepage
+
     def collect_host_info(self, reg_system, reg_software):
         # describe what is done
         report = ReportEntity(
@@ -155,7 +178,7 @@ class HostRegistryAnalyzer(AbstractAnalyzer):
         path = '\\SAM\\Domains\\Account\\Users\\Names'
         key = reg_sam.get_key(path)
         for subkey in key.iter_subkeys():
-            accounts_creation[subkey.header.key_name_string.decode('utf8')] = self._filetime_to_datetime(subkey.header.last_modified)
+            accounts_creation[subkey.header.key_name_string.decode(self.__codepage)] = self._filetime_to_datetime(subkey.header.last_modified)
 
         # collect group membership info
         group_members_sids = {}
@@ -340,7 +363,7 @@ class HostRegistryAnalyzer(AbstractAnalyzer):
                 continue
 
             analysis.append(AutorunEntity(
-                reg_key='HKLM\\SYSTEM' + path + subkey.header.key_name_string.decode('utf8'),
+                reg_key='HKLM\\SYSTEM' + path + subkey.header.key_name_string.decode(self.__codepage),
                 last_modified_at=self._filetime_to_datetime(subkey.header.last_modified),
                 description='Windows services',
                 name=values.get('DisplayName', ''),
@@ -418,7 +441,7 @@ class HostRegistryAnalyzer(AbstractAnalyzer):
         path = self.__current_control_set + '\\Services\\Tcpip\\Parameters\\Interfaces'
         key = reg_system.get_key(path)
         for subkey in key.iter_subkeys():
-            nic = subkey.header.key_name_string.decode('utf8')
+            nic = subkey.header.key_name_string.decode(self.__codepage)
 
             # main key for a NIC
             parameters = self.__decode_tcpip_interface_key(nic, key)
@@ -834,7 +857,7 @@ class HostRegistryAnalyzer(AbstractAnalyzer):
         path = '\\Microsoft\\Windows Portable Devices\\Devices'
         key = reg_software.get_key(path)
         for subkey in key.iter_subkeys():
-            instance_id = subkey.header.key_name_string.decode('utf8').split('#')
+            instance_id = subkey.header.key_name_string.decode(self.__codepage).split('#')
             device = {key: None for key in keys}
             device['user_label'] = subkey.get_value('FriendlyName')
 
@@ -868,9 +891,9 @@ class HostRegistryAnalyzer(AbstractAnalyzer):
             return connections
 
         for subkey in key.iter_subkeys():
-            vid_pid = subkey.header.key_name_string.decode('utf8')
+            vid_pid = subkey.header.key_name_string.decode(self.__codepage)
             for sk_serial_number in subkey.iter_subkeys():
-                serial_number = sk_serial_number.header.key_name_string.decode('utf8')
+                serial_number = sk_serial_number.header.key_name_string.decode(self.__codepage)
                 sk_properties = sk_serial_number.get_subkey('Properties')
 
                 sk = sk_properties.get_subkey('{a8b865dd-2e3d-4094-ad97-e593a70c75d6}')
