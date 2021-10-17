@@ -216,6 +216,13 @@ windows:
     - channel: 'OAlerts'
       eid: '300'
       description: 'pop-up from an Office application'
+    - channel: 'Microsoft-Windows-Windows Defender/Operational'
+      eid: '1116/1117'
+      description: 'malware detected/action taken'
+    - channel: 'Microsoft-Windows-Windows Defender/Operational'
+      eid: '5007'
+      description: 'exclusion path added to Defender AV'
+
     # - channel: 'sysmon WIP'
 
 

@@ -15,6 +15,7 @@ ioc_ttp:
   - 'https://github.com/pan-unit42/iocs'
   - 'https://thedfirreport.com/services'
   - 'https://github.com/vadim-hunter/Detection-Ideas-Rules'
+  - 'https://blog.group-ib.com/revil_raas'
 
 malware:
   - 'https://www.crowdstrike.com/cybersecurity-101/malware/'
@@ -32,6 +33,8 @@ evtx:
   - 'https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/advanced-security-auditing-faq'
   - 'https://www.microsoft.com/download/details.aspx?id=50034'
   - 'https://github.com/EricZimmerman/evtx/tree/master/evtx/Maps'
+  - 'https://github.com/mdecrevoisier/EVTX-to-MITRE-Attack'
+  - 'https://github.com/mdecrevoisier/Windows-auditing-mindmap'
 
 files:
   - 'https://www.winitor.com/pdf/Malware-Analysis-Fundamentals-Files-Tools.pdf'
@@ -90,7 +93,16 @@ blogs:
   - 'https://github.com/sinwindie/OSINT'
   - 'https://www.ssi.gouv.fr/agence/publication/analyse-de-lamcache/'
   - 'https://www.inversecos.com/'
-
+  - 'https://goteleport.com/blog/ssh-tunneling-explained/'
+  - 'https://svch0st.medium.com/guide-to-named-pipes-and-hunting-for-cobalt-strike-pipes-dc46b2c5f575'
+  - 'https://medium.com/purple-team/memory-analysis-for-beginners-with-volatility-64298c8b186'
+  - 'https://www.mdsec.co.uk/2020/09/i-like-to-move-it-windows-lateral-movement-part-1-wmi-event-subscription/'
+  - 'https://www.mdsec.co.uk/2020/09/i-like-to-move-it-windows-lateral-movement-part-2-dcom/'
+  - 'https://www.mdsec.co.uk/2020/10/i-live-to-move-it-windows-lateral-movement-part-3-dll-hijacking/'
+  - 'https://posts.specterops.io/bloodhound-versus-ransomware-a-defenders-guide-28147dedb73b'
+  - 'https://linuxdfir.ashemery.com/'
+  - 'https://github.com/Neo23x0/auditd'
+  - 'https://github.com/0xjxd/SquirrelWaffle-From-Maldoc-to-Cobalt-Strike'
 
 system:
   - 'http://ntoskrnl.org/'

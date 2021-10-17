@@ -124,23 +124,14 @@ defaults_values:
   - description: 'empire default behavior of C2 beacons'
     value: 'GET /login/process.php + GET /admin/get.php + GET /news.php'
 
-win_profiling:
-  - 'collect start/end of event logs for main channels'
-  - 'look for defence evasion: system backdated'
-  - 'look for defence evasion: event logs cleared/stopped'
-  - 'verify the host was active for the time frame: boot/shutdown'
-  - 'verify the host is the correct one: hostname, last IP, local users'
-  - 'profile the local users: login history, group membership, SID'
-  - 'profile the system: network history'
-  - 'profile the system: USB history'
-  - 'profile the system: installed/uninstalled software'
-  - 'profile the system: startup process and services'
-  - 'profile the system: analyze the srum (System Resource Usage Monitor)'
-  - 'profile the users: installed/uninstalled software'
-  - 'profile the users: USB history'
-  - 'profile the users: installed/uninstalled software'
-  - 'profile the users: startup process and services'
-  - 'profile the users: cloud synchronization'
-  - 'py_facs scripts windows profile_host (if it works -_-)'
+misc_analysis:
+  ip_address:
+    - 'whois (ISP, netblocks, geoloc, abuse contacts)'
+    - 'dig, passive DNS (hosted domains)'
+    - 'basic checks (cloudflare, tor, vpn/proxy anonymizer, reputation)'
+    - 'search shodan/censys/greynoise/I know what you download/data breaches/... (hostname, running services, os, open ports, ...)'
 
-
+  url_shortener:
+    - 'bit.ly: add "+" at the end'
+    - 'cutt.ly: add "@" at the end'
+    - 'tiny.cc: add "=" at the end'
