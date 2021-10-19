@@ -90,7 +90,6 @@ class WindowsCommand(AbstractCommand):
         self.__host_reg_analyzer.set_current_control_set(reg_system)
         self.__host_reg_analyzer.set_computer_name(reg_system)
         self.__host_reg_analyzer.set_registry_codepage(reg_system)
-        print(self.__host_reg_analyzer.get_registry_codepage(reg_system))
 
         report['host_info'], analysis['host_info'] = self.__host_reg_analyzer.collect_host_info(reg_system, reg_software)
         analysis['host_info'] = [a.to_dict() for a in analysis['host_info']]
@@ -152,7 +151,6 @@ class WindowsCommand(AbstractCommand):
         self.__host_reg_analyzer.set_current_control_set(reg_system)
         codepage = self.__host_reg_analyzer.get_registry_codepage(reg_system)
 
-        first = True
         for hive_user, username in hive_users:
             # process
             print('[+] Analyzing registry hive for user {} '.format(username), end='', flush=True)
@@ -183,11 +181,6 @@ class WindowsCommand(AbstractCommand):
 
             print(' done.\n')
 
-            # list what was analyzed
-            if first is True:
-                for paragraph in report.values():
-                    self._print_text(paragraph.title, paragraph.details)
-
             # write analysis
             output_files = ReportEntity(
                 title='Output files for user {}'.format(username),
@@ -200,7 +193,9 @@ class WindowsCommand(AbstractCommand):
                 self._write_formatted(outfile, output, results)
             self._print_text(output_files.title, output_files.details)
 
-            first = False
+        # list what was analyzed
+        for paragraph in report.values():
+            self._print_text(paragraph.title, paragraph.details)
 
     def do_analyze_prefetchs(self, prefetch, outdir, output):
         if not os.path.exists(outdir):

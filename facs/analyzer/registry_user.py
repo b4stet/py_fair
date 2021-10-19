@@ -131,15 +131,18 @@ class UserRegistryAnalyzer(AbstractAnalyzer):
             ))
 
         path = '\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce'
-        key = reg_user.get_key(path)
-        for value in key.get_values():
-            analysis.append(AutorunEntity(
-                reg_key='HKU' + path,
-                last_modified_at=self._filetime_to_datetime(key.header.last_modified),
-                description='Program automatically started atuser logon',
-                name=value.name,
-                value=value.value
-            ))
+        try:
+            key = reg_user.get_key(path)
+            for value in key.get_values():
+                analysis.append(AutorunEntity(
+                    reg_key='HKU' + path,
+                    last_modified_at=self._filetime_to_datetime(key.header.last_modified),
+                    description='Program automatically started atuser logon',
+                    name=value.name,
+                    value=value.value
+                ))
+        except RegistryKeyNotFoundException:
+            pass
 
         return report, analysis
 
@@ -156,17 +159,20 @@ class UserRegistryAnalyzer(AbstractAnalyzer):
         analysis = []
 
         path = '\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Compatibility Assistant\\Store'
-        key = reg_user.get_key(path)
-        analysis.append(UserAppCompatEntity(
-            info_type='key last modification',
-            value=str(self._filetime_to_datetime(key.header.last_modified))
-        ))
-
-        for value in key.get_values():
+        try:
+            key = reg_user.get_key(path)
             analysis.append(UserAppCompatEntity(
-                info_type='key value',
-                value=value.name
+                info_type='key last modification',
+                value=str(self._filetime_to_datetime(key.header.last_modified))
             ))
+
+            for value in key.get_values():
+                analysis.append(UserAppCompatEntity(
+                    info_type='key value',
+                    value=value.name
+                ))
+        except RegistryKeyNotFoundException:
+            pass
 
         return report, analysis
 
@@ -195,7 +201,7 @@ class UserRegistryAnalyzer(AbstractAnalyzer):
                     provider='Microsoft',
                     info='email:{} ; cid:{}'.format(subkey.header.key_name_string.decode(self.__codepage), subkey.get_value('cid'))
                 ))
-        except RegistryKeyNotFoundException:
+        except (RegistryKeyNotFoundException, NoRegistrySubkeysException):
             pass
 
         # collect Google accounts if any
@@ -235,7 +241,7 @@ class UserRegistryAnalyzer(AbstractAnalyzer):
                     provider='OneDrive Personal',
                     info='email:{} ; cid:{} ; synced folders:{}'.format(values['UserEmail'], values['cid'], '|'.join(synced_folders))
                 ))
-        except NoRegistrySubkeysException:
+        except (RegistryKeyNotFoundException, NoRegistrySubkeysException):
             pass
 
         try:

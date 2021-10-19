@@ -40,11 +40,12 @@ class AbstractCommand():
         if len(data) == 0:
             return
 
-        with open(outfile, mode='w', encoding='utf8') as fout:
-            if format == self.OUTPUT_JSON:
+        if format == self.OUTPUT_JSON:
+            with open(outfile, mode='w', encoding='utf8') as fout:
                 json.dump(data, fout)
 
-            if format == self.OUTPUT_CSV:
+        if format == self.OUTPUT_CSV:
+            with open(outfile, mode='w', encoding='utf8', newline='') as fout:
                 writer = csv.DictWriter(fout, quoting=csv.QUOTE_MINIMAL, quotechar='"', fieldnames=data[0].keys())
                 writer.writeheader()
                 writer.writerows(data)

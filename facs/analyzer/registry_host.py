@@ -125,9 +125,10 @@ class HostRegistryAnalyzer(AbstractAnalyzer):
         path = '\\Microsoft\\Windows NT\\CurrentVersion'
         key = reg_software.get_key(path)
         values = {value.name: value.value for value in key.get_values()}
+        release = values.get('ReleaseId', '')
         analysis.append(HostInfoEntity(
             title='OS',
-            value='{} Release {} Build {}; installed on {}'.format(values['ProductName'], values['ReleaseId'], values['CurrentBuild'], values['InstallDate'])
+            value='{} Release {} Build {}; installed on {}'.format(values['ProductName'], release, values['CurrentBuild'], values['InstallDate'])
         ))
 
         # collect time zone
