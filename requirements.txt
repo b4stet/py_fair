@@ -5,6 +5,7 @@ odfpy
 datetime
 python-dateutil
 libevtx-python
+tabulate
 xmltodict
 pycodestyle
 snakeviz

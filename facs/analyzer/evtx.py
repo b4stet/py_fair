@@ -195,7 +195,6 @@ class EvtxAnalyzer(AbstractAnalyzer):
                 event.update(self.__parse_system_data(partial_dict, True))
                 heapq.heappush(events, (event['epoch'], event['eid'], event['record_id'], event))
 
-                # events.append(event)
                 continue
 
             # extract keys from the xml
@@ -215,10 +214,10 @@ class EvtxAnalyzer(AbstractAnalyzer):
                 event = self.__enrich(event, tags)
 
             heapq.heappush(events, (event['epoch'], event['eid'], event['record_id'], event))
-            # events.append(event)
         evtx.close()
 
-        return nb_events, events
+        nb_events = len(events)
+        return nb_events, [heapq.heappop(events) for _ in range(0, nb_events)]
 
     def __parse_system_data(self, xml_dict, partial=False):
         if partial is False:

@@ -231,14 +231,13 @@ class WindowsCommand(AbstractCommand):
                 print('[+] Extracting events from {} ... '.format(file), end='', flush=True)
                 nb_events, events = self.__evtx_analyzer.extract_generic(file, tags)
                 if events is not None:
-                    # events_all.extend(events)
                     events_all = heapq.merge(events_all, events)
                     nb_events_all += nb_events
                 print(' done ({} events)'.format(nb_events), flush=True)
 
         with open(outfile, mode='w', encoding='utf8') as fout:
-            for event in events_all:
-                json.dump(event[3], fout)
+            for i in range(nb_events_all):
+                json.dump(next(events_all)[3], fout)
                 fout.write('\n')
 
         self._print_text(title='Wrote results ({} events) in {}'.format(nb_events_all, outfile))
