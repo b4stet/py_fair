@@ -10,12 +10,22 @@ class ProcessingCommand(AbstractCommand):
     def get_commands(self):
         group = click.Group(
             'processing',
-            help='cheat sheets when forensicating',
+            help='cheat sheets to forensicate a target system',
         )
 
         group.add_command(click.Command(
-            name='misc', help='manual mining ideas',
-            callback=self.get_cheat_sheet_misc
+            name='windows', help='manual mining ideas',
+            callback=self.windows_mining
+        ))
+
+        group.add_command(click.Command(
+            name='analyse_ip', help='check points for an IP address',
+            callback=self.ip_analysis
+        ))
+
+        group.add_command(click.Command(
+            name='analyse_url_shortener', help='tips to uncover real site behind a shortened link',
+            callback=self.url_shortener_analysis
         ))
 
         group.add_command(click.Command(
@@ -28,19 +38,14 @@ class ProcessingCommand(AbstractCommand):
             callback=self.list_defaults
         ))
 
-        group.add_command(click.Command(
-            name='win_profiling', help='info to collect about a host and users',
-            callback=self.get_win_profiling
-        ))
-
         return group
 
-    def get_cheat_sheet_misc(self):
+    def windows_mining(self):
         manual = []
-        for elt in self._data['manual_mining']:
+        for elt in self._data['windows_mining']:
             line = '{:80}: {}'.format(elt['description'], elt['note'])
             manual.append(line)
-        self._print_text('Manual mining', manual)
+        self._print_text('Windows artifacts', manual)
 
     def get_tool_patterns(self):
         patterns = []
@@ -52,10 +57,13 @@ class ProcessingCommand(AbstractCommand):
 
     def list_defaults(self):
         defaults = []
-        for elt in self._data['defaults']:
+        for elt in self._data['default_values']:
             line = '{:60}: {}'.format(elt['description'], elt['value'])
             defaults.append(line)
         self._print_text('Some default values of software', defaults)
 
-    def get_win_profiling(self):
-        self._print_text('Collection to get from the investigated host (evtx, registry)', self._data['win_profiling'])
+    def ip_analysis(self):
+        self._print_text('Information related to an IP address', self._data['ip_address'])
+
+    def url_shortener_analysis(self):
+        self._print_text('Uncover shortened links', self._data['url_shortener'])

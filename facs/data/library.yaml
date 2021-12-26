@@ -103,6 +103,7 @@ blogs:
   - 'https://linuxdfir.ashemery.com/'
   - 'https://github.com/Neo23x0/auditd'
   - 'https://github.com/0xjxd/SquirrelWaffle-From-Maldoc-to-Cobalt-Strike'
+  - 'https://github.com/forensicanalysis'
 
 system:
   - 'http://ntoskrnl.org/'

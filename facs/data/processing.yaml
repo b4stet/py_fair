@@ -1,18 +1,19 @@
-manual_mining:
+windows_mining:
   - description: 'look for known suspicious filenames on disk (LotL, old privesc tricks, attacker toolbox, ...)'
     note: 'see wordlist_windows_disk.txt'
   - description: 'look for known suspicious executions in the time frame'
     note: 'see wordlist_windows_execution.txt'
   - description: 'look for unusual binary types in user profile'
-    note: 'ps1|bat|vba|vbs|dll|exe|msi'
+    note: 'ps1|bat|vba|vbs|dll|exe|msi|hta'
   - description: 'databases to check hashes against'
-    note: 'virustotal, nsrl, any.run, hybrid-analysis, tria.ge, labs.inquest.net'
+    note: 'virustotal, py_facs scripts nsrl, any.run, hybrid-analysis, tria.ge, labs.inquest.net'
   - description: 'look for credentials in GPO'
     note: 'browse sysvol on DC'
-  - description: 'look for specific logs (RAT, AV, Cloud ...)'
+  - description: 'search in specific logs (RAT, AV, Cloud ...)'
     note: 'py_facs cheat_sheets logs windows'
   - description: 'look for ADS Zone.Identifier = 3 (from internet)'
-    note: 'grep disk timeline for Zone.Identifier'
+    note: 'grep disk timeline for Zone.Identifier| find . -type f -name ''*:Zone.Identifier'''
+  - description: ''
 
 patterns:
   - tool: 'mimikatz'
@@ -98,7 +99,7 @@ patterns:
   - tool: 'rubeus'
     detection:
       - 'kerberoasting: connections to DC port 88 (KDC) with process != lsass.exe'
-      - 'files created .kirbi, .asreproast, .kerberoast'
+      - 'files created: .kirbi, .asreproast, .kerberoast'
       - 'similar to mimikatz'
 
   - tool: 'lolbins'
@@ -107,8 +108,7 @@ patterns:
       - 'other from https://infosecwriteups.com/common-tools-techniques-used-by-threat-actors-and-malware-part-i-deb05b664879'
       - 'included in execution wordlist'
 
-
-defaults_values:
+default_values:
   - description: 'default RDP port'
     value: '3389'
   - description: 'default Anydesk port'
@@ -124,14 +124,13 @@ defaults_values:
   - description: 'empire default behavior of C2 beacons'
     value: 'GET /login/process.php + GET /admin/get.php + GET /news.php'
 
-misc_analysis:
-  ip_address:
-    - 'whois (ISP, netblocks, geoloc, abuse contacts)'
-    - 'dig, passive DNS (hosted domains)'
-    - 'basic checks (cloudflare, tor, vpn/proxy anonymizer, reputation)'
-    - 'search shodan/censys/greynoise/I know what you download/data breaches/... (hostname, running services, os, open ports, ...)'
+ip_address:
+  - 'whois (ISP, netblocks, geoloc, abuse contacts)'
+  - 'dig, passive DNS (hosted domains)'
+  - 'basic checks (cloudflare, tor, vpn/proxy anonymizer, reputation)'
+  - 'search shodan/censys/greynoise/I know what you download/data breaches/... (hostname, running services, os, open ports, ...)'
 
-  url_shortener:
-    - 'bit.ly: add "+" at the end'
-    - 'cutt.ly: add "@" at the end'
-    - 'tiny.cc: add "=" at the end'
+url_shortener:
+  - 'bit.ly: add "+" at the end'
+  - 'cutt.ly: add "@" at the end'
+  - 'tiny.cc: add "=" at the end'

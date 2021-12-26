@@ -113,7 +113,7 @@ windows:
       description: 'user creation'
       policy: 'Account Management > User Account Management'
     - eid: '4728/4732/4756'
-      description: 'user added to sensitive group (global, local, universal)'
+      description: 'user added to a security-enabled group (global, local, universal)'
       policy: 'Account Management > Security Group Management'
     - eid: '4798/4799'
       description: 'user groups / security-enabled local group enumerated'
