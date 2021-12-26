@@ -220,24 +220,32 @@ class WindowsCommand(AbstractCommand):
         tags = None
         if tags_file is not None:
             with open(tags_file, mode='r', encoding='utf-8') as f:
-                tags = yaml.safe_load(f)['evtx']
+                tags = yaml.safe_load(f)['evtx']['tags']
 
         events_all = []
         nb_events_all = 0
-        outfile = os.path.join(outdir, 'evtx.json')
+        starts_ends = []
+        outfile_evtx = os.path.join(outdir, 'evtx.json')
+        outfile_starts_ends = os.path.join(outdir, 'evtx_starts_ends.csv')
+
         for evtx in os.listdir(evtx_path):
             if evtx.endswith('.evtx'):
                 file = os.path.join(evtx_path, evtx)
                 print('[+] Extracting events from {} ... '.format(file), end='', flush=True)
-                nb_events, events = self.__evtx_analyzer.extract_generic(file, tags)
+                nb_events, events, start_end = self.__evtx_analyzer.extract_generic(file, tags)
+                start_end['evtx_file'] = evtx
                 if events is not None:
                     events_all = heapq.merge(events_all, events)
                     nb_events_all += nb_events
+                    starts_ends.append(start_end)
                 print(' done ({} events)'.format(nb_events), flush=True)
 
-        with open(outfile, mode='w', encoding='utf8') as fout:
+        with open(outfile_evtx, mode='w', encoding='utf8') as fout:
             for i in range(nb_events_all):
                 json.dump(next(events_all)[3], fout)
                 fout.write('\n')
 
-        self._print_text(title='Wrote results ({} events) in {}'.format(nb_events_all, outfile))
+        self._write_formatted(outfile_starts_ends, self.OUTPUT_CSV, starts_ends)
+
+        self._print_text(title='Wrote {} events in {}'.format(nb_events_all, outfile_evtx))
+        self._print_text(title='Wrote start/end of logs in {}'.format(outfile_starts_ends))

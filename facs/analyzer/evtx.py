@@ -10,16 +10,6 @@ from facs.analyzer.abstract import AbstractAnalyzer
 
 
 class EvtxAnalyzer(AbstractAnalyzer):
-    __CHANNELS_MIN = [
-        'Security',
-        'System',
-        'Application',
-        'Microsoft-Windows-TaskScheduler/Operational',
-        'Microsoft-Windows-TerminalServices-RDPClient/Operational',
-        'Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational',
-        'Microsoft-Windows-TerminalServices-LocalSessionManager/Operational',
-    ]
-
     __RE_EVTX_COMMON = re.compile(r'(<System>.*?</System>)', re.S)
 
     def collect_profiling_events(self, fd_evtx):
@@ -28,7 +18,6 @@ class EvtxAnalyzer(AbstractAnalyzer):
             'storage_info': [],
             'pnp_connections': [],
         }
-        log_start_end = {channel: {'start': None, 'end': None} for channel in self.__CHANNELS_MIN}
         timeline = []
         computer_name = None
         report = {}
@@ -42,7 +31,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
             event = json.loads(line)
 
             # discard events that could not be parsed
-            if event['epoch'] == 0.0:
+            if 'xml_not_parsed' in event['tags']:
                 continue
 
             channel = event['channel']
@@ -51,16 +40,6 @@ class EvtxAnalyzer(AbstractAnalyzer):
 
             if computer_name is None:
                 computer_name = event['computer']
-
-            # collect start/end of logs
-            if channel not in log_start_end.keys():
-                log_start_end[channel] = {'start': None, 'end': None}
-
-            if log_start_end[channel]['start'] is None or event['datetime'] < log_start_end[channel]['start']:
-                log_start_end[channel]['start'] = event['datetime']
-
-            if log_start_end[channel]['end'] is None or event['datetime'] > log_start_end[channel]['end']:
-                log_start_end[channel]['end'] = event['datetime']
 
             # check time changes, logging tampered and windows start/stop from Security channel
             if channel == 'Security':
@@ -117,31 +96,6 @@ class EvtxAnalyzer(AbstractAnalyzer):
                     event_processed = self.__collect_kernel_pnp_410_430(event)
                     collection['pnp_connections'] = self._append_to_timeline(event_processed, collection['pnp_connections'])
 
-        # report if major evtx were found
-        report['log_start_end'] = ReportEntity(
-            title='Checked start/end of windows event log for main channels',
-            details=[]
-        )
-        for channel in self.__CHANNELS_MIN:
-            found = 'found'
-            if log_start_end[channel]['start'] is None:
-                found = 'not found'
-
-            report['log_start_end'].details.append('{:80}: {}'.format(channel, found))
-
-        # insert all evtx start/end in the timeline
-        for channel in log_start_end:
-            event = TimelineEntity(
-                start=log_start_end[channel]['start'],
-                end=log_start_end[channel]['end'],
-                host=computer_name,
-                event='log start/end',
-                event_type=TimelineEntity.TIMELINE_TYPE_LOG,
-                source='{}.evtx'.format(channel)
-            )
-
-            timeline.append(event.to_dict())
-
         # list what was done
         report['time_changed'] = ReportEntity(
             title='Checked evidences of system backdating',
@@ -177,8 +131,9 @@ class EvtxAnalyzer(AbstractAnalyzer):
         evtx.open(evtx_file)
 
         nb_events = evtx.get_number_of_records()
+        start_end = {'start': None, 'end': None}
         if nb_events == 0:
-            return 0, None
+            return 0, None, start_end
 
         events = []
         for record in evtx.records:
@@ -192,14 +147,16 @@ class EvtxAnalyzer(AbstractAnalyzer):
                 partial = matches.group(1)
                 partial_dict = xmltodict.parse(partial)
                 event = {'raw': xml, 'source': 'log_evtx', 'tags': ['xml_not_parsed']}
-                event.update(self.__parse_system_data(partial_dict, True))
+                system, start_end = self.__parse_system_data(partial_dict, start_end, True)
+                event.update(system)
                 heapq.heappush(events, (event['epoch'], event['eid'], event['record_id'], event))
 
                 continue
 
             # extract keys from the xml
             event = {'raw': xml, 'source': 'log_evtx'}
-            event.update(self.__parse_system_data(xml_dict))
+            system, start_end = self.__parse_system_data(xml_dict, start_end)
+            event.update(system)
             if xml_dict['Event'].get('EventData', None) is not None:
                 event.update(self.__parse_event_or_user_data(xml_dict['Event']['EventData']))
             if xml_dict['Event'].get('ProcessingErrorData', None) is not None:
@@ -217,9 +174,9 @@ class EvtxAnalyzer(AbstractAnalyzer):
         evtx.close()
 
         nb_events = len(events)
-        return nb_events, [heapq.heappop(events) for _ in range(0, nb_events)]
+        return nb_events, [heapq.heappop(events) for _ in range(0, nb_events)], start_end
 
-    def __parse_system_data(self, xml_dict, partial=False):
+    def __parse_system_data(self, xml_dict, start_end, partial=False):
         if partial is False:
             system = xml_dict['Event']['System']
         else:
@@ -233,8 +190,17 @@ class EvtxAnalyzer(AbstractAnalyzer):
         if isinstance(eid, collections.OrderedDict):
             eid = eid['#text']
 
-        return {
-            'datetime': str(self._isoformat_to_datetime(system['TimeCreated']['@SystemTime'])),
+        dt = self._isoformat_to_datetime(system['TimeCreated']['@SystemTime'])
+
+        # collect start/end
+        if start_end['start'] is None or dt < start_end['start']:
+            start_end['start'] = dt
+
+        if start_end['end'] is None or dt > start_end['end']:
+            start_end['end'] = dt
+
+        event = {
+            'datetime': str(dt),
             'epoch': self._isoformat_to_unixepoch(system['TimeCreated']['@SystemTime']),
             'channel': system['Channel'],
             'provider': system['Provider']['@Name'],
@@ -243,6 +209,8 @@ class EvtxAnalyzer(AbstractAnalyzer):
             'computer': system['Computer'],
             'writer_sid': writer_sid,
         }
+
+        return event, start_end
 
     def __parse_event_or_user_data(self, data_dict):
         event_data = {}
