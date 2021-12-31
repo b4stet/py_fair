@@ -1,0 +1,33 @@
+# under construction
+
+mkdir -p clamav
+fresclam --show-progress && clamscan -r --alert-macros=yes --infected --log=./clamav/clamav_infected.txt <mount_point>
+
+mkdir -p carving/bulk_disk
+mkdir -p carving/bulk_pagefile
+mkdir -p carving/ntfsundelete
+bulk_extractor -o carving/bulk_disk -x all -e base64 -e gzip -e zip -e rar -e hyberfile -e httplogs -e pdf -e evtx -e winlnk -e winpe -e winprefetech disk.raw
+bulk_extractor -o carving/bulk_disk -x all -e base64 -e gzip -e zip -e rar -e hyberfile -e httplogs -e pdf -e evtx -e winlnk -e winpe -e winprefetech hyberfil.sys
+bulk_extractor -o carving/bulk_disk -x all -e base64 -e gzip -e zip -e rar -e httplogs -e pdf -e evtx -e winlnk -e winpe -e winprefetech Windows/memory.dmp
+bulk_extractor -o carving/bulk_pagefile -x all -e base64 -e gzip -e zip -e rar -e httplogs -e pdf -e winpe pagefile.sys
+ntfsundelete /dev/loopX -s -p 100 -m "<pattern.ext>" -t 1m
+ntfsundelete /dev/loopX -i <inode> -d carving/ntfsundelete
+
+mkdir -p tsk
+fls -rph -m '/' disk.raw | tee tsk/fls.body
+mactime -d -y -b tsk/fls.body | tee tsk/fls.csv
+
+icat -h -o <partition sector offset> disk.raw <inode> > tsk/usnjrnl.dat
+python3 usn.py -c -f tsk/usnjrnl.dat -o tsk/usnjrnl.csv
+
+mkdir -p l2t
+docker run -it --rm -u $(id -u $USER):$(id -g $USER) -v "$raw_disk_path":/data_src:ro -v $PWD/l2t:/data_dst plaso-tools log2timeline --parsers win_host --data "$plaso_presets_dir" --process_archives --status-view linear --logfile /data_dst/l2t.log.gz --debug --storage-file l2t.plaso "$disk_raw"
+docker run -it --rm -u $(id -u $USER):$(id -g $USER) -v $PWD/l2t:/data_dst plaso-tools pinfo -v --output_format text -w /data_dst/pinfo.txt /data_dst/l2t.plaso
+docker run -it --rm -u $(id -u $USER):$(id -g $USER) -v $PWD/l2t:/data_dst plaso-tools psort --status-view linear --debug --logfile /data_dst/psort.log.gz -o json_line -w /data_dst/l2t.json /data_dst/l2t.plaso
+
+mkdir -p hives
+registry-transaction-logs <hive> -p <hive>.LOG1 -s <hive>.LOG2 -o hives/<hive>_CLEAN
+registry-dump -o registries.json hives/
+
+mkdir -p facs
+py_facs scripts windows extract_evtx -d facs -e "$evtx_path"

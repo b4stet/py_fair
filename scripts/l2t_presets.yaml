@@ -1,0 +1,44 @@
+name: win_web_and_cloud
+description: 'Web and Cloud artifacts on a recent Windows system'
+parsers:
+  - chrome_cache
+  - firefox_cache
+  - firefox_cache2
+  - msiecf
+  - esedb/msie_webcache
+  - gdrive_synclog
+  - googlelog
+  - skydrive_log
+  - binary_cookies
+  - sqlite/firefox_cookies
+  - sqlite/firefox_downloads
+  - sqlite/firefox_history
+---
+name: win_no_timeline
+description: 'Collection of artifacts without timestamp'
+parses:
+  - winreg/amcache
+  - recycle_bin
+  - czip
+  - pe
+---
+name: win_timeline
+description: 'Collection of timestamped artifacts'
+parsers:
+  - esedb/srum
+  - custom_destinations
+  - lnk
+  - olecf/olecf_automatic_destinations
+  - prefetch
+  - sqlite/windows_timeline
+  - winreg/appcompatcache
+  - winreg/bagmru
+  - winreg/bam
+  - winreg/microsoft_office_mru
+  - winreg/mrulist_string
+  - winreg/mrulistex_string
+  - winreg/mrulistex_string_and_shell_item_list
+  - winreg/mrulistex_shell_item_list
+  - winreg/userassist
+  - winreg/windows_typed_urls
+  - winreg/winreg_default

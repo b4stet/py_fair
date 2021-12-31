@@ -1,0 +1,14 @@
+{
+    "description": "Ingest pipeline for dfir_* indices",
+    "processors": [
+      {
+        "date": {
+          "field": "datetime",
+          "formats": [
+            "yyyy-MM-dd HH:mm:ss.SSSSSSxxx"
+          ],
+          "output_format": "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSSXXX"
+        }
+      }
+    ]
+  }

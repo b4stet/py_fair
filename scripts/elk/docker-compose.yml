@@ -1,0 +1,47 @@
+version: "3.7"
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.14.1
+    environment:
+      - bootstrap.memory_lock=true
+      # avoid error: max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - 127.0.0.1:9200:9200
+    ulimits:
+      nproc: 65535
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata_dfir:/usr/share/elasticsearch/data
+    networks:
+      - elknet
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.14.1
+    # environment:
+    #   ELASTICSEARCH_URL: 'http://elasticsearch:9200'
+    #   ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
+
+    ports:
+      - 127.0.0.1:5601:5601
+    ulimits:
+      nproc: 65535
+      memlock:
+        soft: -1
+        hard: -1
+    depends_on:
+      - elasticsearch
+    networks:
+      - elknet
+
+volumes:
+  esdata_dfir:
+    driver: local
+
+networks:
+  elknet:
+    driver: bridge

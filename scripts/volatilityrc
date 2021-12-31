@@ -1,0 +1,4 @@
+[DEFAULT]
+PROFILE=<profile>
+LOCATION=file:///path/to/memory.img
+KDBG=0x<offset>
