@@ -50,6 +50,7 @@ artifacts:
   - 'https://www.sans.org/security-resources/posters/dfir-memory-forensics/65/download'
   - 'https://www.nist.gov/itl/ssd/software-quality-group/national-software-reference-library-nsrl/nsrl-download/current-rds'
   - 'https://hashlookup.circl.lu/'
+  - 'https://github.com/ForensicArtifacts/artifacts'
 
 tools:
   - 'https://github.com/DidierStevens/DidierStevensSuite'
@@ -104,6 +105,7 @@ blogs:
   - 'https://github.com/Neo23x0/auditd'
   - 'https://github.com/0xjxd/SquirrelWaffle-From-Maldoc-to-Cobalt-Strike'
   - 'https://github.com/forensicanalysis'
+  - 'https://df-stream.com/2017/10/recentapps/'
 
 system:
   - 'http://ntoskrnl.org/'
@@ -114,16 +116,18 @@ system:
   - 'http://linux-training.be/'
 
 cves:
+  - description: 'Log4Shell (Log4j2)'
+    cve: 'CVE-2021-44228'
   - description: 'Pulse Secure'  
-    cve: 'CVE-2021-22893'
+    cve: 'CVE-2019-11510  CVE-2021-22893'
+  - description: 'ProxyShell(Exchange)'
+    cve: 'CVE-2021-34473 CVE-2021-34523 CVE-2021-31207'
   - description: 'Proxylogon (Exchange)'
     cve: 'CVE-2021-26855, CVE-2021-27065'
   - description: 'Sunburst (Solarwinds Orion)'
     cve: 'CVE-2020-14005'
   - description: 'Netlogon'
     cve: 'CVE-2020-1472'
-  - description: 'Pulse Secure'
-    cve: 'CVE-2019-11510'
   - description: 'Shitrix'
     cve: 'CVE-2019-19781'
   - description: 'Eternal Blue MS17-010'

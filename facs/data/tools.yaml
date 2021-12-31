@@ -65,27 +65,26 @@ plaso:
       note: 'docker build -t plaso-tools .'
     - description: 'base syntax to use the docker image'
       note: 'docker run -it --rm -u $(id -u $USER):$(id -g $USER) -v $PWD/<artifacts folder>:/data_src:ro -v $PWD/<result folder>:/data_dst plaso-tools'
-    - description: 'base options to use for log2timeline/psort in docker'
-      note: '--status-view linear --logfile /data_dst/{l2t,psort}.log.gz'
+    - description: 'base options to use for log2timeline/psort'
+      note: '--status-view linear --logfile /data_dst/{l2t,psort}.log.gz --debug (worker logs)'
+    - description: 'base options to use with log2timeline --no_vss/--only_vss/--vss_store N1,N2'
+      note: '--process_archives (disabled by default)'
     - description: 'psort output format to use'
-      note: 'json_line or elastic (w/ --index_name --server --port and --elastic_mappings)'
-    - description: 'list of parsers for a NTFS filesystem'
-      note: 'winevtx,mft,custom_destinations,olecf/olecf_automatic_destinations,lnk,czip,esedb/srum,pe,prefetch,recycle_bin,rplog,usnjrnl,winfirewall,winjob,winreg'
-    - description: 'parsers related to browser and cloud activity'
-      note: 'chrome_cache,firefox_cache,firefox_cache2,msiecf,esedb/msie_webcache,gdrive_synclog,googlelog,skydrive_log'
+      note: 'json_line or elastic (w/ --index_name --server --port --elastic_mappings)'
+    - description: 'keep trace of options used in a log2timeline execution'
+      note: 'pinfo -v --output_format text -w pinfo_l2t.txt l2t.plaso'
     - description: 'meaning of some parsers'
-      note: 'msiecf (IE), czip (office files)'
+      note: 'msiecf (IE), czip (office files), bencode (torrent)'
+    - description: 'using artifacts definitions instead of parsers'
+      note: '--artifact_definitions <path to the clone of https://github.com/ForensicArtifacts/artifacts>'
+    - description: 'using your own presets'
+      note: '--data <path to your own presets.yaml>'
 
 volatility2:
   ref: 'https://github.com/volatilityfoundation/volatility'
   cheat_sheet:
     - description: '.volatilityrc after imageinfo (list of profiles with --info)'
-      note: |
-        usage: vol.py --conf-file .volatilityrc <plugin> <options>
-        [DEFAULT]
-        PROFILE=<profile>
-        LOCATION=file:///path/to/memory.img
-        KDBG=0x<offset>
+      note: 'vol.py --conf-file .volatilityrc <plugin> <options>'
     - description: 'check if a file is on the disk'
       note: 'mftparser | grep <pattern>'
     - description: 'get physical offset of file loaded in memory'
@@ -132,7 +131,7 @@ nsrl:
 bulk_extractor:
   ref: 'https://github.com/simsong/bulk_extractor'
   cheat_sheet:
-    - description: 'usage (E is for exclude, e for enable)'
+    - description: 'usage (-x to exclude, -e to include enable, -E to exclude all but one)'
       note: 'bulk_extractor  -E <scanner1> -e <scanner2> -f <string/regex> -o output/ disk.raw'
     - description: 'outputs'
       note: '1 txt file per scanner (+ histogram sometimes), offset of hits (convert to data block with icat/ifind)'

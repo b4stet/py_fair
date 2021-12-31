@@ -14,8 +14,13 @@ class ProcessingCommand(AbstractCommand):
         )
 
         group.add_command(click.Command(
-            name='windows', help='manual mining ideas',
+            name='windows_mining', help='manual mining ideas',
             callback=self.windows_mining
+        ))
+
+        group.add_command(click.Command(
+            name='windows_mitre', help='examples to cover mitre tactics for a windows system',
+            callback=self.windows_mitre
         ))
 
         group.add_command(click.Command(
@@ -24,8 +29,13 @@ class ProcessingCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
-            name='analyse_url_shortener', help='tips to uncover real site behind a shortened link',
-            callback=self.url_shortener_analysis
+            name='analyse_url', help='check points for an URL and shortened links',
+            callback=self.url_analysis
+        ))
+
+        group.add_command(click.Command(
+            name='analyse_file', help='check points for a pdf or office document',
+            callback=self.file_analysis
         ))
 
         group.add_command(click.Command(
@@ -41,11 +51,19 @@ class ProcessingCommand(AbstractCommand):
         return group
 
     def windows_mining(self):
-        manual = []
+        mining = []
         for elt in self._data['windows_mining']:
-            line = '{:80}: {}'.format(elt['description'], elt['note'])
-            manual.append(line)
-        self._print_text('Windows artifacts', manual)
+            line = '{:100}: {}'.format(elt['description'], elt['note'])
+            mining.append(line)
+        self._print_text('Windows artifacts', mining)
+
+    def windows_mitre(self):
+        tactics = []
+        for elt in self._data['windows_mitre']:
+            for example in elt['examples']:
+                line = 'tactic: {:40} artifacts: {}'.format(elt['tactic'], example)
+                tactics.append(line)
+        self._print_text('Windows artifacts per Mitre Tactic', tactics)
 
     def get_tool_patterns(self):
         patterns = []
@@ -65,5 +83,8 @@ class ProcessingCommand(AbstractCommand):
     def ip_analysis(self):
         self._print_text('Information related to an IP address', self._data['ip_address'])
 
-    def url_shortener_analysis(self):
-        self._print_text('Uncover shortened links', self._data['url_shortener'])
+    def url_analysis(self):
+        self._print_text('Analysis of an URL', self._data['url'])
+
+    def file_analysis(self):
+        self._print_text('Analysis of a file', self._data['file'])

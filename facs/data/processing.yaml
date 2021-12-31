@@ -13,7 +13,88 @@ windows_mining:
     note: 'py_facs cheat_sheets logs windows'
   - description: 'look for ADS Zone.Identifier = 3 (from internet)'
     note: 'grep disk timeline for Zone.Identifier| find . -type f -name ''*:Zone.Identifier'''
-  - description: ''
+  - description: 'check user enabled macro (file creation + 01000000 for enabled editing/FFFFFF7F for macro enabled)'
+    note: 'HKCU\Software\Microsoft\Office\<version>\<Word|Excel|PowerPoint>\Security\Trusted Documents\TrustRecords'
+  - description: 'check for malicious persistence with IFEO (attach cmd as debugger)'
+    note: 'HKLM\SOFTWARE\Wow<64|32>Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\'
+  - description: 'check for malicious persistence with IFEO (slient exec on exit)'
+    note: 'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SilentProcessExit\'
+  - description: 'characterize volumes of a host'
+    note: 'event logs (name, mount point), prefetch (name, SN), lnk/jumplists (name, SN, mount point)'
+  - description: 'check for unusual long data in registry'
+    note: 'value > 512 bytes or base64 value > 50 bytes (limit fixed by the system)'
+  - description: 'meaning of some EIDs'
+    note: 'https://github.com/EricZimmerman/evtx/tree/master/evtx/Maps'
+
+windows_mitre:
+  - tactic: 'initial access'
+    examples:
+      - 'phishing (outlook temp folder, web history, lnk, jumplist, windows timeline, recent docs html/php/com/... extension)'
+      - 'maldocs (file listed in prefetch of office programs, trusted records, SRUM db (network usage), windows timeline)'
+      - 'logon bruteforce'
+      - 'Threat Intel regarding leaked/default account'
+      - 'CVE in public facing application/browser exploit/supply chain'
+      - 'malicious download: antivirus/web history/jump list/lnk/Zone.Identifier'
+      - 'rogue removable media: evtx/registry/setupapi/amcache InventoryDevicePnp'
+      - 'binary modification (old tricks like seth.exe, IFEO)'
+  - tactic: 'discovery'
+    examples:
+      - 'user searches (typed paths/word wheel query)'
+      - 'network share browsing'
+      - 'tools execution (native or not) to scan, collect host info'
+      - 'tools downloads (sysinternals, post exploitation tools, Zone.Identifier)'
+  - tactic: 'execution'
+    examples:
+      - 'prefetch (except on ssd, server)'
+      - 'scripting logs (powershell, ...)'
+      - 'evtx for scheduled tasks, service/process executed'
+      - 'jump lists, lnk, recent apps, shimcache/appcompatcache, bam'
+      - 'amcache (InventoryApplications, InventoryApplications, InventoryDriverBinary)'
+      - 'SRUM db (app usage), user assist, run MRU, LastVisited MRU'
+      - 'AV/EDR events/logs'
+      - 'binaries in user profile'
+  - tactic: 'privilege escalation'
+    examples:
+      - 'lsass dumped'
+      - 'execution of lotl'
+      - 'mimikatz, bloodhound and alike'
+  - tactic: 'defense evasion'
+    examples:
+      - 'carve deleted files'
+      - 'endpoint protection service stopped'
+      - 'usage of lotl'
+      - 'installation of RAT'
+      - 'evtx for log cleared/stopped'
+      - 'recycle bin'
+  - tactic: 'lateral movement'
+    examples:
+      - 'psexec, smbexec and alike'
+      - 'evtx rdp'
+      - 'logon NTLM/Kerberos from DC'
+      - 'kerberoasting'
+      - 'wmi'
+  - tactic: 'persistence'
+    examples:
+      - 'autoruns (run/runonce/services/wmi)'
+      - 'IFEO'
+      - 'scheduled tasks'
+      - 'service installed'
+      - 'amcache (InventoryApplications, InventoryDriverBinary)'
+  - tactic: 'c2 and exfiltration'
+    examples:
+      - 'web history/jump list/lnk/recent docs (html/php/com/... extension)'
+      - 'execution of lotl'
+      - 'DNS logs'
+      - 'fw/proxy logs'
+      - 'SRUM db (connection)'
+  - tactic: 'data collection'
+    examples:
+      - 'evtx/fw for share access'
+      - 'external storage (evtx, registry, setupapi, amcache InventoryDevicePnp)'
+      - 'file/folder accessed/created (mft, lnk, recents app/doc/office, jumplists, shellbag)'
+      - 'user searches (typed paths/word wheel query)'
+      - 'OpenSave/LastVisited MRU, word reading locations'
+      - 'SRUM db (app usage)'
 
 patterns:
   - tool: 'mimikatz'
@@ -125,12 +206,22 @@ default_values:
     value: 'GET /login/process.php + GET /admin/get.php + GET /news.php'
 
 ip_address:
-  - 'whois (ISP, netblocks, geoloc, abuse contacts)'
+  - 'whois (ISP, registry, netblocks, geoloc, abuse contacts)'
   - 'dig, passive DNS (hosted domains)'
   - 'basic checks (cloudflare, tor, vpn/proxy anonymizer, reputation)'
   - 'search shodan/censys/greynoise/I know what you download/data breaches/... (hostname, running services, os, open ports, ...)'
 
-url_shortener:
+url:
+  - 'registrar, registrant, creation/update, country, contacts'
+  - 'passive DNS'
   - 'bit.ly: add "+" at the end'
   - 'cutt.ly: add "@" at the end'
   - 'tiny.cc: add "=" at the end'
+
+file:
+  - 'pdf: peepdf'
+  - 'office: catdoc/catdox, oledump (DiderStevens suite)'
+
+email:
+  - 'headers: sender (IP, real email), first/last MTA, SPF/DKIM/DMARC/SPAM score checks'
+  - 'content, attachment'

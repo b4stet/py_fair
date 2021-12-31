@@ -10,7 +10,7 @@ timelines:
     - description: 'create disk timeline (files/folders and deleted ones) with log2timeline'
       command: 'log2timeline --parsers mft --storage-file l2t_mft.plaso disk.raw && psort -o l2tcsv -w l2t_mft.csv l2t_mft.plaso'
     - description: 'Create timeline of a host with plaso'
-      command: 'log2timeline --parsers <parsers list> --storage-file l2t_evtx.plaso </evtx/folder> && psort -o json_line -w l2t_evtx.json l2t_evtx.plaso'
+      command: 'log2timeline --parsers <parsers list> --storage-file l2t.plaso disk.raw && psort -o json_line -w l2t.json l2t.plaso'
     - description: 'compute md5 of all files'
       command: 'find . -type f -exec md5sum {} \; > ../md5_all_files.csv && sed -i ''s/\s\+/,/'' forensic/md5_all_files.csv'
     - description: 'prepare known goods (OS and Office Suite related files) from NSRL db'

@@ -36,6 +36,12 @@ class LogsCommand(AbstractCommand):
             paths.append(line)
         self._print_text('On windows, main artifacts paths', paths)
 
+        meaning = []
+        for elt in self._data['windows']['artifacts_meaning']:
+            line = '{:60}: {}'.format(elt['description'], elt['note'])
+            meaning.append(line)
+        self._print_text('On windows, some artifacts meaning', meaning)
+
         source = self._data['windows']['evtx_security']
         events = ['EIDs: {:30} desc: {:65} audit to enable: {}'.format(event['eid'], event['description'], event['policy']) for event in source]
         self._print_text('Events from Security channel', events)
