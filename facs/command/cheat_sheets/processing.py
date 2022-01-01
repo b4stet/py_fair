@@ -14,11 +14,6 @@ class ProcessingCommand(AbstractCommand):
         )
 
         group.add_command(click.Command(
-            name='windows_mining', help='manual mining ideas',
-            callback=self.windows_mining
-        ))
-
-        group.add_command(click.Command(
             name='windows_mitre', help='examples to cover mitre tactics for a windows system',
             callback=self.windows_mitre
         ))
@@ -49,13 +44,6 @@ class ProcessingCommand(AbstractCommand):
         ))
 
         return group
-
-    def windows_mining(self):
-        mining = []
-        for elt in self._data['windows_mining']:
-            line = '{:100}: {}'.format(elt['description'], elt['note'])
-            mining.append(line)
-        self._print_text('Windows artifacts', mining)
 
     def windows_mitre(self):
         tactics = []

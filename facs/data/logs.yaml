@@ -70,6 +70,8 @@ windows:
       path: 'Windows/inf/setupapi.dev.log'
     - description: 'generic system logs'
       path: 'Windows/System32/LogFiles/*'
+    - description: 'path to WMI db'
+      path: 'Windows/System32/wbem/Repository/OBJECTS.DATA'
     - description: 'path to AV/EDR logs'
       path: 'check https://github.com/EricZimmerman/KapeFiles/tree/master/Targets/Antivirus'
     - description: 'path to common RAT logs (VNC, TeamViewer, ...)'
@@ -124,6 +126,17 @@ windows:
     note: 'ProgramData/Microsoft/Search/Data/Applications/Windows/Windows.edb, index of content related to file and emails'
   - description: 'Word Reading Locations'
     note: 'HKCU/Software/Microsoft/Office/<version>/Word/Reading Locations, last opening location of word docs'
+  - description: 'characterize volumes of a host'
+    note: 'event logs (name, mount point), prefetch (name, SN), lnk/jumplists (name, SN, mount point)'
+  - description: 'malicious persistence with IFEO: attach cmd as debugger'
+    note: 'HKLM\SOFTWARE\Wow<64|32>Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\'
+  - description: 'malicious persistence with IFEO: silent exec on exit'
+    note: 'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SilentProcessExit\'
+  - description: 'detect when user enabled macro in document (trusted ecords)'
+    note: 'HKCU\Software\Microsoft\Office\<version>\<Word|Excel|PowerPoint>\Security\Trusted Documents\TrustRecords, file creation + 01000000/FFFFFF7F (editing/macro enabled)'
+  - description: 'unusual long data in registry'
+    note: 'value > 512 bytes or base64 value > 50 bytes (limit fixed by the system)'
+
 
   evtx_security:
     - eid: '4608/4609'
@@ -249,8 +262,8 @@ windows:
       eid: '59'
       description: 'transfer start (upload or download)'
     - channel: 'Microsoft-Windows-DNS-Client/Operational'
-      eid: '3006'
-      description: 'DNS queries'
+      eid: '3006/3010/3020'
+      description: 'DNS queries/response'
     - channel: 'Microsoft-Windows-WLAN-Autoconfig/Operational'
       eid: '8001/8002/8003'
       description: 'wireless connection associated/success/failure'
@@ -269,6 +282,9 @@ windows:
     - channel: 'Microsoft-Windows-Windows Defender/Operational'
       eid: '5007'
       description: 'exclusion path added to Defender AV'
+    - channel: 'Microsoft-Windows-WMI-Activity/Operational'
+      eid: '5857'
+      description: 'WMI povider started'
 
     # - channel: 'sysmon WIP'
 

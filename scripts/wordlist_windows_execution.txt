@@ -48,6 +48,7 @@ csc.exe
 regsvr32.exe
 esentutl.exe
 wevtutil.exe
+cmdl32.exe
 pcwutl.dll
 svhost.exe
 rdpclip.exe

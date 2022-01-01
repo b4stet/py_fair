@@ -23,6 +23,7 @@ malware:
   - 'https://strontic.github.io/xcyclopedia/'
   - 'https://thezoo.morirt.com (!! to use with caution !!)'
   - 'https://github.com/Yara-Rules/rules'
+  - 'https://github.com/advanced-threat-research/Yara-Rules'
   - 'https://github.com/InQuest/awesome-yara'
   - 'https://github.com/mikesxrs/Open-Source-YARA-rules'
 
@@ -116,6 +117,8 @@ system:
   - 'http://linux-training.be/'
 
 cves:
+  - desctiption: 'CVE trends in social media'
+    cve: 'https://cvetrends.com/'
   - description: 'Log4Shell (Log4j2)'
     cve: 'CVE-2021-44228'
   - description: 'Pulse Secure'  

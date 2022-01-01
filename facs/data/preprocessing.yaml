@@ -60,3 +60,12 @@ windows:
       command: 'log2timeline --parsers prefetch --storage-file l2t_prefetch.plaso </prefetch/folder> && psort -o json_line -w l2t_prefetch.json l2t_prefetch.plaso'
     - description: 'Extract info from prefetch'
       command: 'py_facs scripts windows analyze_prefetchs -d <output/folder> -o csv -p l2t_prefetch.json'
+    - description: 'look for known suspicious filenames on disk (LotL, old privesc tricks, attacker toolbox, ...)'
+      command: 'grep -Fif wordlist_windows_disk.txt'
+    - description: 'look for known suspicious executions in the time frame'
+      command: 'grep -Fif wordlist_windows_execution.txt'
+    - description: 'look for unusual binary types in user profile'
+      command: 'egrep -i ''\.(ps1|bat|vba|vbs|dll|exe|msi|hta)'''
+    - description: 'databases to check hashes against'
+      command: 'virustotal, py_facs scripts nsrl, any.run, hybrid-analysis, tria.ge, labs.inquest.net'
+

@@ -110,9 +110,9 @@ yara:
   ref: 'https://github.com/Yara-Rules/rules'
   cheat_sheet:
     - description: 'other sources of rules'
-      note: 'https://github.com/InQuest/awesome-yara'
+      note: 'https://github.com/InQuest/awesome-yara, https://github.com/advanced-threat-research/Yara-Rules'
     - description: 'assemble a ruleset'
-      note: 'create a ruleset.yar file with series to include (MALW, RANSOM, RAT, TOOLKIT from the repo)'
+      note: 'create a ruleset.yara file with series to include (MALW, RANSOM, RAT, TOOLKIT from the official repo)'
     - description: 'run yara against a mounted disk'
       note: 'yara -r ruleset.yara <mount point>'
 
