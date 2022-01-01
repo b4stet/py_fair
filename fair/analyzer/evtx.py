@@ -1,12 +1,12 @@
-from facs.entity.report import ReportEntity
+from fair.entity.report import ReportEntity
 import json
 import pyevtx
 import xmltodict
 import heapq
 import re
 import collections
-from facs.entity.timeline import TimelineEntity
-from facs.analyzer.abstract import AbstractAnalyzer
+from fair.entity.timeline import TimelineEntity
+from fair.analyzer.abstract import AbstractAnalyzer
 
 
 class EvtxAnalyzer(AbstractAnalyzer):
@@ -126,7 +126,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
 
         return nb_events, report, timeline, collection
 
-    def extract_generic(self, evtx_file, tags=None):
+    def extract_generic(self, evtx_file):
         evtx = pyevtx.file()
         evtx.open(evtx_file)
 
@@ -165,10 +165,10 @@ class EvtxAnalyzer(AbstractAnalyzer):
                 event.update(self.__parse_event_or_user_data(xml_dict['Event']['UserData']))
 
             # enrich with tags
-            if tags is None:
-                event['tags'] = ['no_tags']
-            else:
-                event = self.__enrich(event, tags)
+            # if tags is None:
+            #     event['tags'] = ['no_tags']
+            # else:
+            #     event = self.__enrich(event, tags)
 
             heapq.heappush(events, (event['epoch'], event['eid'], event['record_id'], event))
         evtx.close()
@@ -256,19 +256,19 @@ class EvtxAnalyzer(AbstractAnalyzer):
             'payload':  error_data['EventPayload'],
         }
 
-    def __enrich(self, event, known_tags):
-        event['tags'] = []
+    # def __enrich(self, event, known_tags):
+    #     event['tags'] = []
 
-        for known in known_tags:
-            if known['channel'] == event['channel'] and event['eid'] in known['eids']:
-                if known.get('provider', None) is not None and known['provider'] != event['provider']:
-                    continue
-                event['tags'].extend(known['tags'])
+    #     for known in known_tags:
+    #         if known['channel'] == event['channel'] and event['eid'] in known['eids']:
+    #             if known.get('provider', None) is not None and known['provider'] != event['provider']:
+    #                 continue
+    #             event['tags'].extend(known['tags'])
 
-        if len(event['tags']) == 0:
-            event['tags'].append('no_tags')
+    #     if len(event['tags']) == 0:
+    #         event['tags'].append('no_tags')
 
-        return event
+    #     return event
 
     def __collect_security_4616(self, event):
         keep_it = True

@@ -1,17 +1,17 @@
-from facs.analyzer import evtx
+from fair.analyzer import evtx
 from regipy.exceptions import RegistryKeyNotFoundException, NoRegistrySubkeysException
 from regipy.structs import VALUE_KEY
 from regipy.utils import boomerang_stream
 
-from facs.entity.report import ReportEntity
-from facs.entity.host_info import HostInfoEntity
-from facs.entity.local_user import LocalUserEntity
-from facs.entity.application import ApplicationEntity
-from facs.entity.autorun import AutorunEntity
-from facs.entity.network_parameters import NetworkParametersEntity
-from facs.entity.storage_info import StorageInfoEntity
-from facs.entity.timeline import TimelineEntity
-from facs.analyzer.abstract import AbstractAnalyzer
+from fair.entity.report import ReportEntity
+from fair.entity.host_info import HostInfoEntity
+from fair.entity.local_user import LocalUserEntity
+from fair.entity.application import ApplicationEntity
+from fair.entity.autorun import AutorunEntity
+from fair.entity.network_parameters import NetworkParametersEntity
+from fair.entity.storage_info import StorageInfoEntity
+from fair.entity.timeline import TimelineEntity
+from fair.analyzer.abstract import AbstractAnalyzer
 
 
 class HostRegistryAnalyzer(AbstractAnalyzer):

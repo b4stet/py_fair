@@ -5,8 +5,8 @@ import yaml
 import heapq
 from regipy.registry import RegistryHive
 
-from facs.command.abstract import AbstractCommand
-from facs.entity.report import ReportEntity
+from fair.command.abstract import AbstractCommand
+from fair.entity.report import ReportEntity
 
 
 class WindowsCommand(AbstractCommand):
@@ -63,7 +63,6 @@ class WindowsCommand(AbstractCommand):
             params=[
                 self._get_option_evtx_path(),
                 self._get_option_outdir(),
-                self._get_option_tags(),
             ]
         ))
 
@@ -210,29 +209,24 @@ class WindowsCommand(AbstractCommand):
         self._write_formatted(outfile, output, prefetchs)
         self._print_text(title='Wrote results in {}'.format(outfile))
 
-    def do_extract_evtx(self, evtx_path, outdir, tags_file=None):
+    def do_extract_evtx(self, evtx_path, outdir):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
 
         if not os.path.exists(evtx_path):
             raise ValueError('Evtx directory {} does not exist.'.format(evtx_path))
 
-        tags = None
-        if tags_file is not None:
-            with open(tags_file, mode='r', encoding='utf-8') as f:
-                tags = yaml.safe_load(f)['evtx']['tags']
-
         events_all = []
         nb_events_all = 0
         starts_ends = []
-        outfile_evtx = os.path.join(outdir, 'evtx.json')
+        outfile_evtx = os.path.join(outdir, 'evtx.ndjson')
         outfile_starts_ends = os.path.join(outdir, 'evtx_starts_ends.csv')
 
         for evtx in os.listdir(evtx_path):
             if evtx.endswith('.evtx'):
                 file = os.path.join(evtx_path, evtx)
                 print('[+] Extracting events from {} ... '.format(file), end='', flush=True)
-                nb_events, events, start_end = self.__evtx_analyzer.extract_generic(file, tags)
+                nb_events, events, start_end = self.__evtx_analyzer.extract_generic(file)
                 start_end['evtx_file'] = evtx
                 if events is not None:
                     events_all = heapq.merge(events_all, events)

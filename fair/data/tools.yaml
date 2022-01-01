@@ -139,7 +139,7 @@ bulk_extractor:
 misc:
   - description: 'convert base 16 to base 10'
     note: 'echo "ibase=16;DEADBEEF" | bc'
-  - description: 'compute all hashes in a folder'
+  - description: 'compute all hashes'
     note: 'find . -type f -exec sha256sum {} \; > ../sha256_all_files.txt'
   - description: 'compare integrity of files with a witness file'
     note: 'sha1sum -c hash.txt --ignore-missing'

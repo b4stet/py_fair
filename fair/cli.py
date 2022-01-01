@@ -1,25 +1,25 @@
 import click
 
-from facs.command.cheat_sheets.library import LibraryCommand
-from facs.command.cheat_sheets.systems import SystemsCommand
-from facs.command.cheat_sheets.tools import ToolsCommand
-from facs.command.cheat_sheets.logs import LogsCommand
-from facs.command.cheat_sheets.acquisition import AcquisitionCommand
-from facs.command.cheat_sheets.carving import CarvingCommand
-from facs.command.cheat_sheets.preprocessing import PreprocessingCommand
-from facs.command.cheat_sheets.processing import ProcessingCommand
+from fair.command.cheat_sheets.library import LibraryCommand
+from fair.command.cheat_sheets.systems import SystemsCommand
+from fair.command.cheat_sheets.tools import ToolsCommand
+from fair.command.cheat_sheets.logs import LogsCommand
+from fair.command.cheat_sheets.acquisition import AcquisitionCommand
+from fair.command.cheat_sheets.carving import CarvingCommand
+from fair.command.cheat_sheets.preprocessing import PreprocessingCommand
+from fair.command.cheat_sheets.processing import ProcessingCommand
 
-from facs.command.scripts.windows import WindowsCommand
-from facs.command.scripts.nsrl import NsrlCommand
-from facs.command.scripts.report import ReportCommand
+from fair.command.scripts.windows import WindowsCommand
+from fair.command.scripts.nsrl import NsrlCommand
+from fair.command.scripts.report import ReportCommand
 
-from facs.loader.ods import OdsBo
+from fair.loader.ods import OdsBo
 
 
-from facs.analyzer.registry_user import UserRegistryAnalyzer
-from facs.analyzer.registry_host import HostRegistryAnalyzer
-from facs.analyzer.evtx import EvtxAnalyzer
-from facs.analyzer.artifact import ArtifactAnalyzer
+from fair.analyzer.registry_user import UserRegistryAnalyzer
+from fair.analyzer.registry_host import HostRegistryAnalyzer
+from fair.analyzer.evtx import EvtxAnalyzer
+from fair.analyzer.artifact import ArtifactAnalyzer
 
 ods_loader = OdsBo()
 

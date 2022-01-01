@@ -1,12 +1,12 @@
 from regipy.exceptions import RegistryKeyNotFoundException, NoRegistrySubkeysException
 
-from facs.analyzer.abstract import AbstractAnalyzer
-from facs.entity.report import ReportEntity
-from facs.entity.user_terminal_server_client import UserTerminalServerClientEntity
-from facs.entity.user_mount_point import UserMountPointEntity
-from facs.entity.user_app_compat import UserAppCompatEntity
-from facs.entity.cloud_account import CloudAccountEntity
-from facs.entity.autorun import AutorunEntity
+from fair.analyzer.abstract import AbstractAnalyzer
+from fair.entity.report import ReportEntity
+from fair.entity.user_terminal_server_client import UserTerminalServerClientEntity
+from fair.entity.user_mount_point import UserMountPointEntity
+from fair.entity.user_app_compat import UserAppCompatEntity
+from fair.entity.cloud_account import CloudAccountEntity
+from fair.entity.autorun import AutorunEntity
 
 
 class UserRegistryAnalyzer(AbstractAnalyzer):

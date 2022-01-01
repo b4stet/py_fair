@@ -2,7 +2,7 @@ import click
 import os
 from datetime import datetime
 
-from facs.command.abstract import AbstractCommand
+from fair.command.abstract import AbstractCommand
 
 
 class ReportCommand(AbstractCommand):

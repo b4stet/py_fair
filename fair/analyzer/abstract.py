@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
 from dateutil import parser
 
-from facs.entity.timeline import TimelineEntity
+from fair.entity.timeline import TimelineEntity
 
 
 class AbstractAnalyzer():

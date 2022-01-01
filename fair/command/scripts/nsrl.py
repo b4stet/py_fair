@@ -3,7 +3,7 @@ import csv
 import os
 import io
 import zipfile
-from facs.command.abstract import AbstractCommand
+from fair.command.abstract import AbstractCommand
 
 
 class NsrlCommand(AbstractCommand):

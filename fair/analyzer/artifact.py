@@ -1,5 +1,5 @@
 import json
-from facs.analyzer.abstract import AbstractAnalyzer
+from fair.analyzer.abstract import AbstractAnalyzer
 
 
 class ArtifactAnalyzer(AbstractAnalyzer):
@@ -40,7 +40,7 @@ class ArtifactAnalyzer(AbstractAnalyzer):
                     'exe_path': info['exe_path'],
                     'first_known_execution': str(info['first_known_execution']) if info['nb_executions'] > 1 else str(info['last_known_execution']),
                     'last_known_execution': str(info['last_known_execution']),
-                    'nb_executions': info['nb_executions'],
+                    'nb_executions': '{} (run_count: {})'.format(len(info['executions_time']), info['nb_executions']),
                     'exec_times': ';'.join(info['executions_time']),
                     'mapped_file': file,
                 })

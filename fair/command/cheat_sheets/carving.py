@@ -1,5 +1,5 @@
 import click
-from facs.command.abstract import AbstractCommand
+from fair.command.abstract import AbstractCommand
 
 
 class CarvingCommand(AbstractCommand):
