@@ -62,11 +62,12 @@ class AbstractCommand():
             writer.writeheader()
             writer.writerows(data)
 
-    def _print_text(self, title: str, data: list = []):
+    def _print_text(self, title: str, data: list = [], newline=True):
         print('[+]', title)
         for elt in data:
             print(' |', elt)
-        print('')
+        if newline is True:
+            print('')
 
     def _get_option_output(self):
         return click.Option(

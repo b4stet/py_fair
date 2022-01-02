@@ -2,7 +2,6 @@ from fair.entity.report import ReportEntity
 import json
 import pyevtx
 import xmltodict
-import heapq
 import re
 import collections
 from fair.entity.timeline import TimelineEntity
@@ -126,16 +125,15 @@ class EvtxAnalyzer(AbstractAnalyzer):
 
         return nb_events, report, timeline, collection
 
-    def extract_generic(self, evtx_file):
+    def extract_generic(self, evtx_file, fout):
         evtx = pyevtx.file()
         evtx.open(evtx_file)
 
         nb_events = evtx.get_number_of_records()
         start_end = {'start': None, 'end': None}
         if nb_events == 0:
-            return 0, None, start_end
+            return 0, start_end
 
-        events = []
         for record in evtx.records:
             xml = record.get_xml_string()
             try:
@@ -149,8 +147,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
                 event = {'raw': xml, 'source': 'log_evtx', 'tags': ['xml_not_parsed']}
                 system, start_end = self.__parse_system_data(partial_dict, start_end, True)
                 event.update(system)
-                heapq.heappush(events, (event['epoch'], event['eid'], event['record_id'], event))
-
+                fout.write('{},{}\n'.format(event['epoch'], json.dumps(event)))
                 continue
 
             # extract keys from the xml
@@ -164,17 +161,10 @@ class EvtxAnalyzer(AbstractAnalyzer):
             if xml_dict['Event'].get('UserData', None) is not None:
                 event.update(self.__parse_event_or_user_data(xml_dict['Event']['UserData']))
 
-            # enrich with tags
-            # if tags is None:
-            #     event['tags'] = ['no_tags']
-            # else:
-            #     event = self.__enrich(event, tags)
+            fout.write('{},{}\n'.format(event['epoch'], json.dumps(event)))
 
-            heapq.heappush(events, (event['epoch'], event['eid'], event['record_id'], event))
         evtx.close()
-
-        nb_events = len(events)
-        return nb_events, [heapq.heappop(events) for _ in range(0, nb_events)], start_end
+        return nb_events, start_end
 
     def __parse_system_data(self, xml_dict, start_end, partial=False):
         if partial is False:
@@ -255,20 +245,6 @@ class EvtxAnalyzer(AbstractAnalyzer):
             'item_name':  error_data['DataItemName'],
             'payload':  error_data['EventPayload'],
         }
-
-    # def __enrich(self, event, known_tags):
-    #     event['tags'] = []
-
-    #     for known in known_tags:
-    #         if known['channel'] == event['channel'] and event['eid'] in known['eids']:
-    #             if known.get('provider', None) is not None and known['provider'] != event['provider']:
-    #                 continue
-    #             event['tags'].extend(known['tags'])
-
-    #     if len(event['tags']) == 0:
-    #         event['tags'].append('no_tags')
-
-    #     return event
 
     def __collect_security_4616(self, event):
         keep_it = True

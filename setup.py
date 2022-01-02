@@ -14,12 +14,12 @@ data = {
 
 setup(
     name='py_fair',
-    version='0.1',
+    version='0.2',
     author="b4stet",
-    description="Forensic Automation and Cheat Sheets",
+    description="Forensic Automation for Incident Response",
     url="https://github.com/b4stet/py_fair",
     packages=find_packages(),
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     install_requires=requirements,
     package_data=data,
     entry_points=entrypoints,

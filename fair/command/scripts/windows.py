@@ -1,8 +1,6 @@
 import click
 import os
-import json
-import yaml
-import heapq
+import subprocess
 from regipy.registry import RegistryHive
 
 from fair.command.abstract import AbstractCommand
@@ -216,30 +214,39 @@ class WindowsCommand(AbstractCommand):
         if not os.path.exists(evtx_path):
             raise ValueError('Evtx directory {} does not exist.'.format(evtx_path))
 
-        events_all = []
+        outfile_starts_ends = os.path.join(outdir, 'evtx_starts_ends.csv')
+        outfile_evtx_unsorted = os.path.join(outdir, 'evtx_unsorted.ndjson')
+        outfile_evtx_sorted = os.path.join(outdir, 'evtx.ndjson')
+
+        fout = open(outfile_evtx_unsorted, mode='w', encoding='utf8')
         nb_events_all = 0
         starts_ends = []
-        outfile_evtx = os.path.join(outdir, 'evtx.ndjson')
-        outfile_starts_ends = os.path.join(outdir, 'evtx_starts_ends.csv')
-
         for evtx in os.listdir(evtx_path):
             if evtx.endswith('.evtx'):
-                file = os.path.join(evtx_path, evtx)
-                print('[+] Extracting events from {} ... '.format(file), end='', flush=True)
-                nb_events, events, start_end = self.__evtx_analyzer.extract_generic(file)
+                infile_evtx = os.path.join(evtx_path, evtx)
+                print('[+] Extracting events from {} ... '.format(infile_evtx), end='', flush=True)
+                nb_events, start_end = self.__evtx_analyzer.extract_generic(infile_evtx, fout)
                 start_end['evtx_file'] = evtx
-                if events is not None:
-                    events_all = heapq.merge(events_all, events)
+                if nb_events > 0:
                     nb_events_all += nb_events
                     starts_ends.append(start_end)
                 print(' done ({} events)'.format(nb_events), flush=True)
+        fout.close()
+        print('')
 
-        with open(outfile_evtx, mode='w', encoding='utf8') as fout:
-            for i in range(nb_events_all):
-                json.dump(next(events_all)[3], fout)
-                fout.write('\n')
+        with open(outfile_evtx_unsorted, mode='r', encoding='utf8') as fin, open(outfile_evtx_sorted, mode='w', encoding='utf8') as fout:
+            sorting = subprocess.Popen([
+                'sort',
+                '--parallel=6', '--temporary-directory={}'.format(outdir),
+                '-n', '-t,', '-k1'
+                ],
+                stdin=fin, stdout=subprocess.PIPE
+            )
+            writing = subprocess.run(['cut', '-d,', '-f2-'], stdin=sorting.stdout, stdout=fout)
+            sorting.stdout.close()
+        if writing.returncode == 0:
+            os.remove(outfile_evtx_unsorted)
 
         self._write_formatted(outfile_starts_ends, self.OUTPUT_CSV, starts_ends)
-
-        self._print_text(title='Wrote {} events in {}'.format(nb_events_all, outfile_evtx))
+        self._print_text(title='Wrote {} events in {}'.format(nb_events_all, outfile_evtx_sorted), newline=False)
         self._print_text(title='Wrote start/end of logs in {}'.format(outfile_starts_ends))
