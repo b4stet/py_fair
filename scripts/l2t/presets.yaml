@@ -15,15 +15,15 @@ parsers:
   - sqlite/firefox_history
 ---
 name: win_no_timeline
-description: 'Collection of artifacts without timestamp'
-parses:
+description: 'Collection of Windows artifacts without timestamp'
+parsers:
   - winreg/amcache
   - recycle_bin
   - czip
   - pe
 ---
 name: win_timeline
-description: 'Collection of timestamped artifacts'
+description: 'Collection of Windows timestamped artifacts'
 parsers:
   - esedb/srum
   - custom_destinations

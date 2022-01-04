@@ -2,8 +2,8 @@
 
 mkdir -p malware_detection/clamav
 mkdir -p malware_detection/yara
-fresclam --show-progress && clamscan -r --alert-macros=yes --infected --log=./clamav/clamav_infected.txt <mount_point>
-yara -r ruleset.yara <mount point>
+freshclam --show-progress && clamscan -r --alert-macros=yes --infected --log=./malware_detection/clamav/clamav_infected.txt <mount_point>
+yara -r -p 6 ruleset.yara <mount point> | tee malware_detection/yara/yara_infected.txt
 
 mkdir -p carving/bulk_disk
 mkdir -p carving/bulk_pagefile
@@ -28,14 +28,14 @@ cat tsk/fls.csv | grep -Fif wordlist_windows_disk.txt > tsk/grep_wordlist_disk.t
 cat tsk/fls.csv | grep -Fif wordlist_windows_execution.txt > tsk/grep_wordlist_execution.txt
 
 icat -h -o <partition sector offset> disk.raw <inode> > tsk/usnjrnl.dat
-python3 usn.py -c -f tsk/usnjrnl.dat -o tsk/usnjrnl.csv
+usn.py -c -f tsk/usnjrnl.dat -o tsk/usnjrnl.csv
 
 mkdir -p l2t
-docker run -it --rm -u $(id -u $USER):$(id -g $USER) -v "$raw_disk_path":/data_src:ro -v $PWD/l2t:/data_dst plaso-tools log2timeline --parsers win_timeline --data ./scripts/l2t/ --process_archives --status-view linear --logfile /data_dst/l2t_timeline.log.gz --debug --storage-file l2t_timeline.plaso "$disk_raw"
+docker run -it --rm -u $(id -u $USER):$(id -g $USER) -v $PWD/mnt/:/data_src:ro -v $PWD/l2t:/data_dst plaso-tools log2timeline --parsers win_timeline --data ./scripts/l2t/ --process_archives --status-view linear --logfile /data_dst/l2t_timeline.log.gz --debug --storage-file l2t_timeline.plaso "$disk_raw"
 docker run -it --rm -u $(id -u $USER):$(id -g $USER) -v $PWD/l2t:/data_dst plaso-tools pinfo -v --output_format text -w /data_dst/pinfo_timeline.txt /data_dst/l2t_timeline.plaso
 docker run -it --rm -u $(id -u $USER):$(id -g $USER) -v $PWD/l2t:/data_dst plaso-tools psort --status-view linear --debug --logfile /data_dst/psort_timeline.log.gz -o json_line -w /data_dst/l2t_timeline.ndjson /data_dst/l2t_timeline.plaso
 
-docker run -it --rm -u $(id -u $USER):$(id -g $USER) -v "$raw_disk_path":/data_src:ro -v $PWD/l2t:/data_dst plaso-tools log2timeline --parsers win_no_timeline --data ./scripts/l2t/ --process_archives --status-view linear --logfile /data_dst/l2t_timeline.log.gz --debug --storage-file l2t_timeline.plaso "$disk_raw"
+docker run -it --rm -u $(id -u $USER):$(id -g $USER) -v $PWD/mnt/:/data_src:ro -v $PWD/l2t:/data_dst plaso-tools log2timeline --parsers win_no_timeline --data ./scripts/l2t/ --process_archives --status-view linear --logfile /data_dst/l2t_timeline.log.gz --debug --storage-file l2t_timeline.plaso "$disk_raw"
 docker run -it --rm -u $(id -u $USER):$(id -g $USER) -v $PWD/l2t:/data_dst plaso-tools pinfo -v --output_format text -w /data_dst/pinfo_no_timeline.txt /data_dst/l2t_no_timeline.plaso
 docker run -it --rm -u $(id -u $USER):$(id -g $USER) -v $PWD/l2t:/data_dst plaso-tools psort --status-view linear --debug --logfile /data_dst/psort_no_timeline.log.gz -o json_line -w /data_dst/l2t_no_timeline.ndjson /data_dst/l2t_timeline.plaso
 

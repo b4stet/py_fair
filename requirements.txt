@@ -1,12 +1,13 @@
 click
 PyYAML
-regipy
 odfpy
 datetime
 python-dateutil
-libevtx-python
 tabulate
 xmltodict
+regipy
+libevtx-python
+usnparser
 pycodestyle
 snakeviz
 setuptools

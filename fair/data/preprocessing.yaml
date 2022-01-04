@@ -22,7 +22,7 @@ known_bads:
 
   cheat_sheet:
     - description: 'Check files against clamav db'
-      command: 'fresclam --show-progress && clamscan -r --alert-macros=yes --infected --log=clamav_infected.txt <mount_point>'
+      command: 'freshclam --show-progress && clamscan -r --alert-macros=yes --infected --log=clamav_infected.txt <mount_point>'
     - description: 'Check disk against a set of yara rules'
       command: 'yara -r ruleset.yara <mount point>'
     - description: 'prepare known goods (OS and Office Suite related files) from NSRL db'
