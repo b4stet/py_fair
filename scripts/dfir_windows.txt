@@ -44,4 +44,5 @@ registry-transaction-logs <hive> -p <hive>.LOG1 -s <hive>.LOG2 -o hives/<hive>_C
 registry-dump -o registries.json hives/
 
 mkdir -p facs
-py_facs scripts windows extract_evtx -d facs -e "$evtx_path"
+py_fair scripts windows extract_evtx -d facs -e "$evtx_path"
+py_fair scripts windows timelines2elk -e fair/evtx.ndjson --timeline_plaso l2t/l2t_timeline_nonull_timestamp.ndjson --timeline_fls tsk/fls.csv -d fair/

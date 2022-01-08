@@ -1,0 +1,29 @@
+{
+    "settings": {
+        "number_of_shards": 1,
+        "index.mapping.total_fields.limit": 5000
+    },
+    "mappings": {
+        "dynamic": "false",
+        "date_detection": false,
+        "numeric_detection": false,
+        "properties": {
+            "datetime": {"type": "date", "format": "yyyy-MM-dd'T'HH:mm:ssxxx"},
+            "timestamp": {"type": "float"},
+            "timestamp_desc": {"type": "keyword"},
+            "source": {"type": "keyword"},
+            "raw": {"type": "text"},
+            "channel": {"type": "keyword"},
+            "provider": {"type": "keyword"},
+            "eid": {"type": "keyword"},
+            "computer": {"type": "keyword"},
+            "filename": {"type": "text"},
+            "inode": {"type": "text"},
+            "size_bytes": {"type": "long"},
+            "misc": {"type": "text"},
+            "data_type": {"type": "keyword"},
+            "parser": {"type": "keyword"},
+            "tags": {"type": "keyword"}
+        }
+    }
+}
