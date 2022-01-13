@@ -54,7 +54,7 @@ $ python3 -m fair.cli <command> <subcommand> --help
 
 ### Scripts Commands
 - `nsrl`: set of scripts to extract OS and office related files (known goods), to then filter on a disk timeline
-- `windows`: set of scripts to automate some parts of the forensics (eg. profiling host and users, extract evtx, assemble for timesketch)
+- `windows`: set of scripts to automate some parts of the forensics (eg. profiling host and users, extract evtx, merging fls/plaso/evtx timelines, tagging)
 - `report`: set of scripts to export csv results in an ODS file
 
 As data volume can be huge for some artifacts, specific formats are enforced to "stream" files instead of loading them fully in memory.  

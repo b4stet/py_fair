@@ -30,6 +30,7 @@ parsers:
   - olecf/olecf_automatic_destinations
   - lnk
   - prefetch
+  - setupapi
   - sqlite/windows_timeline
   - winreg/appcompatcache
   - winreg/bagmru

@@ -23,7 +23,7 @@
             "misc": {"type": "text"},
             "data_type": {"type": "keyword"},
             "parser": {"type": "keyword"},
-            "tags": {"type": "keyword"}
+            "fair_tags": {"type": "keyword"}
         }
     }
 }
