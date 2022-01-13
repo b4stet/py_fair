@@ -30,7 +30,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
             event = json.loads(line)
 
             # discard events that could not be parsed
-            if 'xml_not_parsed' in event['tags']:
+            if event['xml_parsed'] is False:
                 continue
 
             channel = event['channel']
@@ -144,14 +144,14 @@ class EvtxAnalyzer(AbstractAnalyzer):
                 matches = self.__RE_EVTX_COMMON.search(xml)
                 partial = matches.group(1)
                 partial_dict = xmltodict.parse(partial)
-                event = {'raw': xml, 'source': 'log_evtx', 'tags': ['xml_not_parsed']}
+                event = {'raw': xml, 'source': 'log_evtx', 'xml_parsed': False}
                 system, start_end = self.__parse_system_data(partial_dict, start_end, True)
                 event.update(system)
-                fout.write('{},{}\n'.format(event['epoch'], json.dumps(event)))
+                fout.write('{},{}\n'.format(event['timestamp'], json.dumps(event)))
                 continue
 
             # extract keys from the xml
-            event = {'raw': xml, 'source': 'log_evtx'}
+            event = {'raw': xml, 'source': 'log_evtx', 'xml_parsed': True}
             system, start_end = self.__parse_system_data(xml_dict, start_end)
             event.update(system)
             if xml_dict['Event'].get('EventData', None) is not None:
@@ -161,7 +161,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
             if xml_dict['Event'].get('UserData', None) is not None:
                 event.update(self.__parse_event_or_user_data(xml_dict['Event']['UserData']))
 
-            fout.write('{},{}\n'.format(event['epoch'], json.dumps(event)))
+            fout.write('{},{}\n'.format(event['timestamp'], json.dumps(event)))
 
         evtx.close()
         return nb_events, start_end
@@ -191,7 +191,7 @@ class EvtxAnalyzer(AbstractAnalyzer):
 
         event = {
             'datetime': str(dt),
-            'epoch': self._isoformat_to_unixepoch(system['TimeCreated']['@SystemTime']),
+            'timestamp': self._isoformat_to_unixepoch(system['TimeCreated']['@SystemTime']),
             'channel': system['Channel'],
             'provider': system['Provider']['@Name'],
             'eid': eid,

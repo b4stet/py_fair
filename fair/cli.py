@@ -13,20 +13,20 @@ from fair.command.scripts.windows import WindowsCommand
 from fair.command.scripts.nsrl import NsrlCommand
 from fair.command.scripts.report import ReportCommand
 
-from fair.loader.ods import OdsBo
+from fair.loader.ods import OdsLoader
 
 
 from fair.analyzer.registry_user import UserRegistryAnalyzer
 from fair.analyzer.registry_host import HostRegistryAnalyzer
 from fair.analyzer.evtx import EvtxAnalyzer
-from fair.analyzer.artifact import ArtifactAnalyzer
+from fair.analyzer.timeline import TimelineAnalyzer
 
-ods_loader = OdsBo()
+ods_loader = OdsLoader()
 
 user_registry_analyzer = UserRegistryAnalyzer()
 host_registry_analyser = HostRegistryAnalyzer()
 evtx_analyzer = EvtxAnalyzer()
-artifact_analyzer = ArtifactAnalyzer()
+timeline_analyzer = TimelineAnalyzer()
 
 cheat_sheets = click.Group('cheat_sheets')
 cheat_sheets.add_command(LibraryCommand().get_commands())
@@ -40,7 +40,7 @@ cheat_sheets.add_command(ProcessingCommand().get_commands())
 
 scripts = click.Group('scripts')
 scripts.add_command(NsrlCommand().get_commands())
-scripts.add_command(WindowsCommand(evtx_analyzer, host_registry_analyser, user_registry_analyzer, artifact_analyzer).get_commands())
+scripts.add_command(WindowsCommand(evtx_analyzer, host_registry_analyser, user_registry_analyzer, timeline_analyzer).get_commands())
 scripts.add_command(ReportCommand(ods_loader).get_commands())
 
 cli = click.Group('cli', context_settings=dict(terminal_width=160))

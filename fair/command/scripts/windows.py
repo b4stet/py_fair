@@ -1,6 +1,7 @@
 import click
 import os
-import subprocess
+import yaml
+import json
 from regipy.registry import RegistryHive
 
 from fair.command.abstract import AbstractCommand
@@ -9,11 +10,11 @@ from fair.entity.report import ReportEntity
 
 class WindowsCommand(AbstractCommand):
 
-    def __init__(self, evtx_analyzer, host_registry_analyzer, user_registry_analyzer, artifact_analyzer):
+    def __init__(self, evtx_analyzer, host_registry_analyzer, user_registry_analyzer, timeline_analyzer):
         self.__evtx_analyzer = evtx_analyzer
         self.__host_reg_analyzer = host_registry_analyzer
         self.__user_reg_analyzer = user_registry_analyzer
-        self.__artifact_analyzer = artifact_analyzer
+        self.__timeline_analyzer = timeline_analyzer
 
     def get_commands(self):
         group = click.Group(
@@ -46,20 +47,22 @@ class WindowsCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
-            name='analyze_prefetchs', help='analyze prefecths on the subject system (first/last/nb execution, mapped_files)',
-            callback=self.do_analyze_prefetchs,
-            params=[
-                self._get_option_prefetch(),
-                self._get_option_outdir(),
-                self._get_option_output(),
-            ]
-        ))
-
-        group.add_command(click.Command(
             name='extract_evtx', help='extract all evtx in json',
             callback=self.do_extract_evtx,
             params=[
                 self._get_option_evtx_path(),
+                self._get_option_outdir(),
+            ]
+        ))
+
+        group.add_command(click.Command(
+            name='merge_timelines', help='assemble evtx+fls+plaso timelines into a unique ndjson',
+            callback=self.merge_timelines,
+            params=[
+                self._get_option_evtx(),
+                self._get_option_timeline_plaso(),
+                self._get_option_timeline_fls(),
+                self._get_option_tags(),
                 self._get_option_outdir(),
             ]
         ))
@@ -194,19 +197,6 @@ class WindowsCommand(AbstractCommand):
         for paragraph in report.values():
             self._print_text(paragraph.title, paragraph.details)
 
-    def do_analyze_prefetchs(self, prefetch, outdir, output):
-        if not os.path.exists(outdir):
-            raise ValueError('Out directory {} does not exist.'.format(outdir))
-
-        fd_prefetchs = open(prefetch, mode='r', encoding='utf8')
-        prefetchs = self.__artifact_analyzer.analyze_prefetchs(fd_prefetchs)
-        fd_prefetchs.close()
-
-        outfile = 'prefetchs.{}'.format(output)
-        outfile = os.path.join(outdir, outfile)
-        self._write_formatted(outfile, output, prefetchs)
-        self._print_text(title='Wrote results in {}'.format(outfile))
-
     def do_extract_evtx(self, evtx_path, outdir):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
@@ -218,35 +208,58 @@ class WindowsCommand(AbstractCommand):
         outfile_evtx_unsorted = os.path.join(outdir, 'evtx_unsorted.ndjson')
         outfile_evtx_sorted = os.path.join(outdir, 'evtx.ndjson')
 
-        fout = open(outfile_evtx_unsorted, mode='w', encoding='utf8')
+        fd_out = open(outfile_evtx_unsorted, mode='w', encoding='utf8')
         nb_events_all = 0
         starts_ends = []
         for evtx in os.listdir(evtx_path):
             if evtx.endswith('.evtx'):
                 infile_evtx = os.path.join(evtx_path, evtx)
                 print('[+] Extracting events from {} ... '.format(infile_evtx), end='', flush=True)
-                nb_events, start_end = self.__evtx_analyzer.extract_generic(infile_evtx, fout)
+                nb_events, start_end = self.__evtx_analyzer.extract_generic(infile_evtx, fd_out)
                 start_end['evtx_file'] = evtx
                 if nb_events > 0:
                     nb_events_all += nb_events
                     starts_ends.append(start_end)
                 print(' done ({} events)'.format(nb_events), flush=True)
-        fout.close()
+        fd_out.close()
         print('')
 
-        with open(outfile_evtx_unsorted, mode='r', encoding='utf8') as fin, open(outfile_evtx_sorted, mode='w', encoding='utf8') as fout:
-            sorting = subprocess.Popen([
-                'sort',
-                '--parallel=6', '--temporary-directory={}'.format(outdir),
-                '-n', '-t,', '-k1'
-                ],
-                stdin=fin, stdout=subprocess.PIPE
-            )
-            writing = subprocess.run(['cut', '-d,', '-f2-'], stdin=sorting.stdout, stdout=fout)
-            sorting.stdout.close()
-        if writing.returncode == 0:
-            os.remove(outfile_evtx_unsorted)
+        self._sort_big_file(outfile_evtx_unsorted, outfile_evtx_sorted, 1)
+        starts_ends.sort(key=lambda elt: elt['start'])
 
         self._write_formatted(outfile_starts_ends, self.OUTPUT_CSV, starts_ends)
         self._print_text(title='Wrote {} events in {}'.format(nb_events_all, outfile_evtx_sorted), newline=False)
         self._print_text(title='Wrote start/end of logs in {}'.format(outfile_starts_ends))
+
+    def merge_timelines(self, evtx, timeline_plaso, timeline_fls, outdir, tags_file):
+        if not os.path.exists(outdir):
+            raise ValueError('Out directory {} does not exist.'.format(outdir))
+
+        outfile_unsorted = os.path.join(outdir, 'timelines_unsorted.ndjson')
+        outfile_sorted = os.path.join(outdir, 'timelines.ndjson')
+
+        tags = None
+        if tags_file is not None:
+            with open(tags_file, mode='r', encoding='utf-8') as f:
+                tags = yaml.safe_load(f)
+
+        tags_mft = True if tags is not None else False
+        tags_evtx = tags.get('evtx', None) if tags is not None else None
+        tags_plaso = tags.get('plaso_artifacts', None) if tags is not None else None
+
+        fd_out = open(outfile_unsorted, mode='w', encoding='utf8')
+
+        self._print_text(title='Adding fls timeline', newline=False)
+        self.__timeline_analyzer.prepare_fls(timeline_fls, fd_out, tags_mft)
+
+        self._print_text(title='Adding evtx timeline', newline=False)
+        self.__timeline_analyzer.prepare_evtx(evtx, fd_out, tags_evtx)
+
+        self._print_text(title='Adding plaso timeline', newline=False)
+        self.__timeline_analyzer.prepare_plaso(timeline_plaso, fd_out, tags_plaso)
+
+        fd_out.close()
+
+        self._print_text(title='Sorting by dates')
+        self._sort_big_file(outfile_unsorted, outfile_sorted, 1)
+        self._print_text(title='Merged all timelines in {}'.format(outfile_sorted))

@@ -5,6 +5,7 @@ import yaml
 import csv
 import sys
 import os
+import subprocess
 
 
 class AbstractCommand():
@@ -68,6 +69,22 @@ class AbstractCommand():
             print(' |', elt)
         if newline is True:
             print('')
+
+    def _sort_big_file(self, infile, outfile, column=1):
+        outdir = os.path.dirname(outfile)
+        # ugly but more CPU/RAM efficient than rewriting a merge external sort, even with heapq :)
+        with open(infile, mode='r', encoding='utf8') as fin, open(outfile, mode='w', encoding='utf8') as fout:
+            sorting = subprocess.Popen([
+                'sort',
+                '--parallel=6', '--temporary-directory={}'.format(outdir),
+                '-n', '-t,', '-k{}'.format(column)
+                ],
+                stdin=fin, stdout=subprocess.PIPE
+            )
+            writing = subprocess.run(['cut', '-d,', '-f2-'], stdin=sorting.stdout, stdout=fout)
+            sorting.stdout.close()
+        if writing.returncode == 0:
+            os.remove(infile)
 
     def _get_option_output(self):
         return click.Option(
@@ -144,14 +161,14 @@ class AbstractCommand():
 
     def _get_option_evtx(self):
         return click.Option(
-            ['--evtx', '-e', 'evtx'],
+            ['--timeline_evtx', 'evtx'],
             help='path to evtx, as output by "py_facs scripts windows extract_evtx"',
             required=True,
         )
 
     def _get_option_evtx_path(self):
         return click.Option(
-            ['--evtx', '-e', 'evtx_path'],
+            ['--evtx', 'evtx_path'],
             help='path to evtx folder',
             required=True,
         )
@@ -160,6 +177,20 @@ class AbstractCommand():
         return click.Option(
             ['--prefetch', '-p', 'prefetch'],
             help='path to prefetch parsed, as output by plaso in json_line format',
+            required=True,
+        )
+
+    def _get_option_timeline_plaso(self):
+        return click.Option(
+            ['--timeline_plaso', 'timeline_plaso'],
+            help='path to timeline produced by log2timeline+psort in json_line format',
+            required=True,
+        )
+
+    def _get_option_timeline_fls(self):
+        return click.Option(
+            ['--timeline_fls', 'timeline_fls'],
+            help='path to timeline produced by TSK fls+mactime in csv format with header and ISO8601 dates (-y -d options)',
             required=True,
         )
 

@@ -3,7 +3,7 @@ from odf.opendocument import OpenDocumentSpreadsheet, load
 from odf import style, text, table
 
 
-class OdsBo():
+class OdsLoader():
     def __init__(self):
         pass
 
