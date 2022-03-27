@@ -15,6 +15,7 @@ class WindowsCommand(AbstractCommand):
         self.__host_reg_analyzer = host_registry_analyzer
         self.__user_reg_analyzer = user_registry_analyzer
         self.__timeline_analyzer = timeline_analyzer
+        super().__init__('fair_tags.yaml')
 
     def get_commands(self):
         group = click.Group(
@@ -24,7 +25,7 @@ class WindowsCommand(AbstractCommand):
 
         group.add_command(click.Command(
             name='profile_host', help='profile the subject system from evtx and registry',
-            callback=self.do_profile_host,
+            callback=self.profile_host,
             params=[
                 self._get_option_evtx(),
                 self._get_option_hive_sam(),
@@ -37,7 +38,7 @@ class WindowsCommand(AbstractCommand):
 
         group.add_command(click.Command(
             name='profile_users', help='profile the users on the subject system from their ntuser.dat hive',
-            callback=self.do_profile_users,
+            callback=self.profile_users,
             params=[
                 self._get_option_hive_system(),
                 self._get_option_hive_ntusers(),
@@ -48,7 +49,7 @@ class WindowsCommand(AbstractCommand):
 
         group.add_command(click.Command(
             name='extract_evtx', help='extract all evtx in json',
-            callback=self.do_extract_evtx,
+            callback=self.extract_evtx,
             params=[
                 self._get_option_evtx_path(),
                 self._get_option_outdir(),
@@ -69,7 +70,7 @@ class WindowsCommand(AbstractCommand):
 
         return group
 
-    def do_profile_host(self, evtx, hive_sam, hive_system, hive_software, outdir, output):
+    def profile_host(self, evtx, hive_sam, hive_system, hive_software, outdir, output):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
 
@@ -143,7 +144,7 @@ class WindowsCommand(AbstractCommand):
 
         self._print_text(output_files.title, output_files.details)
 
-    def do_profile_users(self, hive_system, hive_users, outdir, output):
+    def profile_users(self, hive_system, hive_users, outdir, output):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
 
@@ -197,7 +198,7 @@ class WindowsCommand(AbstractCommand):
         for paragraph in report.values():
             self._print_text(paragraph.title, paragraph.details)
 
-    def do_extract_evtx(self, evtx_path, outdir):
+    def extract_evtx(self, evtx_path, outdir):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
 
@@ -242,6 +243,9 @@ class WindowsCommand(AbstractCommand):
         if tags_file is not None:
             with open(tags_file, mode='r', encoding='utf-8') as f:
                 tags = yaml.safe_load(f)
+        else:
+            # default tags list
+            tags = self._data
 
         tags_mft = True if tags is not None else False
         tags_evtx = tags.get('evtx', None) if tags is not None else None
