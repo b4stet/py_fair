@@ -51,7 +51,7 @@ class TimelineAnalyzer(AbstractAnalyzer):
             for line in f:
                 event = json.loads(line)
                 event['datetime'] = parser.isoparse(event['datetime']).isoformat(timespec='seconds')
-                event['source'] = 'log_evtx'
+                event['source'] = 'evtx_{}'.format(event['channel'])
 
                 if tags_kb is not None:
                     event_tags = self.__get_evtx_tags(event, tags_kb['kb'])

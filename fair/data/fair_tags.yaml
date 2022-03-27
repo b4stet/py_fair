@@ -1,0 +1,318 @@
+evtx:
+  source: 'log_evtx'
+  plaso_parser: 'winevtx'
+  kb:
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4608', '4609']
+      tags: ['os_start_stop']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Eventlog'
+      eids: ['1100', '1102', '1104']
+      tags: ['logging_altered']
+    - channel: 'System'
+      provider: 'Eventlog'
+      eids: ['6005', '6006']
+      tags: ['logging_altered']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4648']
+      tags: ['authn', 'authn_explicit']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4624']
+      tags: ['authn']
+      additions:
+        - key: 'LogonType'
+          values: ['2', '7', '11']
+          tags: ['authn_interactive']
+        - key: 'LogonType'
+          values: ['3', '8']
+          tags: ['authn_network']
+        - key: 'LogonType'
+          values: ['4']
+          tags: ['authn_batch_as_user', 'process_execution']
+        - key: 'LogonType'
+          values: ['5']
+          tags: ['authn_service_as_user', 'service_execution']
+        - key: 'LogonType'
+          values: ['9']
+          tags: [authn_runas]
+        - key: 'LogonType'
+          values: ['10']
+          tags: ['rdp_incoming']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4634', '4647']
+      tags: ['logoff']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4672', '4964']
+      tags: ['authn', 'authn_privileged']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4768', '4771', '4772']
+      tags: ['dc', 'authn', 'authn_domain_kerberos', 'tgt_request']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4769', '4770', '4773']
+      tags: ['dc', 'authz', 'authz_domain_kerberos', 'tgs_request']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4776', '4777']
+      tags: ['dc', 'authn', 'authn_domain_ntlm']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4825', '4778', '4779']
+      tags: ['rdp', 'rdp_incoming']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4720']
+      tags: ['user_new']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4728', '4732', '4756']
+      tags: ['user_groups_modified']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4798', '4799']
+      tags: ['user_groups_enumeration']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['5140', '5141', '5142', '5143', '5144', '5145']
+      tags: ['network_share', 'network_share_access']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4688', '4689']
+      tags: ['process', 'process_execution', 'process_execution_start_stop']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4697']
+      tags: ['service', 'service_new']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4698']
+      tags: ['scheduled_jobs', 'scheduled_jobs_new']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['5024', '5025']
+      tags: ['local_firewall_start_stop']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['5156', '5157']
+      tags: ['network_connection', 'connection_allowed_blocked']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['6416']
+      tags: ['external_device', 'external_device_new']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4693']
+      tags: ['dc', 'dc_dpapi_key_recovery']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4932', '4933']
+      tags: ['dc', 'dc_replication_start_stop']
+    - channel: 'Security'
+      provider: 'Microsoft-Windows-Security-Auditing'
+      eids: ['4657']
+      tags: ['registry', 'reg_key_modified']
+    - channel: 'System'
+      provider: 'Microsoft-Windows-Kernel-General'
+      eids: ['12', '13']
+      tags: ['system_start_stop']
+    - channel: 'System'
+      provider: 'Service Control Manager'
+      eids: ['7045']
+      tags: ['service', 'service_new']
+    - channel: 'System'
+      provider: 'Service Control Manager'
+      eids: ['7034', '7035', '7040']
+      tags: ['service', 'service_start_stop']
+    - channel: 'Microsoft-Windows-TaskScheduler/Operational'
+      eids: ['106']
+      tags: ['scheduled_jobs', 'scheduled_jobs_new']
+    - channel: 'Microsoft-Windows-TaskScheduler/Operational'
+      eids: ['200', '201']
+      tags: ['scheduled_jobs', 'scheduled_jobs_execution']
+    - channel: 'Microsoft-Windows-TerminalServices-RDPClient/Operational'
+      eids: ['1024', '1029', '1102']
+      tags: ['rdp', 'rdp_outgoing']
+    - channel: 'Microsoft-Windows-RemoteDesktopServices-RdpCoreTS/Operational'
+      eids: ['131']
+      tags: ['rdp', 'rdp_incoming']
+    - channel: 'Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational'
+      eids: ['1149']
+      tags: ['rdp', 'rdp_incoming']
+    - channel: 'Microsoft-Windows-TerminalServices-LocalSessionManager/Operational'
+      eids: ['21', '22', '24', '25']
+      tags: ['rdp', 'rdp_incoming']
+      conditions:
+        - key: 'EventXML.Address'
+          values: ['!LOCAL']
+    - channel: 'Microsoft-Windows-WinRM/Operational'
+      eids: ['6']
+      tags: ['winrm', 'winrm_execution_outgoing']
+    - channel: 'Microsoft-Windows-WinRM/Operational'
+      eids: ['91', '168', '169']
+      tags: ['winrm', 'winrm_execution_incoming']
+    - channel: 'Microsoft-Windows-WinRM/Operational'
+      eids: ['142']
+      tags: ['winrm', 'winrm_remote_shell_attempt_destination']
+    - channel: 'Windows Powershell'
+      eids: ['400', '403']
+      tags: ['powershell', 'powershell_start_stop']
+    - channel: 'Windows Powershell'
+      eids: ['600']
+      tags: ['powershell', 'powershell_execution']
+    - channel: 'Microsoft-Windows-PowerShell/Operational'
+      eids: ['4103', '4104']
+      tags: ['powershell', 'powershell_execution']
+    - channel: 'Microsoft-Windows-Shell-Core/Operational'
+      eids: ['9707', '9708']
+      tags: ['registry', 'reg_run_key_execution']
+    - channel: 'Microsoft-Windows-Bits-Client/Operational'
+      eids: ['59']
+      tags: ['bits_job', 'bits_download_upload']
+    - channel: 'Microsoft-Windows-DNS-Client/Operational'
+      eids: ['3006', '3010', '3020']
+      tags: ['dns_query']
+    - channel: 'Microsoft-Windows-DriverFrameworks-UserMode/Operational'
+      eids: ['2101', '2102']
+      tags: ['external_device', 'external_device_connection']
+      conditions:
+        - key: 'UMDFHostDeviceRequest.InstanceId'
+          values: ['USB', 'SWD', 'PCI']
+    - channel: 'Microsoft-Windows-MBAM/Operational'
+      eids: ['39', '40']
+      tags: ['external_device', 'external_device_mounting']
+    - channel: 'OAlerts'
+      eids: ['300']
+      tags: ['graphical', 'office_doc_access']
+    - channel: 'Microsoft-Windows-Windows Defender/Operational'
+      eids: ['1116', '1117']
+      tags: ['defender', 'malware_detected']
+    - channel: 'Microsoft-Windows-Windows Defender/Operational'
+      eids: ['5007']
+      tags: ['defender', 'exclusion_path_added']
+    - channel: 'Microsoft-Windows-WMI-Activity/Operational'
+      eids: ['5857']
+      tags: ['wmi_provider_started']
+
+plaso_artifacts:
+  - source: 'log_prefetch'
+    plaso_parser: 'prefetch'
+    conditions:
+      - key: 'timestamp_desc'
+        values: ['Previous Last Time Executed', 'Last Time Executed']
+    tags: ['file_opened', 'app_execution']
+
+  - source: 'log_setupapi'
+    plaso_parser: 'setupapi'
+    tags: ['pnp_installation']
+
+  - source: 'shell_item_jumplist'
+    plaso_parser: 'olecf/automatic_destinations'
+    tags: ['by_user', 'app_execution', 'file_opened', 'web_url_visited']
+
+  - source: 'shell_item_jumplist'
+    plaso_parser: 'custom_destinations'
+    tags: ['by_user', 'graphical', 'app_execution', 'file_opened', 'web_url_visited']
+
+  - source: 'shell_item_lnk'
+    plaso_parser: 'lnk'
+    tags: ['by_user', 'app_execution', 'file_opened', 'web_url_visited']
+
+  - source: 'db_srum_app_usage'
+    plaso_parser: 'esedb/srum'
+    conditions:
+      - key: 'data_type'
+        values: ['windows:srum:application_usage']
+    tags: ['app_execution', 'disk_io']
+
+  - source: 'db_srum_network_usage'
+    plaso_parser: 'esedb/srum'
+    conditions:
+      - key: 'data_type'
+        values: ['windows:srum:network_usage']
+    tags: ['network_connection']
+
+  - source: 'db_windows_timeline'
+    plaso_parser: 'sqlite/windows_timeline'
+    tags: ['app_execution', 'file_opened', 'web_url_visited']
+
+  - source: 'reg_recent_apps'
+    plaso_parser: 'winreg/winreg_default'
+    conditions:
+      - key: 'key_path'
+        values: ['HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps']
+    tags: ['app_execution', 'file_opened']
+  
+  - source: 'reg_shimcache_appcompat'
+    plaso_parser: 'winreg/appcompatcache'
+    tags: ['app_execution']
+
+  - source: 'reg_shellbag_mru'
+    plaso_parser: 'winreg/bagmru'
+    tags: ['by_user', 'graphical', 'folder_opened', 'mru']
+  
+  - source: 'reg_bam'
+    plaso_parser: 'winreg/bam'
+    tags: ['by_user', 'app_execution']
+
+  - source: 'reg_userassist'
+    plaso_parser: 'winreg/userassist'
+    conditions:
+      - key: 'key_path'
+        values: ['HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}', 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{F4E57C4B-2036-45F0-A9AB-443BCFE33D9F}']
+    tags: ['by_user', 'graphical', 'app_execution']
+
+  - source: 'reg_office_mru'
+    plaso_parser: 'winreg/microsoft_office_mru'
+    tags: ['by_user', 'file_opened']
+
+  - source: 'reg_recent_docs'
+    plaso_parser: 'winreg/mrulistex_string'
+    conditions:
+      - key: 'key_path'
+        values: ['HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs\']
+    tags: ['by_user', 'file_opened', 'mru']
+
+  - source: 'reg_word_reading_locations'
+    plaso_parser: 'winreg/winreg_default'
+    conditions:
+      - key: 'key_path'
+        values: ['HKEY_CURRENT_USER\Software\Microsoft\Office\16.0\Word\Reading Locations\']
+    tags: ['by_user', 'graphical', 'file_opened']
+
+  - source : 'reg_run_mru'
+    plaso_parser: 'winreg/mrulist_string'
+    conditions:
+      - key: 'key_path'
+        values: ['HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU']
+    tags: ['by_user', 'graphical', 'command_execution', 'mru']
+
+  - source: 'reg_lastvisited_mru'
+    plaso_parser: 'winreg/mrulistex_string_and_shell_item_list'
+    conditions:
+      - key: 'key_path'
+        values: ['HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\LastVisitedPidlMRU']
+    tags: ['by_user', 'graphical', 'app_execution', 'folder_opened', 'mru']
+
+  - source: 'reg_opensave_mru'
+    plaso_parser: 'winreg/mrulistex_shell_item_list'
+    conditions:
+      - key: 'key_path'
+        values: 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\OpenSavePidlMRU\' 
+    tags: ['by_user', 'graphical', 'file_opened', 'mru']
+
+  - source: 'reg_typed_paths'
+    plaso_parser: 'winreg/windows_typed_urls'
+    tags: ['by_user', 'graphical', 'recent_search', 'mru']
+
+  - source: 'reg_word_wheel_query'
+    plaso_parser: 'winreg/mrulistex_string'
+    conditions:
+      - key: 'key_path'
+        values: ['HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\WordWheelQuery']
+    tags: ['by_user', 'graphical', 'recent_search', 'mru']

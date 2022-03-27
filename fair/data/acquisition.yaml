@@ -110,7 +110,7 @@ mount:
   cheat_sheet:
     - description: 'list partitions of a device (size, sector size, offset, file system code)'
       command: 'fdisk -l /dev/<device>'
-    - description: 'create a loop device for each partition in ro (eg. to then mount a vmdk)'
+    - description: 'create a loop device for each partition in ro'
       command: 'losetup -Prf --show disk.img'
     - description: 'get file system of a partition with file'
       command: 'file -s /dev/<loopXp*>'
@@ -126,7 +126,7 @@ mount:
       command: 'losetup -Pf + pvdisplay + vgchange -a y <volume name> + mount'
     - description: 'mount with imagemounter (pip package)'
       command: 'imount -v -k -m xmount /dev/loop0, if failing, the dd might be usable in /tmp/image_mounter_XXX'
-    - description: 'mount a split dump'
+    - description: 'mount a split dump or vmdk'
       command: 'affuse disk.split.000 ./affused + losetup -Prf --show ./affused/disk.split.000.raw + mount -o ro /dev/loopNpX <mount point>'
     - description: 'mount partition in user space (mount under /media/ or /run/media/$USER)'
       command: 'udiskctl mount --block-device /dev/<block device> --options ro,noatime,noexec,<ntfs options>'

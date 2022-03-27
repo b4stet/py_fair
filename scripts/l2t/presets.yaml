@@ -14,8 +14,8 @@ parsers:
   - sqlite/firefox_downloads
   - sqlite/firefox_history
 ---
-name: win_no_timeline
-description: 'Collection of Windows artifacts without timestamp (not applicable or not reliable)'
+name: win_static
+description: 'Collection of static Windows artifacts (timestamp not applicable or not reliable)'
 parsers:
   - winreg/amcache
   - recycle_bin

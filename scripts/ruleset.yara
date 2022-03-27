@@ -1,4 +1,4 @@
-# from https://github.com/advanced-threat-research/Yara-Rules
+# to clone then modify the paths of yar's: from https://github.com/advanced-threat-research/Yara-Rules
 include "./RAT/RAT_comrat_v3_pdb.yar"
 include "./RAT/RAT_crimson_covid.yar"
 include "./RAT/RAT_darkcomet_pdb.yar"
