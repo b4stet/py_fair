@@ -4,7 +4,7 @@ from fair.analyzer.abstract import AbstractAnalyzer
 
 
 class PrefetchAnalyzer(AbstractAnalyzer):
-    def extract_prefetch(self, pf_file):
+    def extract(self, pf_file):
         prefetch = pyscca.file()
         prefetch.open(pf_file)
 
@@ -38,24 +38,23 @@ class PrefetchAnalyzer(AbstractAnalyzer):
 
         return extracted
 
-    def flatten(self, prefetchs):
+    def flatten(self, prefetch):
         flattened = []
-        for prefetch in prefetchs:
-            for file in prefetch['files_loaded']:
-                nb_executions = sum( date != 'n/a' for date in prefetch['executions_time'])
-                volumes_info = ['{}(created at {}, SN {})'.format(
-                    volume['device_path'], volume['creation_time'], volume['serial_number']) for volume in prefetch['volumes_information']
-                ]
-                info = {
-                    'prefetch_file': prefetch['prefetch_file'],
-                    'executable': prefetch['executable'],
-                    'file_loaded': file,
-                    'nb_executions': '{} (run_count: {})'.format(nb_executions, prefetch['run_count']),
-                    'volumes_info': '|'.join(volumes_info),
-                }
+        for file in prefetch['files_loaded']:
+            nb_executions = sum( date != 'n/a' for date in prefetch['executions_time'])
+            volumes_info = ['{}(created at {}, SN {})'.format(
+                volume['device_path'], volume['creation_time'], volume['serial_number']) for volume in prefetch['volumes_information']
+            ]
+            info = {
+                'prefetch_file': prefetch['prefetch_file'],
+                'executable': prefetch['executable'],
+                'file_loaded': file,
+                'nb_executions': '{} (run_count: {})'.format(nb_executions, prefetch['run_count']),
+                'volumes_info': '|'.join(volumes_info),
+            }
 
-                for i in range(0, 8):
-                    info[f'last_run_time_{i+1}'] = prefetch['executions_time'][i]
+            for i in range(0, 8):
+                info[f'last_run_time_{i+1}'] = prefetch['executions_time'][i]
 
-                flattened.append(info)
+            flattened.append(info)
         return flattened

@@ -1,7 +1,6 @@
 import click
 import os
 import yaml
-import json
 from regipy.registry import RegistryHive
 
 from fair.command.abstract import AbstractCommand
@@ -62,6 +61,16 @@ class WindowsCommand(AbstractCommand):
             callback=self.extract_prefetch,
             params=[
                 self._get_option_prefetch_path(),
+                self._get_option_outdir(),
+                self._get_option_output(),
+            ]
+        ))
+
+        group.add_command(click.Command(
+            name='extract_amcache', help='extract info fom AmCache hive',
+            callback=self.extract_amcache,
+            params=[
+                self._get_option_amcache_path(),
                 self._get_option_outdir(),
                 self._get_option_output(),
             ]
@@ -255,16 +264,35 @@ class WindowsCommand(AbstractCommand):
             if prefetch.endswith('.pf'):
                 infile_prefetch = os.path.join(prefetch_path, prefetch)
                 print('[+] Extracting info from prefetch {} ... '.format(infile_prefetch), end='', flush=True)
-                prefetchs.append(self.__prefetch_analyzer.extract_prefetch(infile_prefetch))
+                extracted = self.__prefetch_analyzer.extract(infile_prefetch)
+                if output == self.OUTPUT_CSV:
+                    prefetchs.extend(self.__prefetch_analyzer.flatten(extracted))
+                else:
+                    prefetchs.append(extracted)
                 print('done', flush=True)
-
-        if output == self.OUTPUT_CSV:
-            prefetchs = self.__prefetch_analyzer.flatten(prefetchs)
 
         outfile = 'prefetchs.{}'.format(output)
         outfile = os.path.join(outdir, outfile)
         self._write_formatted(outfile, output, prefetchs)
         self._print_text(title='Wrote prefetchs in {}'.format(outfile))
+
+    def extract_amcache(self, amcache_path, outdir, output):
+        if not os.path.exists(outdir):
+            raise ValueError('Out directory {} does not exist.'.format(outdir))
+
+        if not os.path.exists(amcache_path):
+            raise ValueError('AmCache hive {} does not exist.'.format(amcache_path))
+
+        # reg_amcache = RegistryHive(amcache_path)
+        # amcache = self.__amcache_analyzer.extract(reg_amcache)
+
+        # if output == self.OUTPUT_CSV:
+        #     amcache = self.__amcache_analyzer.flatten(amcache)
+
+        # outfile = 'amcache.{}'.format(output)
+        # outfile = os.path.join(outdir, outfile)
+        # self._write_formatted(outfile, output, amcache)
+        # self._print_text(title='Wrote AmCache info in {}'.format(outfile))
 
     def merge_timelines(self, evtx, timeline_plaso, timeline_fls, outdir, tags_file):
         if not os.path.exists(outdir):
