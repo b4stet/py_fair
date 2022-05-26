@@ -199,7 +199,8 @@ url:
 
 file:
   - 'pdf: peepdf'
-  - 'office: catdoc/catdox, oledump (DiderStevens suite)'
+  - 'office: catdoc/catdox, oletools'
+  - 'binary/shellcode: speakeasy'
 
 email:
   - 'headers: sender (IP, real email), first/last MTA, SPF/DKIM/DMARC/SPAM score checks'

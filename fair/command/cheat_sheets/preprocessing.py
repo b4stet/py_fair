@@ -37,7 +37,7 @@ class PreprocessingCommand(AbstractCommand):
 
         cheat_sheet = []
         for elt in self._data['timelines']['cheat_sheet']:
-            line = '{:80}: {}'.format(elt['description'], elt['command'])
+            line = '{:35}: {}'.format(elt['description'], elt['command'])
             cheat_sheet.append(line)
         self._print_text('Cheat Sheet', cheat_sheet)
 
