@@ -7,19 +7,6 @@ from fair.analyzer.abstract import AbstractAnalyzer
 
 
 class TimelineAnalyzer(AbstractAnalyzer):
-    # def do_analyze_prefetchs(self, prefetch, outdir, output):
-    #     if not os.path.exists(outdir):
-    #         raise ValueError('Out directory {} does not exist.'.format(outdir))
-
-    #     fd_prefetchs = open(prefetch, mode='r', encoding='utf8')
-    #     prefetchs = self.__artifact_analyzer.analyze_prefetchs(fd_prefetchs)
-    #     fd_prefetchs.close()
-
-    #     outfile = 'prefetchs.{}'.format(output)
-    #     outfile = os.path.join(outdir, outfile)
-    #     self._write_formatted(outfile, output, prefetchs)
-    #     self._print_text(title='Wrote results in {}'.format(outfile))
-
     def prepare_fls(self, timeline_fls, fd_out, tags=False):
         with open(timeline_fls, mode='r', encoding='utf8') as f:
             reader = csv.DictReader(f)
@@ -158,29 +145,3 @@ class TimelineAnalyzer(AbstractAnalyzer):
             fulfilled = fulfilled and fulfilled_or
 
         return fulfilled
-
-        # prefetchs = {}
-        # for line in fd_prefetch:
-        #     execution = json.loads(line)
-        #     prefetch_name = execution['filename']
-
-        #     if prefetch_name not in prefetchs.keys():
-        #         prefetchs[prefetch_name] = {
-        #             'first_known_execution': None,
-        #             'executions_time': []
-        #         }
-
-        #     # plaso timestamp in 'Creation Time' relates to volumne creation time (not first execution)
-        #     if execution['timestamp_desc'] == 'Previous Last Time Executed':
-        #         exec_time = self._filetime_to_datetime(execution['date_time']['timestamp'])
-        #         if prefetchs[prefetch_name]['first_known_execution'] is None or exec_time < prefetchs[prefetch_name]['first_known_execution']:
-        #             prefetchs[prefetch_name]['first_known_execution'] = exec_time
-        #             prefetchs[prefetch_name]['executions_time'].append(str(exec_time))
-
-        #     if execution['timestamp_desc'] == 'Last Time Executed':
-        #         exec_time = self._filetime_to_datetime(execution['date_time']['timestamp'])
-        #         prefetchs[prefetch_name]['last_known_execution'] = exec_time
-        #         prefetchs[prefetch_name]['nb_executions'] = execution['run_count']
-        #         prefetchs[prefetch_name]['exe_path'] = ';'.join(execution['path_hints'])
-        #         prefetchs[prefetch_name]['mapped_files'] = execution['mapped_files']
-        #         prefetchs[prefetch_name]['executions_time'].append(str(exec_time))

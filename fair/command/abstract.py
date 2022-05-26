@@ -47,7 +47,7 @@ class AbstractCommand():
 
         if format == self.OUTPUT_CSV:
             with open(outfile, mode='w', encoding='utf8', newline='') as fout:
-                writer = csv.DictWriter(fout, quoting=csv.QUOTE_MINIMAL, quotechar='"', fieldnames=data[0].keys())
+                writer = csv.DictWriter(fout, quoting=csv.QUOTE_MINIMAL, quotechar='"', fieldnames=data[0].keys(), lineterminator='\n')
                 writer.writeheader()
                 writer.writerows(data)
 
@@ -59,7 +59,7 @@ class AbstractCommand():
             print(json.dumps(data))
 
         if format == self.OUTPUT_CSV:
-            writer = csv.DictWriter(sys.stdout, quoting=csv.QUOTE_MINIMAL, quotechar='"', fieldnames=data[0].keys())
+            writer = csv.DictWriter(sys.stdout, quoting=csv.QUOTE_MINIMAL, quotechar='"', fieldnames=data[0].keys(), lineterminator='\n')
             writer.writeheader()
             writer.writerows(data)
 
@@ -173,10 +173,10 @@ class AbstractCommand():
             required=True,
         )
 
-    def _get_option_prefetch(self):
+    def _get_option_prefetch_path(self):
         return click.Option(
-            ['--prefetch', '-p', 'prefetch'],
-            help='path to prefetch parsed, as output by plaso in json_line format',
+            ['--prefetch', 'prefetch_path'],
+            help='path to prefetch folder',
             required=True,
         )
 

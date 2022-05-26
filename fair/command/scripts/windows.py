@@ -10,8 +10,9 @@ from fair.entity.report import ReportEntity
 
 class WindowsCommand(AbstractCommand):
 
-    def __init__(self, evtx_analyzer, host_registry_analyzer, user_registry_analyzer, timeline_analyzer):
+    def __init__(self, evtx_analyzer, prefetch_analyzer, host_registry_analyzer, user_registry_analyzer, timeline_analyzer):
         self.__evtx_analyzer = evtx_analyzer
+        self.__prefetch_analyzer = prefetch_analyzer
         self.__host_reg_analyzer = host_registry_analyzer
         self.__user_reg_analyzer = user_registry_analyzer
         self.__timeline_analyzer = timeline_analyzer
@@ -53,6 +54,16 @@ class WindowsCommand(AbstractCommand):
             params=[
                 self._get_option_evtx_path(),
                 self._get_option_outdir(),
+            ]
+        ))
+
+        group.add_command(click.Command(
+            name='extract_prefetch', help='extract all prefetch',
+            callback=self.extract_prefetch,
+            params=[
+                self._get_option_prefetch_path(),
+                self._get_option_outdir(),
+                self._get_option_output(),
             ]
         ))
 
@@ -231,6 +242,29 @@ class WindowsCommand(AbstractCommand):
         self._write_formatted(outfile_starts_ends, self.OUTPUT_CSV, starts_ends)
         self._print_text(title='Wrote {} events in {}'.format(nb_events_all, outfile_evtx_sorted), newline=False)
         self._print_text(title='Wrote start/end of logs in {}'.format(outfile_starts_ends))
+
+    def extract_prefetch(self, prefetch_path, outdir, output):
+        if not os.path.exists(outdir):
+            raise ValueError('Out directory {} does not exist.'.format(outdir))
+
+        if not os.path.exists(prefetch_path):
+            raise ValueError('Prefetch directory {} does not exist.'.format(prefetch_path))
+
+        prefetchs = []
+        for prefetch in os.listdir(prefetch_path):
+            if prefetch.endswith('.pf'):
+                infile_prefetch = os.path.join(prefetch_path, prefetch)
+                print('[+] Extracting info from prefetch {} ... '.format(infile_prefetch), end='', flush=True)
+                prefetchs.append(self.__prefetch_analyzer.extract_prefetch(infile_prefetch))
+                print('done', flush=True)
+
+        if output == self.OUTPUT_CSV:
+            prefetchs = self.__prefetch_analyzer.flatten(prefetchs)
+
+        outfile = 'prefetchs.{}'.format(output)
+        outfile = os.path.join(outdir, outfile)
+        self._write_formatted(outfile, output, prefetchs)
+        self._print_text(title='Wrote prefetchs in {}'.format(outfile))
 
     def merge_timelines(self, evtx, timeline_plaso, timeline_fls, outdir, tags_file):
         if not os.path.exists(outdir):

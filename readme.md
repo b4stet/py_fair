@@ -11,7 +11,7 @@ $ python -m pip install pip wheel setuptools --upgrade
 $ pip3 install -r requirements.txt
 ```
 
-It also requires some system utilities:
+It also requires few system utilities:
 - `sort`
 - `cut`
 
@@ -19,6 +19,17 @@ It also requires some system utilities:
 ```
 $ source ./fair_env/bin/activate
 $ pip3 install .
+```
+
+For Windows prefetch command, you will have to compile `libscca` python bindings
+```
+$ git clone https://github.com/libyal/libscca.git
+$ cd libscca
+$ ./synclibs.sh
+$ ./autogen.sh 
+$ source ./fair_env/bin/activate
+$ python setup.py build
+$ sudo python setup.py install
 ```
 
 ## Uninstall
@@ -44,13 +55,13 @@ $ python3 -m fair.cli <command> <subcommand> --help
 
 ### Cheat Sheets Commands
 - `library`: blogs, tools, various knowledge bases, notable cves, ...
-- `tools`: cheat sheets for some tools like tsk, plaso, tshark, volatility, ...
+- `tools`: some tools like tsk, plaso, tshark, volatility, ...
 - `systems`: some notes about operating systems
-- `logs`: cheat sheets of some log paths, Windows artifacts ...
-- `acquisition`: cheat sheets for operations related to data acquisition (info, dump disk/memory, mount)
-- `carving`: cheat sheets to carve allocated and unallocated blocks, ...
-- `preprocessing`: cheat sheets to prepare data to be analyzed, time intensive tasks
-- `processing`: cheat sheets for mining, default values, attacker toolbox patterns, some possible traces per mitre tactic
+- `logs`: some log paths, Windows artifacts ...
+- `acquisition`: operations related to data acquisition (info, dump disk/memory, mount)
+- `carving`: carve allocated and unallocated blocks, ...
+- `preprocessing`: prepare data to be analyzed, time intensive tasks
+- `processing`: mining, default values, attacker toolbox patterns, some possible traces per mitre tactic
 
 ### Scripts Commands
 - `nsrl`: set of scripts to extract OS and office related files (known goods), to then filter on a disk timeline
@@ -61,7 +72,7 @@ As data volume can be huge for some artifacts, specific formats are enforced to 
 When this is required, the helper of the command indicates the expected format.
 
 ### About export to ODS
-The ODF format was preferred to Open XML one due to issues with xlsx files opened in LibreOffice.
+The ODF format was preferred to Open XML one, due to issues with xlsx files opened in LibreOffice.
 However, the only suitable library found to handle creation, data updates and styles in ODF was `odfpy`.
 As the notion of address/coordinates is not attached to a cell in ODF, several limitations are enforced to avoid writing a too complex processor:
 - styles supported are font, size, alignement, color and color background
