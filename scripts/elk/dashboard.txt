@@ -1,0 +1,31 @@
+panel Tag Distribution - Time series: 
+    timeline.ndjson
+    count
+    group by: fair_tags
+    chart type: line, no stacked
+panel Tag Distribution - Table: 
+    timeline.ndjson
+    metric: count
+    buckets: split rows on fair_tags
+    show total (sum)
+    percentage column: count
+panel Source Distribution - Time series:
+    timeline.ndjson
+    count
+    group by: source
+    chart type: line, no stacked
+panel Evtx channels - Time series: 
+    timeline.ndjson
+    count
+    group by: channel
+    chart type: line, no stacked
+panel Network - Time series: 
+    network.csv, header: datetime (iso8601),application,sent,received
+    sum on sent/sum on received
+    data formatter: Bytes
+    separate exis: left/right
+panel Timeline report: 
+    report.csv, header: datetime (iso8601),event,tags,source 
+    count
+    group by: event 
+    chart type: line, no stacked
