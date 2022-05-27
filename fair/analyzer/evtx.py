@@ -135,8 +135,8 @@ class EvtxAnalyzer(AbstractAnalyzer):
             return 0, start_end
 
         for record in evtx.records:
-            xml = record.get_xml_string()
             try:
+                xml = record.get_xml_string()
                 xml_dict = xmltodict.parse(xml)
             except Exception:
                 # some xml are malformed (namespace missing, text value not properly escaped)
