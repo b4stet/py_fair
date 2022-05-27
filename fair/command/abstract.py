@@ -180,6 +180,13 @@ class AbstractCommand():
             required=True,
         )
 
+    def _get_option_amcache_path(self):
+        return click.Option(
+            ['--amcache', 'amcache_path'],
+            help='path to amcache hive',
+            required=True,
+        )
+
     def _get_option_timeline_plaso(self):
         return click.Option(
             ['--timeline_plaso', 'timeline_plaso'],

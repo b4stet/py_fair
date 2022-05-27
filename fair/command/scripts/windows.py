@@ -9,9 +9,10 @@ from fair.entity.report import ReportEntity
 
 class WindowsCommand(AbstractCommand):
 
-    def __init__(self, evtx_analyzer, prefetch_analyzer, host_registry_analyzer, user_registry_analyzer, timeline_analyzer):
+    def __init__(self, evtx_analyzer, prefetch_analyzer, amcache_analyzer, host_registry_analyzer, user_registry_analyzer, timeline_analyzer):
         self.__evtx_analyzer = evtx_analyzer
         self.__prefetch_analyzer = prefetch_analyzer
+        self.__amcache_analyzer = amcache_analyzer
         self.__host_reg_analyzer = host_registry_analyzer
         self.__user_reg_analyzer = user_registry_analyzer
         self.__timeline_analyzer = timeline_analyzer
@@ -283,16 +284,19 @@ class WindowsCommand(AbstractCommand):
         if not os.path.exists(amcache_path):
             raise ValueError('AmCache hive {} does not exist.'.format(amcache_path))
 
-        # reg_amcache = RegistryHive(amcache_path)
-        # amcache = self.__amcache_analyzer.extract(reg_amcache)
+        reg_amcache = RegistryHive(amcache_path)
+        amcache = self.__amcache_analyzer.extract(reg_amcache)
 
-        # if output == self.OUTPUT_CSV:
-        #     amcache = self.__amcache_analyzer.flatten(amcache)
-
-        # outfile = 'amcache.{}'.format(output)
-        # outfile = os.path.join(outdir, outfile)
-        # self._write_formatted(outfile, output, amcache)
-        # self._print_text(title='Wrote AmCache info in {}'.format(outfile))
+        if output == self.OUTPUT_CSV:
+            for key in amcache:
+                outfile = 'amcache_{}.csv'.format(key)
+                outfile = os.path.join(outdir, outfile)
+                self._write_formatted(outfile, output, amcache[key])
+                self._print_text(title='Wrote AmCache {} info in {}'.format(key, outfile), newline=False)
+        else:
+            outfile = os.path.join(outdir, 'amcache.json')
+            self._write_formatted(outfile, output, amcache)
+            self._print_text(title='Wrote AmCache info in {}'.format(outfile))
 
     def merge_timelines(self, evtx, timeline_plaso, timeline_fls, outdir, tags_file):
         if not os.path.exists(outdir):

@@ -1,4 +1,3 @@
-import json
 import pyscca
 from fair.analyzer.abstract import AbstractAnalyzer
 
