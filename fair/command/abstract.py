@@ -191,7 +191,7 @@ class AbstractCommand():
         return click.Option(
             ['--timeline_plaso', 'timeline_plaso'],
             help='path to timeline produced by log2timeline+psort in json_line format',
-            required=True,
+            required=False,
         )
 
     def _get_option_timeline_fls(self):

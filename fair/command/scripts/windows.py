@@ -325,8 +325,9 @@ class WindowsCommand(AbstractCommand):
         self._print_text(title='Adding evtx timeline', newline=False)
         self.__timeline_analyzer.prepare_evtx(evtx, fd_out, tags_evtx)
 
-        self._print_text(title='Adding plaso timeline', newline=False)
-        self.__timeline_analyzer.prepare_plaso(timeline_plaso, fd_out, tags_plaso)
+        if timeline_plaso is not None:
+            self._print_text(title='Adding plaso timeline', newline=False)
+            self.__timeline_analyzer.prepare_plaso(timeline_plaso, fd_out, tags_plaso)
 
         fd_out.close()
 

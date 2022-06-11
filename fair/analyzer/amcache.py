@@ -91,8 +91,8 @@ class AmcacheAnalyzer(AbstractAnalyzer):
                 'product_version': values['ProductVersion'],
                 'sha1': values['FileId'][4:] if values['FileId'] != 0 else 0,
                 'link_date': values['LinkDate'],
-                'is_pe': values['IsPeFile'],
-                'is_os_component': values['IsOsComponent'],
+                'is_pe': values.get('IsPeFile', None),
+                'is_os_component': values.get('IsOsComponent', None),
             })
 
         return results

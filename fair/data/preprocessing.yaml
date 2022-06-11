@@ -13,7 +13,6 @@ timelines:
       command: 'log2timeline --parsers win_timeline --data /data_dst/ --process_archives --partitions all --status-view linear --logfile /data_dst/l2t_timeline.log.gz --debug --storage-file /data_dst/l2t_timeline.plaso /data_src/disk.raw && psort --status-view linear --debug --logfile /data_dst/psort_timeline.log.gz -o json_line -w /data_dst/l2t_timeline.ndjson /data_dst/l2t_timeline.plaso'
     - description: 'Merge timelines (fls, evtx, plaso)'
       command: 'py_fair scripts windows merge_timelines --timeline_evtx evtx.ndjson --timeline_plaso l2t_timeline.ndjson --timeline_fls fls.csv -d <outfolder>'
-    - description: 'Upload timelines to ELK'
 
 known_bads:
   tools:
