@@ -169,3 +169,7 @@ misc:
     note: 'jq ''select(.tags as $tags | ["item1", "item2"] | map([$tags[] == .] | any) | any)'''
   - description: 'tcpdump traffic from and to one host'
     note: 'tcpdump -i wlo1 -w capture.pcap host a.b.c.d'
+  - description: 'gzip magic number to add sometimes'
+    note: 'printf "\x1f\x8b\x08\x00\x00\x00\x00\x00" |cat - <file> |gzip -dc'
+  - description: 'print n-th line of a file'
+    note: 'sed 'Nq;d''
