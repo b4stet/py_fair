@@ -34,7 +34,7 @@ known_bads:
     - description: 'Look for known suspicious executions'
       command: 'cat fls.csv grep -Fif wordlist_windows_execution.txt'
     - description: 'Look for unusual binary types in Windows user profile'
-      command: 'find Users/ -type f | egrep -i ''\.(ps1|bat|vba|vbs|dll|exe|msi|hta)'' > userprofile_binaries_scripts.txt'
+      command: 'find Users/ -type f | egrep -i ''\.(ps1|bat|vba|vbs|dll|exe|msi|hta|cpl|scr)'' > userprofile_binaries_scripts.txt'
     - description: 'Online databases to check hashes against'
       command: 'virustotal, py_fair scripts nsrl, any.run, hybrid-analysis, tria.ge, labs.inquest.net'
     - description: 'List big files'

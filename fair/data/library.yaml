@@ -36,6 +36,7 @@ evtx:
   - 'https://github.com/EricZimmerman/evtx/tree/master/evtx/Maps'
   - 'https://github.com/mdecrevoisier/EVTX-to-MITRE-Attack'
   - 'https://github.com/mdecrevoisier/Windows-auditing-mindmap'
+  - 'https://github.com/Velocidex/evtx'
 
 files:
   - 'https://www.winitor.com/pdf/Malware-Analysis-Fundamentals-Files-Tools.pdf'

@@ -84,6 +84,10 @@ windows:
       path: 'Users/<user>/AppData/Local/Microsoft/Windows/{Temporary Internet Files, InetCache}/Content.Outlook/<random>/'
     - description: 'list of application IDs in jumplists'
       path: 'https://github.com/EricZimmerman/JumpList/blob/master/JumpList/Resources/AppIDs.txt'
+    - description: 'DLL holding message for a channel+provider+eid'
+      path: 'HKLM/SYSTEM/CurrentControlSet/Services/EventLog -> value EventMessageFile'
+    - description: 'check audit policy in place'
+      path: 'HLM/Security/Policy/PolAdtEv (or regripper plugin auditpol on SECURITY hive)'
 
   artifacts_meaning:
   - description: 'shell item: jumplists (automatic/custom destinations)'
@@ -285,6 +289,9 @@ windows:
     - channel: 'Microsoft-Windows-WMI-Activity/Operational'
       eid: '5857'
       description: 'WMI povider started'
+    - channel: 'Microsoft-Windows-User Profiles Service/Operational'
+      eid: '2/3'
+      description: 'User logon/logoff'
 
     # - channel: 'sysmon WIP'
 
