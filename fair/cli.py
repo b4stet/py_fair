@@ -14,22 +14,25 @@ from fair.command.scripts.nsrl import NsrlCommand
 from fair.command.scripts.report import ReportCommand
 
 from fair.loader.ods import OdsLoader
-
+from fair.loader.files import FilesLoader
 
 from fair.analyzer.registry_user import UserRegistryAnalyzer
 from fair.analyzer.registry_host import HostRegistryAnalyzer
 from fair.analyzer.evtx import EvtxAnalyzer
 from fair.analyzer.prefetch import PrefetchAnalyzer
 from fair.analyzer.amcache import AmcacheAnalyzer
+from fair.analyzer.pe import PEAnalyzer
 from fair.analyzer.timeline import TimelineAnalyzer
 
 ods_loader = OdsLoader()
+files_loader = FilesLoader()
 
 user_registry_analyzer = UserRegistryAnalyzer()
 host_registry_analyser = HostRegistryAnalyzer()
 evtx_analyzer = EvtxAnalyzer()
 prefetch_analyzer = PrefetchAnalyzer()
 amcache_analyzer = AmcacheAnalyzer()
+pe_analyzer = PEAnalyzer()
 timeline_analyzer = TimelineAnalyzer()
 
 cheat_sheets = click.Group('cheat_sheets')
@@ -44,7 +47,7 @@ cheat_sheets.add_command(ProcessingCommand().get_commands())
 
 scripts = click.Group('scripts')
 scripts.add_command(NsrlCommand().get_commands())
-scripts.add_command(WindowsCommand(evtx_analyzer, prefetch_analyzer, amcache_analyzer, host_registry_analyser, user_registry_analyzer, timeline_analyzer).get_commands())
+scripts.add_command(WindowsCommand(files_loader, evtx_analyzer, prefetch_analyzer, amcache_analyzer, pe_analyzer, host_registry_analyser, user_registry_analyzer, timeline_analyzer).get_commands())
 scripts.add_command(ReportCommand(ods_loader).get_commands())
 
 cli = click.Group('cli', context_settings=dict(terminal_width=160))

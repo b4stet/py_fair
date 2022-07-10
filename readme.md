@@ -55,7 +55,7 @@ $ python3 -m fair.cli <command> <subcommand> --help
 
 ### Cheat Sheets Commands
 - `library`: blogs, tools, various knowledge bases, notable cves, ...
-- `tools`: some tools like tsk, plaso, tshark, volatility, ...
+- `tools`: tips for tools like tsk, plaso, tshark, volatility, ...
 - `systems`: some notes about operating systems
 - `logs`: some log paths, Windows artifacts ...
 - `acquisition`: operations related to data acquisition (info, dump disk/memory, mount)
@@ -65,11 +65,14 @@ $ python3 -m fair.cli <command> <subcommand> --help
 
 ### Scripts Commands
 - `nsrl`: set of scripts to extract OS and office related files (known goods), to then filter on a disk timeline
-- `windows`: set of scripts to automate some parts of the forensics (eg. profiling host and users, extract evtx, merging fls/plaso/evtx timelines, tagging)
-- `report`: set of scripts to export csv results in an ODS file
-
-As data volume can be huge for some artifacts, specific formats are enforced to "stream" files instead of loading them fully in memory.  
-When this is required, the helper of the command indicates the expected format.
+- `windows`: set of scripts to automate some parts of the forensics 
+    - profiling host and users (aggregate common info from evtx and registries)
+    - extract evtx in ndjson
+    - extract Windows event messages from PE
+    - extract prefetchs in ndjson or csv
+    - extract amcache in ndjson or csv
+    - merging fls/plaso/evtx timelines
+- `report`: set of scripts to export and update csv results in an ODS file
 
 ### About export to ODS
 The ODF format was preferred to Open XML one, due to issues with xlsx files opened in LibreOffice.

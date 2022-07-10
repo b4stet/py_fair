@@ -1,13 +1,14 @@
 click
 PyYAML
-odfpy
 datetime
 python-dateutil
+odfpy
 tabulate
 xmltodict
 regipy
 libevtx-python
 usnparser
+pefile
 pycodestyle
 snakeviz
 setuptools

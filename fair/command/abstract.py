@@ -159,10 +159,10 @@ class AbstractCommand():
             type=click.Choice(self.SUPPORTED_OS)
         )
 
-    def _get_option_evtx(self):
+    def _get_option_mount_point(self):
         return click.Option(
-            ['--timeline_evtx', 'evtx'],
-            help='path to evtx, as output by "py_facs scripts windows extract_evtx"',
+            ['--mount_point', 'mount_point'],
+            help='path to disk mount point',
             required=True,
         )
 
@@ -184,6 +184,13 @@ class AbstractCommand():
         return click.Option(
             ['--amcache', 'amcache_path'],
             help='path to amcache hive',
+            required=True,
+        )
+
+    def _get_option_timeline_evtx(self):
+        return click.Option(
+            ['--timeline_evtx', 'timeline_evtx'],
+            help='path to evtx, as output by "py_fair scripts windows extract_evtx"',
             required=True,
         )
 

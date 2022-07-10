@@ -172,4 +172,4 @@ misc:
   - description: 'gzip magic number to add sometimes'
     note: 'printf "\x1f\x8b\x08\x00\x00\x00\x00\x00" |cat - <file> |gzip -dc'
   - description: 'print n-th line of a file'
-    note: 'sed 'Nq;d''
+    note: 'sed ''Nq;d'''
