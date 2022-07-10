@@ -187,7 +187,7 @@ evtx:
       eids: ['39', '40']
       tags: ['external_device', 'external_device_mounting']
     - channel: 'OAlerts'
-      eids: ['300']
+      eids: ['300', '301']
       tags: ['graphical', 'office_doc_access']
     - channel: 'Microsoft-Windows-Windows Defender/Operational'
       eids: ['1116', '1117']
@@ -198,6 +198,12 @@ evtx:
     - channel: 'Microsoft-Windows-WMI-Activity/Operational'
       eids: ['5857']
       tags: ['wmi_provider_started']
+    - channel: 'Microsoft-Windows-User Profile Service/Operational'
+      eids: ['2', '67']
+      tags: ['authn']
+    - channel: 'Microsoft-Windows-User Profile Service/Operational'
+      eids: ['3']
+      tags: ['logoff']
 
 plaso_artifacts:
   - source: 'log_prefetch'

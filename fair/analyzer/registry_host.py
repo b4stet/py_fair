@@ -12,6 +12,7 @@ from fair.entity.network_parameters import NetworkParametersEntity
 from fair.entity.storage_info import StorageInfoEntity
 from fair.entity.timeline import TimelineEntity
 from fair.analyzer.abstract import AbstractAnalyzer
+from fair.loader.files import FilesLoader
 
 
 class HostRegistryAnalyzer(AbstractAnalyzer):
@@ -85,6 +86,42 @@ class HostRegistryAnalyzer(AbstractAnalyzer):
             codepage = '1252'
 
         return codepage
+
+    def collect_event_messages_files(self, reg_system):
+        key_path = self.__current_control_set + '\\Services\\EventLog'
+        key = reg_system.get_key(key_path)
+        files = {}
+        for subkey in key.iter_subkeys():
+            for subsubkey in subkey.iter_subkeys():
+                provider = subsubkey.header.key_name_string.decode(self.__codepage)
+                event_message_file = subsubkey.get_value('EventMessageFile')
+                if event_message_file is None:
+                    continue
+
+                paths = event_message_file.split(';')
+                for path in paths:
+                    # transform the path to be unix friendly
+                    path_chunks = path.strip('\\').replace('\\', '/').split('/')
+
+                    # expand Windows environment variable
+                    # it can have multiple forms: %xxx%, \xxx, $(runtime.xxx)
+                    pattern = path_chunks[0].upper()
+                    pattern = pattern.strip('%')
+                    pattern = pattern.lstrip('$(RUNTIME.')
+                    pattern = pattern.rstrip(')')
+                    if pattern in FilesLoader.WIN_ENV_VARS:
+                        path_chunks[0] = FilesLoader.WIN_ENV_VARS[pattern]
+
+                    new_path = '/'.join(path_chunks).lower()
+                    if new_path not in files:
+                        files[new_path] = {
+                            'providers': [],
+                            'path': new_path,
+                        }
+                    
+                    files[new_path]['providers'].append(provider)
+
+        return files
 
     def collect_host_info(self, reg_system, reg_software):
         # describe what is done

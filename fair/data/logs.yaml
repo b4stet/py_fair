@@ -290,8 +290,8 @@ windows:
       eid: '5857'
       description: 'WMI povider started'
     - channel: 'Microsoft-Windows-User Profiles Service/Operational'
-      eid: '2/3'
-      description: 'User logon/logoff'
+      eid: '2/67/3'
+      description: 'User logon/logontype and profile/logoff'
 
     # - channel: 'sysmon WIP'
 

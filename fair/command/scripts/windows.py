@@ -1,6 +1,7 @@
 import click
 import os
 import yaml
+import sys
 from regipy.registry import RegistryHive
 
 from fair.command.abstract import AbstractCommand
@@ -9,10 +10,12 @@ from fair.entity.report import ReportEntity
 
 class WindowsCommand(AbstractCommand):
 
-    def __init__(self, evtx_analyzer, prefetch_analyzer, amcache_analyzer, host_registry_analyzer, user_registry_analyzer, timeline_analyzer):
+    def __init__(self, files_loader, evtx_analyzer, prefetch_analyzer, amcache_analyzer, pe_analyzer, host_registry_analyzer, user_registry_analyzer, timeline_analyzer):
+        self.__files_loader = files_loader
         self.__evtx_analyzer = evtx_analyzer
         self.__prefetch_analyzer = prefetch_analyzer
         self.__amcache_analyzer = amcache_analyzer
+        self.__pe_analyzer = pe_analyzer
         self.__host_reg_analyzer = host_registry_analyzer
         self.__user_reg_analyzer = user_registry_analyzer
         self.__timeline_analyzer = timeline_analyzer
@@ -28,7 +31,7 @@ class WindowsCommand(AbstractCommand):
             name='profile_host', help='profile the subject system from evtx and registry',
             callback=self.profile_host,
             params=[
-                self._get_option_evtx(),
+                self._get_option_timeline_evtx(),
                 self._get_option_hive_sam(),
                 self._get_option_hive_system(),
                 self._get_option_hive_software(),
@@ -49,7 +52,18 @@ class WindowsCommand(AbstractCommand):
         ))
 
         group.add_command(click.Command(
-            name='extract_evtx', help='extract all evtx in json',
+            name='extract_eid_messages', help='extract Windows event messages from files',
+            callback=self.extract_eid_messages,
+            params=[
+                self._get_option_hive_system(),
+                self._get_option_mount_point(),
+                self._get_option_outdir(),
+                self._get_option_output(),
+            ]
+        ))
+
+        group.add_command(click.Command(
+            name='extract_evtx', help='extract all evtx in ndjson',
             callback=self.extract_evtx,
             params=[
                 self._get_option_evtx_path(),
@@ -81,7 +95,7 @@ class WindowsCommand(AbstractCommand):
             name='merge_timelines', help='assemble evtx+fls+plaso timelines into a unique ndjson',
             callback=self.merge_timelines,
             params=[
-                self._get_option_evtx(),
+                self._get_option_timeline_evtx(),
                 self._get_option_timeline_plaso(),
                 self._get_option_timeline_fls(),
                 self._get_option_tags(),
@@ -91,13 +105,13 @@ class WindowsCommand(AbstractCommand):
 
         return group
 
-    def profile_host(self, evtx, hive_sam, hive_system, hive_software, outdir, output):
+    def profile_host(self, timeline_evtx, hive_sam, hive_system, hive_software, outdir, output):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
 
         # extract info from windows events
         print('[+] Analyzing evtx ', end='', flush=True)
-        fd_evtx = open(evtx, mode='r', encoding='utf8')
+        fd_evtx = open(timeline_evtx, mode='r', encoding='utf8')
         nb_events, report, timeline, collection = self.__evtx_analyzer.collect_profiling_events(fd_evtx)
         fd_evtx.close()
         print(' done. Processed {} events'.format(nb_events))
@@ -219,6 +233,46 @@ class WindowsCommand(AbstractCommand):
         for paragraph in report.values():
             self._print_text(paragraph.title, paragraph.details)
 
+    def extract_eid_messages(self, hive_system, mount_point, outdir, output):
+        if not os.path.exists(outdir):
+            raise ValueError('Out directory {} does not exist.'.format(outdir))
+
+        reg_system = RegistryHive(hive_system)
+        self.__host_reg_analyzer.set_current_control_set(reg_system)
+        self.__host_reg_analyzer.set_computer_name(reg_system)
+        self.__host_reg_analyzer.set_registry_codepage(reg_system)
+        event_message_files = self.__host_reg_analyzer.collect_event_messages_files(reg_system)
+
+        event_messages = []
+        for event_message_file in event_message_files.values():
+            print('[+] Extracting event messages for providers {} ... '.format(event_message_file['providers']), end='', flush=True)
+
+            # add alternative paths
+            alternatives = self.__files_loader.get_alternative_message_table_files(event_message_file['path'])
+
+            # find case sensitive paths from mount_point
+            real_paths = []
+            for path in alternatives:
+                real_paths.append(self.__files_loader.find_file(path, mount_point))
+            real_paths = [path for path in real_paths if path is not None]
+            if len(real_paths) == 0:
+                print('could not find any of the files {}'.format(alternatives))
+                continue
+
+            messages = self.__pe_analyzer.parse_message_table(event_message_file['providers'], real_paths)
+            if messages is None:
+                print('could not find any message table in {}'.format(real_paths), flush=True)
+                continue
+
+            event_messages.extend(messages)
+            print('done', flush=True)
+
+        outfile = 'eid_messages.{}'.format(output)
+        outfile = os.path.join(outdir, outfile)
+        self._write_formatted(outfile, output, event_messages)
+        self._print_text(title='Wrote EID messages in {}'.format(outfile))
+
+
     def extract_evtx(self, evtx_path, outdir):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
@@ -298,7 +352,7 @@ class WindowsCommand(AbstractCommand):
             self._write_formatted(outfile, output, amcache)
             self._print_text(title='Wrote AmCache info in {}'.format(outfile))
 
-    def merge_timelines(self, evtx, timeline_plaso, timeline_fls, outdir, tags_file):
+    def merge_timelines(self, timeline_evtx, timeline_plaso, timeline_fls, outdir, tags_file):
         if not os.path.exists(outdir):
             raise ValueError('Out directory {} does not exist.'.format(outdir))
 
@@ -323,7 +377,7 @@ class WindowsCommand(AbstractCommand):
         self.__timeline_analyzer.prepare_fls(timeline_fls, fd_out, tags_mft)
 
         self._print_text(title='Adding evtx timeline', newline=False)
-        self.__timeline_analyzer.prepare_evtx(evtx, fd_out, tags_evtx)
+        self.__timeline_analyzer.prepare_evtx(timeline_evtx, fd_out, tags_evtx)
 
         if timeline_plaso is not None:
             self._print_text(title='Adding plaso timeline', newline=False)
