@@ -2,11 +2,14 @@ timelines:
   tools:
     - 'sleuthkit'
     - 'plaso-tools'
+    - 'https://github.com/dkovar/analyzeMFT'
   cheat_sheet:
     - description: 'Create disk timeline TSK'
       command: 'fls -{F,D}rph{u,d} -m ''/''  disk.raw | tee fls_{files,folders}_{allocated,deleted}.body && mactime -d -y -b fls_files.body | tee mactime_timeline_files.csv'
     - description: 'Create disk timeline L2T'
       command: 'log2timeline --parsers mft --storage-file /data_dst/l2t_mft.plaso /data_src/disk.raw && psort -o l2tcsv -w /data_dst/l2t_mft.csv /data_dst/l2t_mft.plaso'
+    - description: 'Create disk timeline AnalyzeMFT'
+      command: 'analyzeMFT.py -f mft.dat --bodyfull -b mft.body && mactime -d -y -b mft.body | tee mft.csv'
     - description: 'Create windows events timeline'
       command: 'py_fair scripts windows extract_evtx -e <evtx/folder> -d <output/folder>'
     - description: 'Create activity timeline'

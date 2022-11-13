@@ -26,6 +26,7 @@ malware:
   - 'https://github.com/advanced-threat-research/Yara-Rules'
   - 'https://github.com/InQuest/awesome-yara'
   - 'https://github.com/mikesxrs/Open-Source-YARA-rules'
+  - 'https://redcanary.com/threat-detection-report/threats/cobalt-strike/'
 
 evtx:
   - 'http://www.eventid.net'
@@ -76,6 +77,7 @@ challenges:
   - 'https://zer1t0.gitlab.io/challenges/'
   - 'https://www.ashemery.com/dfir.html'
   - 'https://blueteamlabs.online/'
+  - 'https://securitydatasets.com'
 
 
 blogs:
@@ -113,6 +115,7 @@ blogs:
   - 'https://github.com/0xjxd/SquirrelWaffle-From-Maldoc-to-Cobalt-Strike'
   - 'https://github.com/forensicanalysis'
   - 'https://df-stream.com/2017/10/recentapps/'
+  - 'https://carvesystems.com/news/credentialed-windows-remote-code-execution-techniques/'
 
 system:
   - 'http://ntoskrnl.org/'

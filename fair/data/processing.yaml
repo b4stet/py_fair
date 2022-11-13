@@ -179,6 +179,8 @@ default_values:
     value: '5800/5900'
   - description: 'default port of meterpreter reverse shell'
     value: '4444'
+  - description: 'default port of cobalt server'
+    value: '50050'
   - description: 'empire default stager name'
     value: 'launcher.bat, launcher.vbs'
   - description: 'empire default behavior of C2 beacons'
